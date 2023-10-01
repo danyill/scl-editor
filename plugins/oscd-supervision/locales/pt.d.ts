@@ -1,5 +1,4 @@
 export declare const templates: {
-    s49c26e1d7235015c: string;
     s69bb8d6e3f4442dc: string;
     s6c69c398a9073c91: string;
     s7d678ae4032b59f0: string;
@@ -12,10 +11,11 @@ export declare const templates: {
     s74770d66bf7310b8: string;
     saf3b628bc8515d77: string;
     s72258a704e2bfd4d: string;
+    sb9b1c5efdd511c3d: import("@lit/localize").StrResult;
     s69d78be01e752f2d: string;
     s5d929ff1619ac0c9: string;
     sf2add3f33cacfd26: import("@lit/localize").StrResult;
-    s719c8f1a9d5d70e9: import("@lit/localize").StrResult;
+    s31888f6cee2865e6: import("@lit/localize").StrResult;
     sa9b15d243beb72ca: string;
     s5de80cd77362dcba: string;
     s41076cfdf7ca3bbf: import("@lit/localize").StrResult;

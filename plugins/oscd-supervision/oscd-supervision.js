@@ -9639,8 +9639,7 @@ function findControlBlocks(extRef, controlType) {
         .querySelectorAll(`IED[name="${srcIedName}"] LDevice[inst="${srcLDInst}"] > LN0[lnClass="${srcLNClass}"]${srcPrefix !== '' ? `[prefix="${srcPrefix}"]` : ''}${srcLNInst !== '' ? `[inst="${srcLNInst}"]` : ''} > ${serviceTypeControlBlockTags[controlType]}[name="${srcCBName}"]`));
     if (controlBlockFromSrc)
         return controlBlockFromSrc;
-    // Ed 1 this is more complicated as control blocks not explicitly
-    console.log('Ed 1');
+    // Ed 1 this is more complicated as control blocks not explicitly identified...
     const fcdas = findFCDAs(extRef);
     const cbTags = serviceTypeControlBlockTags[extRef.getAttribute('serviceType') ?? 'NONE'] ??
         [];
@@ -11646,12 +11645,12 @@ function supervisionPath(supLn) {
         .join(' ');
     return path;
 }
-function getSupervisionControlBlockRef(ln) {
+function getSupervisionCBRef(ln) {
     const type = ln.getAttribute('lnClass') === 'LGOS' ? 'GoCBRef' : 'SvCBRef';
     return (ln.querySelector(`DOI[name="${type}"] > DAI[name="setSrcRef"] > Val`)
         ?.textContent ?? null);
 }
-function extRefIsType(extRef, type) {
+function isGOOSEorSMV(extRef, type) {
     return (extRef.getAttribute('serviceType') === type ||
         extRef.getAttribute('pServT') === type);
 }
@@ -11695,6 +11694,11 @@ function getSearchRegex(searchExpression) {
     const regexString = expandedTerms.map(term => `(?=.*${term})`);
     return new RegExp(`${regexString.join('')}.*`, 'i');
 }
+/**
+ * Ensures callback is not called more frequently than `delay`
+ * @param callback - Function to be debounced.
+ * @param delay - Duration of debounce in ms.
+ */
 function debounce(callback, delay = 100) {
     let timeout;
     return (...args) => {
@@ -11705,7 +11709,91 @@ function debounce(callback, delay = 100) {
     };
 }
 /**
- * Editor for GOOSE and SMV supervision LNs
+ * Fetches used control block references for a given IED and control type
+ * (GOOSE or SMV) and returns them as an array
+ * @param ied - SCL IED element.
+ * @param type - Either `GOOSE` or `SMV`.
+ * @returns an array of control block references.
+ */
+function getSubscribedCBRefs(ied, type) {
+    if (!ied)
+        return [];
+    const extRefs = Array.from(ied.getElementsByTagName('ExtRef')) ?? [];
+    const controlBlockRefs = new Set();
+    extRefs.forEach(extRef => {
+        if (isGOOSEorSMV(extRef, type)) {
+            findControlBlocks(extRef, type).forEach(cb => controlBlockRefs.add(controlBlockReference(cb) ?? 'Unknown Control'));
+        }
+    });
+    return Array.from(controlBlockRefs);
+}
+/**
+ * Gets GSEControl or SampledValueControl elements for the selected IED.
+ *
+ * @param controlType either 'GOOSE' or 'SMV'
+ * @returns array of GSEControl or SampledValueControl elements
+ */
+/**
+ * Gets GSEControl or SampledValueControl elements _except_ for the
+ * selected IED.
+ * @param ied - Selected IED SCL element.
+ * @param controlType - Either `GOOSE` or `SMV`
+ * @returns an array of `GSEControl` or `SampledValueControl` elements.
+ */
+function getOtherIedControlElements(ied, controlType) {
+    if (!ied)
+        return [];
+    const iedName = getNameAttribute(ied);
+    return Array.from(ied.ownerDocument.querySelectorAll(`LN0 > ${controlTag[controlType]}`)).filter(cb => getNameAttribute(cb.closest('IED')) !== iedName);
+}
+/**
+ * Retrieve supervision LNs for GOOSE or SMV.
+ * @param ied - An IED SCL element.
+ * @param controlType - Either `GOOSE` or `SMV`.
+ * @returns An array of LN elements.
+ */
+function getSupervisionLNs(ied, controlType) {
+    if (!ied)
+        return [];
+    return Array.from(ied.querySelectorAll(`LN[lnClass="${supervisionLnType[controlType]}"]`));
+}
+/**
+ * Retrieve control block references for a given IED whose references is used
+ * within a supervision node.
+ * @param ied - An SCL IED Element.
+ * @param controlType - Either `GOOSE` or `SMV`.
+ * @returns An array of control block references.
+ */
+function getSupervisedCBRefs(ied, controlType) {
+    if (!ied)
+        return [];
+    const supervisedCbRefs = [];
+    const controlElements = getOtherIedControlElements(ied, controlType);
+    getSupervisionLNs(ied, controlType).forEach(lN => {
+        const cbRef = getSupervisionCBRef(lN);
+        if (cbRef !== null && cbRef !== '') {
+            const controlElement = controlElements.find(control => cbRef === controlBlockReference(control)) ?? null;
+            if (controlElement) {
+                if (!supervisedCbRefs.includes(cbRef))
+                    supervisedCbRefs.push(cbRef);
+            }
+        }
+    });
+    return supervisedCbRefs;
+}
+/**
+ * Get control block references for an IED and a
+ * specific control type
+ * @param ied - An SCL IED element.
+ * @param controlType - Either `GOOSE` or `SMV`.
+ * @returns An array of control block references.
+ */
+function getCBRefs(ied, controlType) {
+    return getOtherIedControlElements(ied, controlType).map(cb => controlBlockReference(cb) ?? 'Unknown Control');
+}
+/**
+ * Editor to allow allocation of GOOSE and SMV supervision LNs
+ * to control blocks
  */
 class Supervision extends s$1 {
     constructor() {
@@ -11713,9 +11801,20 @@ class Supervision extends s$1 {
         this.editCount = -1;
         this.controlType = 'GOOSE';
         this.selectedIEDs = [];
-        this.allControlBlockIds = [];
-        this.connectedControlBlockIds = [];
-        this.supervisedControlBlockIds = [];
+        /**
+         * Control block references for non-selected IEDs
+         */
+        this.otherIedsCBRefs = [];
+        /**
+         * Control block references for which selected IED
+         * has a subscription in an `ExtRef` element
+         */
+        this.selectedIedSubscribedCBRefs = [];
+        /**
+         * Control block references for which the selected IED
+         * has an supervision LN referenced to
+         */
+        this.selectedIedSupervisedCBRefs = [];
         this.searchUnusedSupervisions = /.*/i;
         this.selectedControl = null;
         this.selectedSupervision = null;
@@ -11737,59 +11836,17 @@ class Supervision extends s$1 {
         }
         return undefined;
     }
-    updateConnectedControlBlocks() {
-        if (!this.selectedIed)
-            return;
-        const extRefs = Array.from(this.selectedIed.getElementsByTagName('ExtRef')) ?? [];
-        const connectedControlBlockIds = new Set();
-        extRefs.forEach(extRef => {
-            if (extRefIsType(extRef, 'GOOSE')) {
-                findControlBlocks(extRef, 'GOOSE').forEach(cb => connectedControlBlockIds.add(controlBlockReference(cb) ?? 'Unknown Control'));
-            }
-            else if (extRefIsType(extRef, 'SMV')) {
-                findControlBlocks(extRef, 'SMV').forEach(cb => connectedControlBlockIds.add(controlBlockReference(cb) ?? 'Unknown Control'));
-            }
-            else {
-                // unknown type, must check both
-                findControlBlocks(extRef, 'GOOSE').forEach(cb => connectedControlBlockIds.add(controlBlockReference(cb) ?? 'Unknown Control'));
-                findControlBlocks(extRef, 'SMV').forEach(cb => connectedControlBlockIds.add(controlBlockReference(cb) ?? 'Unknown Control'));
-            }
-        });
-        this.connectedControlBlockIds = Array.from(connectedControlBlockIds);
-        this.requestUpdate();
-    }
-    updateSupervisedControlBlocks() {
-        this.supervisedControlBlockIds = [];
-        const controlElements = [
-            ...this.getControlElements('GOOSE'),
-            ...this.getControlElements('SMV'),
-        ];
-        [
-            ...this.getSupervisionLNs('GOOSE'),
-            ...this.getSupervisionLNs('SMV'),
-        ].forEach(lN => {
-            const cbRef = getSupervisionControlBlockRef(lN);
-            if (cbRef !== null && cbRef !== '') {
-                const controlElement = controlElements.find(control => cbRef === controlBlockReference(control)) ?? null;
-                if (controlElement) {
-                    if (!this.supervisedControlBlockIds.includes(cbRef))
-                        this.supervisedControlBlockIds.push(cbRef);
-                }
-            }
-        });
-    }
-    updateAllControlBlocks() {
-        this.allControlBlockIds = [];
-        this.allControlBlockIds.push(...this.getControlElements('GOOSE').map(cb => controlBlockReference(cb) ?? 'Unknown Control'));
-        this.allControlBlockIds.push(...this.getControlElements('SMV').map(cb => controlBlockReference(cb) ?? 'Unknown Control'));
-    }
-    updateControlBlockInfo() {
-        this.updateAllControlBlocks();
-        this.updateConnectedControlBlocks();
-        this.updateSupervisedControlBlocks();
+    /**
+     * Update stores of control block references which have (from this IED)
+     * supervisions or subscriptions or belong to other IEDs
+     */
+    updateCBRefInfo(ied, controlType) {
+        this.otherIedsCBRefs = getCBRefs(ied, controlType);
+        this.selectedIedSubscribedCBRefs = getSubscribedCBRefs(ied, controlType);
+        this.selectedIedSupervisedCBRefs = getSupervisedCBRefs(ied, controlType);
     }
     firstUpdated() {
-        this.updateControlBlockInfo();
+        this.updateCBRefInfo(this.selectedIed, this.controlType);
     }
     updated(_changedProperties) {
         super.updated(_changedProperties);
@@ -11801,25 +11858,28 @@ class Supervision extends s$1 {
                 const iedName = getNameAttribute(this.iedList[0]);
                 if (iedName) {
                     this.selectedIEDs = [iedName];
+                    this.updateCBRefInfo(this.selectedIed, this.controlType);
                 }
             }
         }
         if (_changedProperties.has('selectedIed') && this.selectedIed) {
-            this.updateControlBlockInfo();
+            this.updateCBRefInfo(this.selectedIed, this.controlType);
+            this.clearListSelections();
+            this.resetSearchFilters();
         }
         if (_changedProperties.has('editCount') && _changedProperties.size === 1) {
             // when change is introduced through undo and redo need to update cached
             // variables and reset any in-progress user action
-            this.updateControlBlockInfo();
+            this.updateCBRefInfo(this.selectedIed, this.controlType);
             this.clearListSelections();
         }
     }
     // eslint-disable-next-line class-methods-use-this
     renderUnusedSupervisionNode(lN) {
         const description = getDescriptionAttribute(lN);
-        const controlBlockRef = getSupervisionControlBlockRef(lN);
+        const controlBlockRef = getSupervisionCBRef(lN);
         const invalidControlBlock = controlBlockRef !== '' &&
-            !this.allControlBlockIds.includes(controlBlockRef ?? 'Unknown control block') &&
+            !this.otherIedsCBRefs.includes(controlBlockRef ?? 'Unknown control block') &&
             controlBlockRef !== null;
         return x `
       <mwc-list-item
@@ -11827,8 +11887,8 @@ class Supervision extends s$1 {
         class="mitem"
         graphic="icon"
         ?hasMeta=${invalidControlBlock}
-        ?noninteractive=${this.supervisedControlBlockIds.length ===
-            this.connectedControlBlockIds.length}
+        ?noninteractive=${this.selectedIedSupervisedCBRefs.length ===
+            this.selectedIedSubscribedCBRefs.length}
         data-supervision="${identity(lN)}"
         value="${identity(lN)}"
       >
@@ -11878,20 +11938,10 @@ class Supervision extends s$1 {
       ></mwc-icon-button> -->
     `;
     }
-    getSupervisionLNs(controlType) {
-        if (this.doc && this.selectedIed) {
-            return Array.from(this.selectedIed.querySelectorAll(`LN[lnClass="${supervisionLnType[controlType]}"]`));
-        }
-        return [];
-    }
-    getControlElements(controlType) {
-        if (this.doc && this.selectedIed) {
-            const iedName = getNameAttribute(this.selectedIed);
-            return Array.from(this.doc.querySelectorAll(`LN0 > ${controlTag[controlType]}`)).filter(cb => getNameAttribute(cb.closest('IED')) !== iedName);
-        }
-        return [];
-    }
     clearListSelections() {
+        this.selectedControl = null;
+        this.selectedSupervision = null;
+        this.newSupervision = false;
         if (this.selectedUnusedControlUI) {
             this.selectedUnusedControlUI.selected = false;
             this.selectedUnusedControlUI.activated = false;
@@ -11901,11 +11951,11 @@ class Supervision extends s$1 {
             this.selectedUnusedSupervisionUI.activated = false;
         }
     }
-    getSupLNsWithCBs(used = true, unused = false) {
-        return this.getSupervisionLNs(this.controlType)
+    getSelectedIedSupLNs(used = true, unused = false) {
+        return getSupervisionLNs(this.selectedIed, this.controlType)
             .filter(lN => {
-            const cbRef = getSupervisionControlBlockRef(lN);
-            const cbRefUsed = this.allControlBlockIds.includes(cbRef ?? 'Unknown Control');
+            const cbRef = getSupervisionCBRef(lN);
+            const cbRefUsed = this.selectedIedSubscribedCBRefs.includes(cbRef ?? 'Unknown Control');
             return (cbRefUsed && used) || (!cbRefUsed && unused);
         })
             .sort((lnA, lnB) => {
@@ -11925,10 +11975,10 @@ class Supervision extends s$1 {
         const maxSupervisionLNs = this.selectedIed
             ? maxSupervisions(this.selectedIed, controlTag[this.controlType])
             : 0;
-        const instantiatedSupervisionLNs = this.getSupervisionLNs(this.controlType).length;
+        const instantiatedSupervisionLNs = getSupervisionLNs(this.selectedIed, this.controlType).length;
         const availableSupervisionLNs = maxSupervisionLNs - instantiatedSupervisionLNs;
         const supervisionType = this.controlType === 'GOOSE' ? 'LGOS' : 'LSVS';
-        return x `${this.getSupLNsWithCBs(used, unused)
+        return x `${this.getSelectedIedSupLNs(used, unused)
             .filter(supervision => {
             const supervisionSearchText = `${identity(supervision)} ${supervision.getAttribute('desc')}`;
             return (this.searchUnusedSupervisions &&
@@ -11942,8 +11992,8 @@ class Supervision extends s$1 {
         data-supervision="NEW"
         value="${msg('New')} ${supervisionType} ${msg('Supervision')}"
         ?noninteractive=${availableSupervisionLNs === 0 ||
-            this.supervisedControlBlockIds.length ===
-                this.connectedControlBlockIds.length}
+            this.selectedIedSupervisedCBRefs.length ===
+                this.selectedIedSubscribedCBRefs.length}
       >
         <span
           >${msg('New')} ${supervisionType} ${msg('Supervision')}
@@ -11956,13 +12006,13 @@ class Supervision extends s$1 {
       </mwc-list-item>`;
     }
     renderDeleteIcons(used = true, unused = false, withFiltering = false) {
-        const firstSupervision = this.getSupervisionLNs(this.controlType)[0];
+        const firstSupervision = getSupervisionLNs(this.selectedIed, this.controlType)[0];
         return x `<mwc-list class="column mlist deleter">
       <!-- show additional item to allow delete button alignment -->
       ${unused
             ? x `<mwc-list-item twoline noninteractive></mwc-list-item>`
             : A}
-      ${this.getSupLNsWithCBs(used, unused)
+      ${this.getSelectedIedSupLNs(used, unused)
             .filter(supervision => {
             const supervisionSearchText = `${identity(supervision)} ${supervision.getAttribute('desc')}`;
             return (!withFiltering ||
@@ -11995,11 +12045,11 @@ class Supervision extends s$1 {
                     node: lN,
                 };
                 this.dispatchEvent(newEditEvent(removeEdit));
-                this.updateSupervisedControlBlocks();
+                this.selectedIedSupervisedCBRefs = getSupervisedCBRefs(this.selectedIed, this.controlType);
             }
             this.clearListSelections();
         }}
-                >${lN === firstSupervision ? 'info' : 'delete'}</mwc-icon
+                >${lN === firstSupervision ? 'block' : 'delete'}</mwc-icon
               >
             </mwc-list-item>
           `)}
@@ -12012,9 +12062,9 @@ class Supervision extends s$1 {
     renderUsedSupervisionLNs(onlyUsed = false, onlyUnused = false) {
         if (!this.selectedIed)
             return x ``;
-        const usedSupervisions = this.getSupervisionLNs(this.controlType).filter(lN => {
-            const cbRef = getSupervisionControlBlockRef(lN);
-            const cbRefUsed = this.allControlBlockIds.includes(cbRef ?? 'Unknown Control');
+        const usedSupervisions = getSupervisionLNs(this.selectedIed, this.controlType).filter(lN => {
+            const cbRef = getSupervisionCBRef(lN);
+            const cbRefUsed = this.otherIedsCBRefs.includes(cbRef ?? 'Unknown Control');
             return (cbRefUsed && onlyUsed) || (!cbRefUsed && onlyUnused);
         });
         if (usedSupervisions.length === 0)
@@ -12025,7 +12075,7 @@ class Supervision extends s$1 {
     }
     renderUsedSupervisionRemovalIcons() {
         return x `<mwc-list class="column remover mlist">
-      ${this.getSupLNsWithCBs(true, false).map(lN => x `
+      ${this.getSelectedIedSupLNs(true, false).map(lN => x `
           <mwc-list-item
             ?noninteractive=${!isSupervisionModificationAllowed(this.selectedIed, supervisionLnType[this.controlType])}
             graphic="icon"
@@ -12033,12 +12083,13 @@ class Supervision extends s$1 {
             data-ln="${identity(lN)}"
             value="${identity(lN)}"
             @click=${() => {
-            const cbRef = getSupervisionControlBlockRef(lN);
-            const controlBlock = this.getControlElements(this.controlType).find(control => cbRef === controlBlockReference(control)) ?? null;
+            const cbRef = getSupervisionCBRef(lN);
+            const controlBlock = getOtherIedControlElements(this.selectedIed, this.controlType).find(control => cbRef === controlBlockReference(control)) ??
+                null;
             if (controlBlock) {
                 const removeEdit = removeSubscriptionSupervision(controlBlock, this.selectedIed);
                 this.dispatchEvent(newEditEvent(removeEdit));
-                this.updateSupervisedControlBlocks();
+                this.selectedIedSupervisedCBRefs = getSupervisedCBRefs(this.selectedIed, this.controlType);
                 this.requestUpdate();
             }
             this.clearListSelections();
@@ -12073,8 +12124,8 @@ class Supervision extends s$1 {
             secondLineDesc += ` - Dataset: ${datasetName}, Id: ${controlId})`;
         }
         return x `<mwc-list-item
-      ?noninteractive=${!unused ||
-            !this.selectedSupervision ||
+      ?noninteractive=${!unused &&
+            !this.selectedSupervision &&
             !this.newSupervision}
       graphic="icon"
       ?twoline=${!!pathDescription || !!datasetName}
@@ -12091,18 +12142,18 @@ class Supervision extends s$1 {
     renderUnusedControls() {
         if (!this.selectedIed)
             return x ``;
-        return x `${this.getControlElements(this.controlType)
-            .filter(control => this.connectedControlBlockIds.includes(controlBlockReference(control) ?? 'Unknown Control') &&
-            !this.supervisedControlBlockIds.includes(controlBlockReference(control) ?? 'Unknown Control'))
+        return x `${getOtherIedControlElements(this.selectedIed, this.controlType)
+            .filter(control => this.selectedIedSubscribedCBRefs.includes(controlBlockReference(control) ?? 'Unknown Control') &&
+            !this.selectedIedSupervisedCBRefs.includes(controlBlockReference(control) ?? 'Unknown Control'))
             .map(controlElement => x `${this.renderControl(controlElement, true)}`)}`;
     }
     renderUsedControls() {
         if (!this.selectedIed)
             return x ``;
         return x `<mwc-list class="column mlist">
-      ${this.getSupLNsWithCBs(true, false).map(lN => {
-            const cbRef = getSupervisionControlBlockRef(lN);
-            const controlElement = this.getControlElements(this.controlType).find(control => cbRef === controlBlockReference(control)) ?? null;
+      ${this.getSelectedIedSupLNs(true, false).map(lN => {
+            const cbRef = getSupervisionCBRef(lN);
+            const controlElement = getOtherIedControlElements(this.selectedIed, this.controlType).find(control => cbRef === controlBlockReference(control)) ?? null;
             return x `${controlElement
                 ? this.renderControl(controlElement)
                 : A}`;
@@ -12110,11 +12161,13 @@ class Supervision extends s$1 {
     >`;
     }
     renderInfo() {
+        const supervisionType = this.controlType === 'GOOSE' ? 'LGOS' : 'LSVS';
         return x `<div class="side-icons">
       ${this.selectedIed &&
             !isSupervisionModificationAllowed(this.selectedIed, supervisionLnType[this.controlType])
             ? x `<mwc-icon-button
-            title="${msg('This IED does not support supervision modification. Only viewing supervisions is supported.')}"
+            title="${msg(str `
+              This IED does not support ${supervisionType} supervision modification.`)}"
             icon="warning"
           ></mwc-icon-button>`
             : A}
@@ -12178,7 +12231,7 @@ class Supervision extends s$1 {
             edits = instantiateSubscriptionSupervision(selectedControl, this.selectedIed, selectedSupervision ?? undefined);
             this.dispatchEvent(newEditEvent(edits));
         }
-        this.updateSupervisedControlBlocks();
+        this.selectedIedSupervisedCBRefs = getSupervisedCBRefs(this.selectedIed, this.controlType);
     }
     // TODO: restructure in terms of edits
     createNewSupervision(selectedControl) {
@@ -12220,9 +12273,6 @@ class Supervision extends s$1 {
                 (this.selectedSupervision || this.newSupervision)) {
                 this.createSupervision(this.selectedControl, this.selectedSupervision, this.newSupervision);
             }
-            this.selectedControl = null;
-            this.selectedSupervision = null;
-            this.newSupervision = false;
             this.clearListSelections();
         }}
     >
@@ -12246,8 +12296,8 @@ class Supervision extends s$1 {
       <mwc-list
         id="unusedSupervisions"
         activatable
-        ?noninteractive=${this.supervisedControlBlockIds.length ===
-            this.connectedControlBlockIds.length}
+        ?noninteractive=${this.selectedIedSupervisedCBRefs.length ===
+            this.selectedIedSubscribedCBRefs.length}
         @selected=${(ev) => {
             const selectedListItem = (ev.target.selected);
             if (!selectedListItem)
@@ -12259,7 +12309,6 @@ class Supervision extends s$1 {
             }
             this.selectedSupervision = selectedSupervision;
             this.selectedControl = null;
-            this.newSupervision = false;
         }}
       >
         ${this.renderUnusedSupervisionLNs(false, true)}
@@ -12270,7 +12319,7 @@ class Supervision extends s$1 {
         const maxSupervisionLNs = this.selectedIed
             ? maxSupervisions(this.selectedIed, controlTag[this.controlType])
             : 0;
-        const instantiatedSupervisionLNs = this.getSupervisionLNs(this.controlType).length;
+        const instantiatedSupervisionLNs = getSupervisionLNs(this.selectedIed, this.controlType).length;
         const availableSupervisionLNs = maxSupervisionLNs - instantiatedSupervisionLNs;
         let titleText;
         if (this.selectedSupervision) {
@@ -12296,7 +12345,7 @@ class Supervision extends s$1 {
             id="createNewLN"
             class="greyOutDisabled"
             title="${msg(str `
-              'Create New ${supervisionType} Supervision`)} - ${availableSupervisionLNs} ${msg('available')}"
+              Create New ${supervisionType} Supervision`)} - ${availableSupervisionLNs} ${msg('available')}"
             icon="heart_plus"
             ?disabled=${availableSupervisionLNs <= 0}
             @click=${() => {
@@ -12318,7 +12367,7 @@ class Supervision extends s$1 {
       <hr />
       <div class="column-unused">
         <h2
-          class="${this.selectedSupervision
+          class="${this.selectedSupervision || this.newSupervision
             ? 'selected title-element text'
             : ''}"
         >
@@ -12341,8 +12390,7 @@ class Supervision extends s$1 {
             else {
                 this.controlType = 'GOOSE';
             }
-            this.selectedControl = null;
-            this.selectedSupervision = null;
+            this.updateCBRefInfo(this.selectedIed, this.controlType);
             this.clearListSelections();
             this.resetSearchFilters();
         }}
@@ -12354,8 +12402,8 @@ class Supervision extends s$1 {
             return x ``;
         if (this.iedList.length === 0)
             return x `<h1>>No IEDs present</h1>`;
-        const usedSupLNs = this.getSupLNsWithCBs(true, false).length;
-        const totalSupLNs = this.getSupLNsWithCBs(true, true).length;
+        const usedSupLNs = this.getSelectedIedSupLNs(true, false).length;
+        const totalSupLNs = this.getSelectedIedSupLNs(true, true).length;
         const percentUsed = (usedSupLNs / totalSupLNs) * 100;
         return x `<div id="container">
       <div id="controlSection">
@@ -12649,13 +12697,13 @@ __decorate([
 ], Supervision.prototype, "selectedIEDs", void 0);
 __decorate([
     t$1()
-], Supervision.prototype, "allControlBlockIds", void 0);
+], Supervision.prototype, "otherIedsCBRefs", void 0);
 __decorate([
     t$1()
-], Supervision.prototype, "connectedControlBlockIds", void 0);
+], Supervision.prototype, "selectedIedSubscribedCBRefs", void 0);
 __decorate([
     t$1()
-], Supervision.prototype, "supervisedControlBlockIds", void 0);
+], Supervision.prototype, "selectedIedSupervisedCBRefs", void 0);
 __decorate([
     e$5({ type: String })
 ], Supervision.prototype, "searchUnusedSupervisions", void 0);

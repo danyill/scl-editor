@@ -14,7 +14,8 @@ import type { TextField } from '@material/mwc-textfield';
 import './foundation/components/oscd-filter-button.js';
 import './foundation/components/oscd-filtered-list.js';
 /**
- * Editor for GOOSE and SMV supervision LNs
+ * Editor to allow allocation of GOOSE and SMV supervision LNs
+ * to control blocks
  */
 export default class Supervision extends LitElement {
     doc: XMLDocument;
@@ -23,9 +24,20 @@ export default class Supervision extends LitElement {
     controlType: 'GOOSE' | 'SMV';
     private get iedList();
     selectedIEDs: string[];
-    allControlBlockIds: Array<string>;
-    connectedControlBlockIds: Array<string>;
-    supervisedControlBlockIds: Array<string>;
+    /**
+     * Control block references for non-selected IEDs
+     */
+    otherIedsCBRefs: Array<string>;
+    /**
+     * Control block references for which selected IED
+     * has a subscription in an `ExtRef` element
+     */
+    selectedIedSubscribedCBRefs: Array<string>;
+    /**
+     * Control block references for which the selected IED
+     * has an supervision LN referenced to
+     */
+    selectedIedSupervisedCBRefs: Array<string>;
     searchUnusedSupervisions: RegExp;
     private get selectedIed();
     selectedControl: Element | null;
@@ -37,18 +49,17 @@ export default class Supervision extends LitElement {
     selectedUnusedSupervisionUI?: ListItem;
     filterUnusedSupervisionInputUI?: TextField;
     filterUnusedControlBlocksList?: HTMLElement;
-    protected updateConnectedControlBlocks(): void;
-    protected updateSupervisedControlBlocks(): void;
-    protected updateAllControlBlocks(): void;
-    protected updateControlBlockInfo(): void;
+    /**
+     * Update stores of control block references which have (from this IED)
+     * supervisions or subscriptions or belong to other IEDs
+     */
+    protected updateCBRefInfo(ied: Element | undefined, controlType: 'GOOSE' | 'SMV'): void;
     protected firstUpdated(): void;
     protected updated(_changedProperties: PropertyValues): void;
     renderUnusedSupervisionNode(lN: Element): TemplateResult;
     renderSupervisionListItem(lN: Element, interactive: boolean): TemplateResult;
-    private getSupervisionLNs;
-    private getControlElements;
     clearListSelections(): void;
-    private getSupLNsWithCBs;
+    private getSelectedIedSupLNs;
     protected renderUnusedSupervisionLNs(used?: boolean, unused?: boolean): TemplateResult;
     private renderDeleteIcons;
     private renderUsedSupervisionLNs;
