@@ -5375,17 +5375,95 @@ function newEditEvent(edit) {
     });
 }
 
-/** Utility function to create element with `tagName` and its`attributes` */
-function createElement(doc, tag, attrs) {
-    const element = doc.createElementNS(doc.documentElement.namespaceURI, tag);
-    Object.entries(attrs)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        .filter(([_, value]) => value !== null)
-        .forEach(([name, value]) => element.setAttribute(name, value));
-    return element;
+/** @returns the cartesian product of `arrays` */
+function crossProduct(...arrays) {
+    return arrays.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())), [[]]);
+}
+/**
+ * Looks up Communication section GSE or SMV addresses based on the control block
+ * within the IED section (GSEControl or SampledValueControl).
+ * @param ctrlBlock - SCL control block element (GSEControl or SampledValueControl)
+ * @returns SCL GSE or SMV address element or null if not found.
+ */
+function getCommAddress(ctrlBlock) {
+    const doc = ctrlBlock.ownerDocument;
+    const ctrlLdInst = ctrlBlock.closest('LDevice').getAttribute('inst');
+    const addressTag = ctrlBlock.tagName === 'GSEControl' ? 'GSE' : 'SMV';
+    const ied = ctrlBlock.closest('IED');
+    const apName = ctrlBlock.closest('AccessPoint').getAttribute('name');
+    let apNames = [];
+    const serverAts = ied.querySelectorAll(`AccessPoint > ServerAt[apName="${apName}"`);
+    if (serverAts.length > 0) {
+        const serverAtNames = Array.from(serverAts).map(ap => ap.closest('AccessPoint').getAttribute('name'));
+        apNames = [apName, ...serverAtNames];
+    }
+    else {
+        apNames = [apName];
+    }
+    const iedName = ied.getAttribute('name');
+    const connectedAps = `:root > Communication > SubNetwork > ConnectedAP[iedName="${iedName}"]`;
+    const connectedApNames = apNames.map(ap => `[apName="${ap}"]`);
+    const cbName = ctrlBlock.getAttribute('name');
+    const addressElement = `${addressTag}[ldInst="${ctrlLdInst}"][cbName="${cbName}"]`;
+    return doc.querySelector(crossProduct([connectedAps], connectedApNames, ['>'], [addressElement])
+        .map(strings => strings.join(''))
+        .join(','));
 }
 
-// from scl-lib
+const TPNS = 'https://transpower.co.nz/SCL/SCD/Communication/v1';
+const XSINS = 'http://www.w3.org/2001/XMLSchema-instance';
+/**
+ * Creates either a Transpower-GSE-Subscribe or Transpower-SMV-Subscribe
+ * element which has `P` elements which provide the MAC address
+ * VLAN-ID and and VLAN-Priority similar to the standard's GSE and SMV
+ * elements
+ * @param address - SCL address element `GSE` or `SMV`.
+ * @returns - an Element or undefined if nothing to create
+ */
+function createSubscribedAddress(address) {
+    const privateSCL = address.ownerDocument.createElementNS(address.ownerDocument.documentElement.namespaceURI, 'Private');
+    privateSCL.setAttribute('type', `Transpower-${address.tagName}-Subscribe`);
+    const iedName = address.closest('ConnectedAP').getAttribute('iedName');
+    privateSCL.setAttributeNS(TPNS, 'iedName', iedName);
+    const cbName = address.getAttribute('cbName');
+    if (cbName)
+        privateSCL.setAttributeNS(TPNS, 'cbName', cbName);
+    const ldInst = address.getAttribute('ldInst');
+    if (ldInst)
+        privateSCL.setAttributeNS(TPNS, 'ldInst', ldInst);
+    const newAddress = address.ownerDocument.createElementNS(TPNS, 'Address');
+    privateSCL.appendChild(newAddress);
+    const addressVlan = address.querySelector('P[type="VLAN-ID"]');
+    if (addressVlan) {
+        const vlanId = address.ownerDocument.createElementNS(TPNS, 'P');
+        vlanId.setAttribute('type', 'VLAN-ID');
+        vlanId.setAttributeNS(XSINS, 'type', 'tP_VLAN-ID');
+        vlanId.textContent = addressVlan.textContent;
+        newAddress.appendChild(vlanId);
+    }
+    const addressVlanPriority = address.querySelector('P[type="VLAN-PRIORITY"]');
+    if (addressVlanPriority) {
+        const vlanPriority = address.ownerDocument.createElementNS(TPNS, 'P');
+        vlanPriority.setAttribute('type', 'VLAN-PRIORITY');
+        vlanPriority.setAttributeNS(XSINS, 'type', 'tP_VLAN-PRIORITY');
+        vlanPriority.textContent = addressVlanPriority.textContent;
+        newAddress.appendChild(vlanPriority);
+    }
+    const addressMac = address.querySelector('P[type="MAC-Address"]');
+    if (addressMac) {
+        const mac = address.ownerDocument.createElementNS(TPNS, 'P');
+        mac.setAttribute('type', 'MAC-Address');
+        mac.setAttributeNS(XSINS, 'type', 'tP_MAC-Address');
+        mac.textContent = addressMac.textContent;
+        newAddress.appendChild(mac);
+    }
+    // only proceed if there is something to write
+    if (!(addressVlan || addressVlanPriority || addressMac)) {
+        return null;
+    }
+    return privateSCL;
+}
+
 /** @returns control block or null for a given external reference */
 function sourceControlBlock(extRef) {
     var _a;
@@ -5398,8 +5476,8 @@ function sourceControlBlock(extRef) {
         'srcCBName',
     ].map(attr => { var _a; return (_a = extRef.getAttribute(attr)) !== null && _a !== void 0 ? _a : ''; });
     return ((_a = Array.from(extRef.ownerDocument.querySelectorAll(`IED[name="${iedName}"] ReportControl, 
-          IED[name="${iedName}"] GSEControl, 
-          IED[name="${iedName}"] SampledValueControl`)).find(cBlock => {
+            IED[name="${iedName}"] GSEControl, 
+            IED[name="${iedName}"] SampledValueControl`)).find(cBlock => {
         var _a;
         return cBlock.closest('LDevice').getAttribute('inst') === srcLDInst &&
             ((_a = cBlock.closest('LN, LN0').getAttribute('prefix')) !== null && _a !== void 0 ? _a : '') ===
@@ -5409,200 +5487,1061 @@ function sourceControlBlock(extRef) {
             cBlock.getAttribute('name') === srcCBName;
     })) !== null && _a !== void 0 ? _a : null);
 }
-/** @returns the cartesian product of `arrays` */
-function crossProduct(...arrays) {
-    return arrays.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())), [[]]);
+
+/**
+ * Ensures the nearest element is not within a Private element.
+ *
+ * @param element
+ * @returns
+ */
+function isPublic(element) {
+    return !element.closest('Private');
 }
-function getCommAddress(ctrlBlock) {
-    var _a;
-    const doc = ctrlBlock.ownerDocument;
-    const ctrlLdInst = ctrlBlock.closest('LDevice').getAttribute('inst');
-    const addressTag = ctrlBlock.tagName === 'GSEControl' ? 'GSE' : 'SMV';
-    const ied = ctrlBlock.closest('IED');
-    const iedName = ied.getAttribute('name');
-    const apName = (_a = ctrlBlock.closest('AccessPoint')) === null || _a === void 0 ? void 0 : _a.getAttribute('name');
-    const cbName = ctrlBlock.getAttribute('name');
-    let apNames = [];
-    const serverAts = ied.querySelectorAll(`AccessPoint > ServerAt[apName="${apName}"`);
-    if (serverAts) {
-        const serverAtNames = Array.from(serverAts).map(ap => ap.closest('AccessPoint').getAttribute('name'));
-        apNames = [apName, ...serverAtNames];
+function getUsedCBs(doc) {
+    // fetch unique control blocks and subscribing IEDs
+    const controlBlocksAndIEDs = new Map();
+    Array.from(doc.querySelectorAll('Inputs > ExtRef'))
+        .filter(isPublic)
+        .forEach(extRef => {
+        var _a;
+        const cb = sourceControlBlock(extRef);
+        const ied = extRef.closest('IED').getAttribute('name');
+        if (!cb)
+            return;
+        // need to store IED and ConnectedAP apName
+        const cbAlreadyExists = controlBlocksAndIEDs.has(cb);
+        const cbHasIed = (_a = controlBlocksAndIEDs.get(cb)) === null || _a === void 0 ? void 0 : _a.includes(ied);
+        if (cbAlreadyExists && !cbHasIed) {
+            controlBlocksAndIEDs.set(cb, [...controlBlocksAndIEDs.get(cb), ied]);
+        }
+        else if (!cbAlreadyExists) {
+            controlBlocksAndIEDs.set(cb, [ied]);
+        }
+    });
+    // provide stable order -- GOOSE then SV, sorted by IED and control block name
+    const sortedControlBlocksAndIEDs = new Map([...controlBlocksAndIEDs].sort((first, second) => {
+        const firstKey = first[0];
+        const secondKey = second[0];
+        const comparison = (e) => `${e.tagName} ${e
+            .closest('IED')
+            .getAttribute('name')} ${e.getAttribute('name')}`;
+        return comparison(secondKey).localeCompare(comparison(firstKey));
+    }));
+    // sort the order IEDs are processed
+    sortedControlBlocksAndIEDs.forEach((value, key) => {
+        sortedControlBlocksAndIEDs.set(key, value.sort());
+    });
+    return sortedControlBlocksAndIEDs.size === 0
+        ? null
+        : sortedControlBlocksAndIEDs;
+}
+
+/** Utility function to create element with `tagName` and its`attributes` */
+function createElement(doc, tag, attrs) {
+    const element = doc.createElementNS(doc.documentElement.namespaceURI, tag);
+    Object.entries(attrs)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .filter(([_, value]) => value !== null)
+        .forEach(([name, value]) => element.setAttribute(name, value));
+    return element;
+}
+
+const maxGseMacAddress = 0x010ccd0101ff;
+const minGseMacAddress = 0x010ccd010000;
+const maxSmvMacAddress = 0x010ccd0401ff;
+const minSmvMacAddress = 0x010ccd040000;
+function convertToMac(mac) {
+    const str = 0 + mac.toString(16).toUpperCase();
+    const arr = str.match(/.{1,2}/g);
+    return arr.join("-");
+}
+Array(maxGseMacAddress - minGseMacAddress)
+    .fill(1)
+    .map((_, i) => convertToMac(minGseMacAddress + i));
+Array(maxSmvMacAddress - minSmvMacAddress)
+    .fill(1)
+    .map((_, i) => convertToMac(minSmvMacAddress + i));
+
+const maxGseAppId = 0x3fff;
+const minGseAppId = 0x0000;
+// APPID range for Type1A(Trip) GOOSE acc. IEC 61850-8-1
+const maxGseTripAppId = 0xbfff;
+const minGseTripAppId = 0x8000;
+const maxSmvAppId = 0x7fff;
+const minSmvAppId = 0x4000;
+Array(maxGseAppId - minGseAppId)
+    .fill(1)
+    .map((_, i) => (minGseAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+Array(maxGseTripAppId - minGseTripAppId)
+    .fill(1)
+    .map((_, i) => (minGseTripAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+Array(maxSmvAppId - minSmvAppId)
+    .fill(1)
+    .map((_, i) => (minSmvAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+
+/** maximum value for `lnInst` attribute */
+const maxLnInst = 99;
+Array(maxLnInst)
+    .fill(1)
+    .map((_, i) => `${i + 1}`);
+
+const tAbstractConductingEquipment = [
+    "TransformerWinding",
+    "ConductingEquipment",
+];
+const tEquipment = [
+    "GeneralEquipment",
+    "PowerTransformer",
+    ...tAbstractConductingEquipment,
+];
+const tEquipmentContainer = ["Substation", "VoltageLevel", "Bay"];
+const tGeneralEquipmentContainer = ["Process", "Line"];
+const tAbstractEqFuncSubFunc = ["EqSubFunction", "EqFunction"];
+const tPowerSystemResource = [
+    "SubFunction",
+    "Function",
+    "TapChanger",
+    "SubEquipment",
+    ...tEquipment,
+    ...tEquipmentContainer,
+    ...tGeneralEquipmentContainer,
+    ...tAbstractEqFuncSubFunc,
+];
+const tLNodeContainer = ["ConnectivityNode", ...tPowerSystemResource];
+const tCertificate = ["GOOSESecurity", "SMVSecurity"];
+const tNaming = ["SubNetwork", ...tCertificate, ...tLNodeContainer];
+const tAbstractDataAttribute = ["BDA", "DA"];
+const tControlWithIEDName = ["SampledValueControl", "GSEControl"];
+const tControlWithTriggerOpt = ["LogControl", "ReportControl"];
+const tControl = [...tControlWithIEDName, ...tControlWithTriggerOpt];
+const tControlBlock = ["GSE", "SMV"];
+const tUnNaming = [
+    "ConnectedAP",
+    "PhysConn",
+    "SDO",
+    "DO",
+    "DAI",
+    "SDI",
+    "DOI",
+    "Inputs",
+    "RptEnabled",
+    "Server",
+    "ServerAt",
+    "SettingControl",
+    "Communication",
+    "Log",
+    "LDevice",
+    "DataSet",
+    "AccessPoint",
+    "IED",
+    "NeutralPoint",
+    ...tControl,
+    ...tControlBlock,
+    ...tAbstractDataAttribute,
+];
+const tAnyLN = ["LN0", "LN"];
+const tAnyContentFromOtherNamespace = [
+    "Text",
+    "Private",
+    "Hitem",
+    "AccessControl",
+];
+const tCert = ["Subject", "IssuerName"];
+const tDurationInMilliSec = ["MinTime", "MaxTime"];
+const tIDNaming = ["LNodeType", "DOType", "DAType", "EnumType"];
+const tServiceYesNo = [
+    "FileHandling",
+    "TimeSyncProt",
+    "CommProt",
+    "SGEdit",
+    "ConfSG",
+    "GetDirectory",
+    "GetDataObjectDefinition",
+    "DataObjectDirectory",
+    "GetDataSetValue",
+    "SetDataSetValue",
+    "DataSetDirectory",
+    "ReadWrite",
+    "TimerActivatedControl",
+    "GetCBValues",
+    "GSEDir",
+    "ConfLdName",
+];
+const tServiceWithMaxAndMaxAttributes = ["DynDataSet", "ConfDataSet"];
+const tServiceWithMax = [
+    "GSSE",
+    "GOOSE",
+    "ConfReportControl",
+    "SMVsc",
+    ...tServiceWithMaxAndMaxAttributes,
+];
+const tServiceWithMaxNonZero = ["ConfLogControl", "ConfSigRef"];
+const tServiceSettings = [
+    "ReportSettings",
+    "LogSettings",
+    "GSESettings",
+    "SMVSettings",
+];
+const tBaseElement = ["SCL", ...tNaming, ...tUnNaming, ...tIDNaming];
+const sCLTags = [
+    ...tBaseElement,
+    ...tAnyContentFromOtherNamespace,
+    "Header",
+    "LNode",
+    "Val",
+    "Voltage",
+    "Services",
+    ...tCert,
+    ...tDurationInMilliSec,
+    "Association",
+    "FCDA",
+    "ClientLN",
+    "IEDName",
+    "ExtRef",
+    "Protocol",
+    ...tAnyLN,
+    ...tServiceYesNo,
+    "DynAssociation",
+    "SettingGroups",
+    ...tServiceWithMax,
+    ...tServiceWithMaxNonZero,
+    ...tServiceSettings,
+    "ConfLNs",
+    "ClientServices",
+    "SupSubscription",
+    "ValueHandling",
+    "RedProt",
+    "McSecurity",
+    "KDC",
+    "Address",
+    "P",
+    "ProtNs",
+    "EnumVal",
+    "Terminal",
+    "BitRate",
+    "Authentication",
+    "DataTypeTemplates",
+    "History",
+    "OptFields",
+    "SmvOpts",
+    "TrgOps",
+    "SamplesPerSec",
+    "SmpRate",
+    "SecPerSamples",
+];
+const tBaseNameSequence = ["Text", "Private"];
+const tNamingSequence = [...tBaseNameSequence];
+const tUnNamingSequence = [...tBaseNameSequence];
+const tIDNamingSequence = [...tBaseNameSequence];
+const tAbstractDataAttributeSequence = [...tUnNamingSequence, "Val"];
+const tLNodeContainerSequence = [...tNamingSequence, "LNode"];
+const tPowerSystemResourceSequence = [...tLNodeContainerSequence];
+const tEquipmentSequence = [...tPowerSystemResourceSequence];
+const tEquipmentContainerSequence = [
+    ...tPowerSystemResourceSequence,
+    "PowerTransformer",
+    "GeneralEquipment",
+];
+const tAbstractConductingEquipmentSequence = [
+    ...tEquipmentSequence,
+    "Terminal",
+];
+const tControlBlockSequence = [...tUnNamingSequence, "Address"];
+const tControlSequence = [...tNamingSequence];
+const tControlWithIEDNameSequence = [...tControlSequence, "IEDName"];
+const tAnyLNSequence = [
+    ...tUnNamingSequence,
+    "DataSet",
+    "ReportControl",
+    "LogControl",
+    "DOI",
+    "Inputs",
+    "Log",
+];
+const tGeneralEquipmentContainerSequence = [
+    ...tPowerSystemResourceSequence,
+    "GeneralEquipment",
+    "Function",
+];
+const tControlWithTriggerOptSequence = [...tControlSequence, "TrgOps"];
+const tAbstractEqFuncSubFuncSequence = [
+    ...tPowerSystemResourceSequence,
+    "GeneralEquipment",
+    "EqSubFunction",
+];
+const tags = {
+    AccessControl: {
+        parents: ["LDevice"],
+        children: [],
+    },
+    AccessPoint: {
+        parents: ["IED"],
+        children: [
+            ...tNamingSequence,
+            "Server",
+            "LN",
+            "ServerAt",
+            "Services",
+            "GOOSESecurity",
+            "SMVSecurity",
+        ],
+    },
+    Address: {
+        parents: ["ConnectedAP", "GSE", "SMV"],
+        children: ["P"],
+    },
+    Association: {
+        parents: ["Server"],
+        children: [],
+    },
+    Authentication: {
+        parents: ["Server"],
+        children: [],
+    },
+    BDA: {
+        parents: ["DAType"],
+        children: [...tAbstractDataAttributeSequence],
+    },
+    BitRate: {
+        parents: ["SubNetwork"],
+        children: [],
+    },
+    Bay: {
+        parents: ["VoltageLevel"],
+        children: [
+            ...tEquipmentContainerSequence,
+            "ConductingEquipment",
+            "ConnectivityNode",
+            "Function",
+        ],
+    },
+    ClientLN: {
+        parents: ["RptEnabled"],
+        children: [],
+    },
+    ClientServices: {
+        parents: ["Services"],
+        children: ["TimeSyncProt", "McSecurity"],
+    },
+    CommProt: {
+        parents: ["Services"],
+        children: [],
+    },
+    Communication: {
+        parents: ["SCL"],
+        children: [...tUnNamingSequence, "SubNetwork"],
+    },
+    ConductingEquipment: {
+        parents: ["Process", "Line", "SubFunction", "Function", "Bay"],
+        children: [
+            ...tAbstractConductingEquipmentSequence,
+            "EqFunction",
+            "SubEquipment",
+        ],
+    },
+    ConfDataSet: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfLdName: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfLNs: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfLogControl: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfReportControl: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfSG: {
+        parents: ["SettingGroups"],
+        children: [],
+    },
+    ConfSigRef: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConnectedAP: {
+        parents: ["SubNetwork"],
+        children: [...tUnNamingSequence, "Address", "GSE", "SMV", "PhysConn"],
+    },
+    ConnectivityNode: {
+        parents: ["Bay", "Line"],
+        children: [...tLNodeContainerSequence],
+    },
+    DA: {
+        parents: ["DOType"],
+        children: [...tAbstractDataAttributeSequence],
+    },
+    DAI: {
+        parents: ["DOI", "SDI"],
+        children: [...tUnNamingSequence, "Val"],
+    },
+    DAType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "BDA", "ProtNs"],
+    },
+    DO: {
+        parents: ["LNodeType"],
+        children: [...tUnNamingSequence],
+    },
+    DOI: {
+        parents: [...tAnyLN],
+        children: [...tUnNamingSequence, "SDI", "DAI"],
+    },
+    DOType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "SDO", "DA"],
+    },
+    DataObjectDirectory: {
+        parents: ["Services"],
+        children: [],
+    },
+    DataSet: {
+        parents: [...tAnyLN],
+        children: [...tNamingSequence, "FCDA"],
+    },
+    DataSetDirectory: {
+        parents: ["Services"],
+        children: [],
+    },
+    DataTypeTemplates: {
+        parents: ["SCL"],
+        children: ["LNodeType", "DOType", "DAType", "EnumType"],
+    },
+    DynAssociation: {
+        parents: ["Services"],
+        children: [],
+    },
+    DynDataSet: {
+        parents: ["Services"],
+        children: [],
+    },
+    EnumType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "EnumVal"],
+    },
+    EnumVal: {
+        parents: ["EnumType"],
+        children: [],
+    },
+    EqFunction: {
+        parents: [
+            "GeneralEquipment",
+            "TapChanger",
+            "TransformerWinding",
+            "PowerTransformer",
+            "SubEquipment",
+            "ConductingEquipment",
+        ],
+        children: [...tAbstractEqFuncSubFuncSequence],
+    },
+    EqSubFunction: {
+        parents: ["EqSubFunction", "EqFunction"],
+        children: [...tAbstractEqFuncSubFuncSequence],
+    },
+    ExtRef: {
+        parents: ["Inputs"],
+        children: [],
+    },
+    FCDA: {
+        parents: ["DataSet"],
+        children: [],
+    },
+    FileHandling: {
+        parents: ["Services"],
+        children: [],
+    },
+    Function: {
+        parents: ["Bay", "VoltageLevel", "Substation", "Process", "Line"],
+        children: [
+            ...tPowerSystemResourceSequence,
+            "SubFunction",
+            "GeneralEquipment",
+            "ConductingEquipment",
+        ],
+    },
+    GeneralEquipment: {
+        parents: [
+            "SubFunction",
+            "Function",
+            ...tGeneralEquipmentContainer,
+            ...tAbstractEqFuncSubFunc,
+            ...tEquipmentContainer,
+        ],
+        children: [...tEquipmentSequence, "EqFunction"],
+    },
+    GetCBValues: {
+        parents: ["Services"],
+        children: [],
+    },
+    GetDataObjectDefinition: {
+        parents: ["Services"],
+        children: [],
+    },
+    GetDataSetValue: {
+        parents: ["Services"],
+        children: [],
+    },
+    GetDirectory: {
+        parents: ["Services"],
+        children: [],
+    },
+    GOOSE: {
+        parents: ["Services"],
+        children: [],
+    },
+    GOOSESecurity: {
+        parents: ["AccessPoint"],
+        children: [...tNamingSequence, "Subject", "IssuerName"],
+    },
+    GSE: {
+        parents: ["ConnectedAP"],
+        children: [...tControlBlockSequence, "MinTime", "MaxTime"],
+    },
+    GSEDir: {
+        parents: ["Services"],
+        children: [],
+    },
+    GSEControl: {
+        parents: ["LN0"],
+        children: [...tControlWithIEDNameSequence, "Protocol"],
+    },
+    GSESettings: {
+        parents: ["Services"],
+        children: [],
+    },
+    GSSE: {
+        parents: ["Services"],
+        children: [],
+    },
+    Header: {
+        parents: ["SCL"],
+        children: ["Text", "History"],
+    },
+    History: {
+        parents: ["Header"],
+        children: ["Hitem"],
+    },
+    Hitem: {
+        parents: ["History"],
+        children: [],
+    },
+    IED: {
+        parents: ["SCL"],
+        children: [...tUnNamingSequence, "Services", "AccessPoint", "KDC"],
+    },
+    IEDName: {
+        parents: ["GSEControl", "SampledValueControl"],
+        children: [],
+    },
+    Inputs: {
+        parents: [...tAnyLN],
+        children: [...tUnNamingSequence, "ExtRef"],
+    },
+    IssuerName: {
+        parents: ["GOOSESecurity", "SMVSecurity"],
+        children: [],
+    },
+    KDC: {
+        parents: ["IED"],
+        children: [],
+    },
+    LDevice: {
+        parents: ["Server"],
+        children: [...tUnNamingSequence, "LN0", "LN", "AccessControl"],
+    },
+    LN: {
+        parents: ["AccessPoint", "LDevice"],
+        children: [...tAnyLNSequence],
+    },
+    LN0: {
+        parents: ["LDevice"],
+        children: [
+            ...tAnyLNSequence,
+            "GSEControl",
+            "SampledValueControl",
+            "SettingControl",
+        ],
+    },
+    LNode: {
+        parents: [...tLNodeContainer],
+        children: [...tUnNamingSequence],
+    },
+    LNodeType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "DO"],
+    },
+    Line: {
+        parents: ["Process", "SCL"],
+        children: [
+            ...tGeneralEquipmentContainerSequence,
+            "Voltage",
+            "ConductingEquipment",
+        ],
+    },
+    Log: {
+        parents: [...tAnyLN],
+        children: [...tUnNamingSequence],
+    },
+    LogControl: {
+        parents: [...tAnyLN],
+        children: [...tControlWithTriggerOptSequence],
+    },
+    LogSettings: {
+        parents: ["Services"],
+        children: [],
+    },
+    MaxTime: {
+        parents: ["GSE"],
+        children: [],
+    },
+    McSecurity: {
+        parents: ["GSESettings", "SMVSettings", "ClientServices"],
+        children: [],
+    },
+    MinTime: {
+        parents: ["GSE"],
+        children: [],
+    },
+    NeutralPoint: {
+        parents: ["TransformerWinding"],
+        children: [...tUnNamingSequence],
+    },
+    OptFields: {
+        parents: ["ReportControl"],
+        children: [],
+    },
+    P: {
+        parents: ["Address", "PhysConn"],
+        children: [],
+    },
+    PhysConn: {
+        parents: ["ConnectedAP"],
+        children: [...tUnNamingSequence, "P"],
+    },
+    PowerTransformer: {
+        parents: [...tEquipmentContainer],
+        children: [
+            ...tEquipmentSequence,
+            "TransformerWinding",
+            "SubEquipment",
+            "EqFunction",
+        ],
+    },
+    Private: {
+        parents: [],
+        children: [],
+    },
+    Process: {
+        parents: ["Process", "SCL"],
+        children: [
+            ...tGeneralEquipmentContainerSequence,
+            "ConductingEquipment",
+            "Substation",
+            "Line",
+            "Process",
+        ],
+    },
+    ProtNs: {
+        parents: ["DAType", "DA"],
+        children: [],
+    },
+    Protocol: {
+        parents: ["GSEControl", "SampledValueControl"],
+        children: [],
+    },
+    ReadWrite: {
+        parents: ["Services"],
+        children: [],
+    },
+    RedProt: {
+        parents: ["Services"],
+        children: [],
+    },
+    ReportControl: {
+        parents: [...tAnyLN],
+        children: [...tControlWithTriggerOptSequence, "OptFields", "RptEnabled"],
+    },
+    ReportSettings: {
+        parents: ["Services"],
+        children: [],
+    },
+    RptEnabled: {
+        parents: ["ReportControl"],
+        children: [...tUnNamingSequence, "ClientLN"],
+    },
+    SamplesPerSec: {
+        parents: ["SMVSettings"],
+        children: [],
+    },
+    SampledValueControl: {
+        parents: ["LN0"],
+        children: [...tControlWithIEDNameSequence, "SmvOpts"],
+    },
+    SecPerSamples: {
+        parents: ["SMVSettings"],
+        children: [],
+    },
+    SCL: {
+        parents: [],
+        children: [
+            ...tBaseNameSequence,
+            "Header",
+            "Substation",
+            "Communication",
+            "IED",
+            "DataTypeTemplates",
+            "Line",
+            "Process",
+        ],
+    },
+    SDI: {
+        parents: ["DOI", "SDI"],
+        children: [...tUnNamingSequence, "SDI", "DAI"],
+    },
+    SDO: {
+        parents: ["DOType"],
+        children: [...tNamingSequence],
+    },
+    Server: {
+        parents: ["AccessPoint"],
+        children: [
+            ...tUnNamingSequence,
+            "Authentication",
+            "LDevice",
+            "Association",
+        ],
+    },
+    ServerAt: {
+        parents: ["AccessPoint"],
+        children: [...tUnNamingSequence],
+    },
+    Services: {
+        parents: ["IED", "AccessPoint"],
+        children: [
+            "DynAssociation",
+            "SettingGroups",
+            "GetDirectory",
+            "GetDataObjectDefinition",
+            "DataObjectDirectory",
+            "GetDataSetValue",
+            "SetDataSetValue",
+            "DataSetDirectory",
+            "ConfDataSet",
+            "DynDataSet",
+            "ReadWrite",
+            "TimerActivatedControl",
+            "ConfReportControl",
+            "GetCBValues",
+            "ConfLogControl",
+            "ReportSettings",
+            "LogSettings",
+            "GSESettings",
+            "SMVSettings",
+            "GSEDir",
+            "GOOSE",
+            "GSSE",
+            "SMVsc",
+            "FileHandling",
+            "ConfLNs",
+            "ClientServices",
+            "ConfLdName",
+            "SupSubscription",
+            "ConfSigRef",
+            "ValueHandling",
+            "RedProt",
+            "TimeSyncProt",
+            "CommProt",
+        ],
+    },
+    SetDataSetValue: {
+        parents: ["Services"],
+        children: [],
+    },
+    SettingControl: {
+        parents: ["LN0"],
+        children: [...tUnNamingSequence],
+    },
+    SettingGroups: {
+        parents: ["Services"],
+        children: ["SGEdit", "ConfSG"],
+    },
+    SGEdit: {
+        parents: ["SettingGroups"],
+        children: [],
+    },
+    SmpRate: {
+        parents: ["SMVSettings"],
+        children: [],
+    },
+    SMV: {
+        parents: ["ConnectedAP"],
+        children: [...tControlBlockSequence],
+    },
+    SmvOpts: {
+        parents: ["SampledValueControl"],
+        children: [],
+    },
+    SMVsc: {
+        parents: ["Services"],
+        children: [],
+    },
+    SMVSecurity: {
+        parents: ["AccessPoint"],
+        children: [...tNamingSequence, "Subject", "IssuerName"],
+    },
+    SMVSettings: {
+        parents: ["Services"],
+        children: ["SmpRate", "SamplesPerSec", "SecPerSamples", "McSecurity"],
+    },
+    SubEquipment: {
+        parents: [
+            "TapChanger",
+            "PowerTransformer",
+            "ConductingEquipment",
+            "TransformerWinding",
+            ...tAbstractConductingEquipment,
+        ],
+        children: [...tPowerSystemResourceSequence, "EqFunction"],
+    },
+    SubFunction: {
+        parents: ["SubFunction", "Function"],
+        children: [
+            ...tPowerSystemResourceSequence,
+            "GeneralEquipment",
+            "ConductingEquipment",
+            "SubFunction",
+        ],
+    },
+    SubNetwork: {
+        parents: ["Communication"],
+        children: [...tNamingSequence, "BitRate", "ConnectedAP"],
+    },
+    Subject: {
+        parents: ["GOOSESecurity", "SMVSecurity"],
+        children: [],
+    },
+    Substation: {
+        parents: ["SCL"],
+        children: [...tEquipmentContainerSequence, "VoltageLevel", "Function"],
+    },
+    SupSubscription: {
+        parents: ["Services"],
+        children: [],
+    },
+    TapChanger: {
+        parents: ["TransformerWinding"],
+        children: [...tPowerSystemResourceSequence, "SubEquipment", "EqFunction"],
+    },
+    Terminal: {
+        parents: [...tEquipment],
+        children: [...tUnNamingSequence],
+    },
+    Text: {
+        parents: sCLTags.filter((tag) => tag !== "Text" && tag !== "Private"),
+        children: [],
+    },
+    TimerActivatedControl: {
+        parents: ["Services"],
+        children: [],
+    },
+    TimeSyncProt: {
+        parents: ["Services", "ClientServices"],
+        children: [],
+    },
+    TransformerWinding: {
+        parents: ["PowerTransformer"],
+        children: [
+            ...tAbstractConductingEquipmentSequence,
+            "TapChanger",
+            "NeutralPoint",
+            "EqFunction",
+            "SubEquipment",
+        ],
+    },
+    TrgOps: {
+        parents: ["ReportControl"],
+        children: [],
+    },
+    Val: {
+        parents: ["DAI", "DA", "BDA"],
+        children: [],
+    },
+    ValueHandling: {
+        parents: ["Services"],
+        children: [],
+    },
+    Voltage: {
+        parents: ["VoltageLevel"],
+        children: [],
+    },
+    VoltageLevel: {
+        parents: ["Substation"],
+        children: [...tEquipmentContainerSequence, "Voltage", "Bay", "Function"],
+    },
+};
+const tagSet = new Set(sCLTags);
+function isSCLTag(tag) {
+    return tagSet.has(tag);
+}
+/**
+ * Helper function for to determine schema valid `reference` for OpenSCD
+ * core Insert event.
+ * !! only valid with Edition 2.1 projects (2007B4)
+ * @param parent - The parent element the new child shall be added to
+ * @param tag - The `tagName` of the new child
+ * @returns Reference for new [[`tag`]] child within [[`parent`]]  or `null`
+ */
+function getReference(parent, tag) {
+    if (!isSCLTag(tag))
+        return null;
+    const parentTag = parent.tagName;
+    const children = Array.from(parent.children);
+    if (parentTag === "Services" ||
+        parentTag === "SettingGroups" ||
+        !isSCLTag(parentTag))
+        return children.find((child) => child.tagName === tag) ?? null;
+    const sequence = tags[parentTag].children;
+    let index = sequence.findIndex((element) => element === tag);
+    if (index < 0)
+        return null;
+    let nextSibling;
+    while (index < sequence.length && !nextSibling) {
+        // eslint-disable-next-line no-loop-func
+        nextSibling = children.find((child) => child.tagName === sequence[index]);
+        index += 1;
+    }
+    return nextSibling ?? null;
+}
+
+await fetch(new URL(new URL('assets/nsd-0a370a57.json', import.meta.url).href, import.meta.url)).then((res) => res.json());
+
+function getCommEdit(address, privateSCL, iedName) {
+    // const apIedNameRx = address.closest('ConnectedAP')!.getAttribute('iedName');
+    const apName = address.closest('ConnectedAP').getAttribute('apName');
+    const subNetwork = address.closest('SubNetwork');
+    const doc = address.ownerDocument;
+    const connectedAp = subNetwork.querySelector(`ConnectedAP[iedName="${iedName}"][apName="${apName}"]`);
+    let edit;
+    if (connectedAp) {
+        edit = {
+            parent: connectedAp,
+            node: privateSCL.cloneNode(true),
+            reference: getReference(connectedAp, 'Private'),
+        };
     }
     else {
-        apNames = [apName];
+        // create new access point
+        const newConnectedAp = createElement(doc, 'ConnectedAP', {
+            apName,
+            iedName,
+        });
+        newConnectedAp.appendChild(privateSCL.cloneNode(true));
+        edit = {
+            parent: subNetwork,
+            node: newConnectedAp,
+            reference: getReference(subNetwork, 'ConnectedAP'),
+        };
     }
-    const connectedAps = `Communication > SubNetwork > ConnectedAP[iedName="${iedName}"]`;
-    const connectedApNames = apNames.map(ap => `[apName="${ap}"]`);
-    const addressElement = `${addressTag}[ldInst="${ctrlLdInst}"][cbName="${cbName}"]`;
-    return doc.querySelector(crossProduct([connectedAps], connectedApNames, ['>'], [addressElement])
-        .map(strings => strings.join(''))
-        .join(','));
+    return edit;
 }
-const TPNS = 'https://transpower.co.nz/SCL/SCD/Communication/v1';
-const XSINS = 'http://www.w3.org/2001/XMLSchema-instance';
+
+/**
+ * Updates namespaces to include the XML schema instance and the
+ * Transpower `etpc` namespaces for writing address elements.
+ * @returns
+ */
+function updateNamespaces(doc) {
+    const namespaceUpdate = {
+        element: doc.documentElement,
+        attributes: {},
+    };
+    if (!doc.documentElement.hasAttribute('xmlns:etpc'))
+        namespaceUpdate.attributes = {
+            ...namespaceUpdate.attributes,
+            'xmlns:etpc': {
+                value: TPNS,
+                namespaceURI: 'http://www.w3.org/2000/xmlns/',
+            },
+        };
+    if (!doc.documentElement.hasAttribute('xmlns:xsi'))
+        namespaceUpdate.attributes = {
+            ...namespaceUpdate.attributes,
+            'xmlns:xsi': {
+                value: XSINS,
+                namespaceURI: 'http://www.w3.org/2000/xmlns/',
+            },
+        };
+    if (!(Object.entries(namespaceUpdate.attributes).length === 0))
+        return namespaceUpdate;
+    return undefined;
+}
+
+/**
+ * Removes existing `Private` address elements in preparation for
+ * rewriting.
+ * @returns Remove edit array.
+ */
+function removeExistingSubscribedAddresses(doc) {
+    return Array.from(doc.querySelectorAll('Private[type="Transpower-GSE-Subscribe"], Private[type="Transpower-SMV-Subscribe"]')).map(element => ({ node: element }));
+}
+
 class NetworkData extends s$1 {
     constructor() {
         super(...arguments);
         this.subscriptionCount = 0;
+        this.apCount = 0;
     }
     async run() {
-        // fetch unique control blocks and subscribing IEDs
-        const controlBlocksAndAPs = new Map();
-        Array.from(this.doc.querySelectorAll('ExtRef')).forEach(extRef => {
-            var _a;
-            const cb = sourceControlBlock(extRef);
-            const ap = extRef.closest('AccessPoint');
-            if (!cb)
-                return;
-            // need to store IED and ConnectedAP apName
-            const cbAlreadyExists = controlBlocksAndAPs.has(cb);
-            const cbHasIed = (_a = controlBlocksAndAPs.get(cb)) === null || _a === void 0 ? void 0 : _a.includes(ap);
-            if (cbAlreadyExists && !cbHasIed) {
-                controlBlocksAndAPs.set(cb, [...controlBlocksAndAPs.get(cb), ap]);
-            }
-            else if (!cbAlreadyExists) {
-                controlBlocksAndAPs.set(cb, [ap]);
-            }
-        });
-        // provide stable order -- GOOSE then SV, sorted by IED and control block name
-        const sortedControlBlocksAndAPs = new Map([...controlBlocksAndAPs].sort((first, second) => {
-            const firstKey = first[0];
-            const secondKey = second[0];
-            const comparison = (e) => `${e.tagName} ${e
-                .closest('IED')
-                .getAttribute('name')} ${e.getAttribute('name')}`;
-            return comparison(secondKey).localeCompare(comparison(firstKey));
-        }));
-        // sort the order IEDs are processed
-        sortedControlBlocksAndAPs.forEach((value, key) => {
-            sortedControlBlocksAndAPs.set(key, value.sort());
-        });
         const edits = [];
         // update namespaces for Transpower and schema instances
-        const namespaceUpdate = {
-            element: this.doc.documentElement,
-            attributes: {},
-        };
-        if (!this.doc.documentElement.hasAttribute('xmlns:etpc'))
-            namespaceUpdate.attributes = {
-                ...namespaceUpdate.attributes,
-                'xmlns:etpc': {
-                    value: TPNS,
-                    namespaceURI: 'http://www.w3.org/2000/xmlns/',
-                },
-            };
-        if (!this.doc.documentElement.hasAttribute('xmlns:xsi'))
-            namespaceUpdate.attributes = {
-                ...namespaceUpdate.attributes,
-                'xmlns:xsi': {
-                    value: XSINS,
-                    namespaceURI: 'http://www.w3.org/2000/xmlns/',
-                },
-            };
-        if (!(Object.entries(namespaceUpdate.attributes).length === 0))
+        const namespaceUpdate = updateNamespaces(this.doc);
+        if (namespaceUpdate)
             edits.push(namespaceUpdate);
-        const removePrivates = Array.from(this.doc.querySelectorAll('Private[type="Transpower-GSE-Subscribe"], Private[type="Transpower-SMV-Subscribe"]')).map(element => ({ node: element }));
-        edits.push(removePrivates);
+        // remove any existing addresses to allow a complete rewrite
+        const removePrivates = removeExistingSubscribedAddresses(this.doc);
         if (removePrivates)
-            console.log(`Removed ${removePrivates.length}`);
+            edits.push(...removePrivates);
         this.dispatchEvent(newEditEvent(edits));
+        // now build addresses from scratch
         this.subscriptionCount = 0;
         let addedSubscriptionCount = 0;
-        sortedControlBlocksAndAPs.forEach((receivingIeds, cb) => {
+        const usedCBs = getUsedCBs(this.doc);
+        if (!usedCBs)
+            return;
+        usedCBs.forEach((subscribingIedNames, cb) => {
             const address = getCommAddress(cb);
-            if (!address) {
-                console.log(`No address for ${cb}`);
+            // missing address
+            if (!address)
                 return;
-            }
-            const addressSubNetwork = address.closest('SubNetwork');
-            const iedName = cb.closest('IED').getAttribute('name');
-            const privateSCL = this.doc.createElementNS(this.doc.documentElement.namespaceURI, 'Private');
-            privateSCL.setAttribute('type', `Transpower-${address.tagName}-Subscribe`);
-            privateSCL.setAttributeNS(TPNS, 'iedName', iedName);
-            const cbName = cb.getAttribute('name');
-            if (cbName)
-                privateSCL.setAttributeNS(TPNS, 'cbName', cbName);
-            const ldInst = address.getAttribute('ldInst');
-            if (ldInst)
-                privateSCL.setAttributeNS(TPNS, 'ldInst', ldInst);
-            const addressVlan = address.querySelector('P[type="VLAN-ID"]');
-            if (addressVlan) {
-                const vlanId = this.doc.createElementNS(TPNS, 'P');
-                vlanId.setAttribute('type', 'VLAN-ID');
-                vlanId.setAttributeNS(XSINS, 'type', 'tP_VLAN-ID');
-                vlanId.textContent = addressVlan.textContent;
-                privateSCL.appendChild(vlanId);
-            }
-            const addressVlanPriority = address.querySelector('P[type="VLAN-PRIORITY"]');
-            if (addressVlanPriority) {
-                const vlanPriority = this.doc.createElementNS(TPNS, 'P');
-                vlanPriority.setAttribute('type', 'VLAN-PRIORITY');
-                vlanPriority.setAttributeNS(XSINS, 'type', 'tP_VLAN-PRIORITY');
-                vlanPriority.textContent = addressVlanPriority.textContent;
-                privateSCL.appendChild(vlanPriority);
-            }
-            const addressMac = address.querySelector('P[type="MAC-Address"]');
-            if (addressMac) {
-                const mac = this.doc.createElementNS(TPNS, 'P');
-                mac.setAttribute('type', 'MAC-Address');
-                mac.setAttributeNS(XSINS, 'type', 'tP_MAC-Address');
-                mac.textContent = addressMac.textContent;
-                privateSCL.appendChild(mac);
-            }
-            // TODO: Should we include APPIDs?
-            // only proceed if there is something to write
-            if (!(addressVlan || addressVlanPriority || addressMac)) {
-                console.log(`Missing addresses for ${cb}`);
+            const privateSCL = createSubscribedAddress(address);
+            // nothing to add for addressing
+            if (!privateSCL)
                 return;
-            }
-            receivingIeds.forEach(ap => {
-                const apIedNameRx = ap.closest('IED').getAttribute('name');
-                const apName = ap.getAttribute('name');
-                const addressSubNetworkName = addressSubNetwork.getAttribute('name');
-                const subNetwork = this.doc.querySelector(`:root > Communication > SubNetwork[name="${addressSubNetworkName}"]`);
-                if (!subNetwork)
-                    return;
-                const subNetworkName = subNetwork.getAttribute('name');
-                const connectedAp = subNetwork.querySelector(`ConnectedAP[iedName="${apIedNameRx}"][apName="${apName}"]`);
-                let edit;
-                if (connectedAp) {
-                    edit = {
-                        parent: connectedAp,
-                        node: privateSCL.cloneNode(true),
-                        reference: connectedAp.firstElementChild,
-                    };
-                    console.log(`dispatch edit`, edit.parent, privateSCL);
+            subscribingIedNames.forEach(iedName => {
+                const edit = getCommEdit(address, privateSCL, iedName);
+                if (edit) {
+                    this.dispatchEvent(newEditEvent(edit));
+                    addedSubscriptionCount += 1;
                 }
-                else {
-                    // create new access point
-                    const newConnectedAp = createElement(this.doc, 'ConnectedAP', {
-                        apName,
-                        iedName: apIedNameRx,
-                    });
-                    newConnectedAp.appendChild(privateSCL.cloneNode(true));
-                    edit = {
-                        parent: subNetwork,
-                        node: newConnectedAp,
-                        reference: null,
-                    };
-                    console.log(`Creating ConnectedAP for IED ${apIedNameRx}, Access Point ${apName} and SubNetwork ${subNetworkName}`);
-                }
-                this.dispatchEvent(newEditEvent(edit));
-                addedSubscriptionCount += 1;
             });
+            this.subscriptionCount = addedSubscriptionCount;
         });
-        this.subscriptionCount = addedSubscriptionCount;
         this.successMessage.show();
-    }
-    getEditCount() {
-        return this.subscriptionCount;
     }
     render() {
         return x `<mwc-snackbar
       id="successMessage"
       leading
       labelText="Network data updated (${this
-            .subscriptionCount} items written)."
+            .subscriptionCount} items written to the Communication section)."
     >
     </mwc-snackbar>`;
     }
@@ -5620,5 +6559,5 @@ __decorate([
     i$2('#successMessage')
 ], NetworkData.prototype, "successMessage", void 0);
 
-export { crossProduct, NetworkData as default };
+export { NetworkData as default };
 //# sourceMappingURL=oscd-network-data.js.map

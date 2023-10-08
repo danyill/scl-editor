@@ -12401,7 +12401,7 @@ class Supervision extends s$1 {
         if (!this.doc)
             return x ``;
         if (this.iedList.length === 0)
-            return x `<h1>>No IEDs present</h1>`;
+            return x `<h1>No IEDs present</h1>`;
         const usedSupLNs = this.getSelectedIedSupLNs(true, false).length;
         const totalSupLNs = this.getSelectedIedSupLNs(true, true).length;
         const percentUsed = (usedSupLNs / totalSupLNs) * 100;
