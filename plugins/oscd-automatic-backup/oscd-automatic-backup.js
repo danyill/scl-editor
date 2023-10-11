@@ -7337,7 +7337,7 @@ class AutomaticBackup extends s$2 {
                         // delete
                         await directoryHandle.removeEntry(fileToRemove);
                     }
-                    const fileName = getFileName(this.docname);
+                    const fileName = getFileName(this.docName);
                     this.usedFileNames.push(fileName);
                     const fileHandle = await directoryHandle.getFileHandle(fileName, {
                         create: true,
@@ -7467,7 +7467,7 @@ __decorate([
 ], AutomaticBackup.prototype, "doc", void 0);
 __decorate([
     n$3()
-], AutomaticBackup.prototype, "docname", void 0);
+], AutomaticBackup.prototype, "docName", void 0);
 __decorate([
     n$3()
 ], AutomaticBackup.prototype, "editCount", void 0);

@@ -12,7 +12,7 @@ import type { TextField } from '@material/mwc-textfield';
 export default class AutomaticBackup extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
-    docname: string;
+    docName: string;
     editCount: number;
     usedDirectory: string;
     usedFileNames: string[];
