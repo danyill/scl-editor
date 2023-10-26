@@ -25648,7 +25648,7 @@ function cloneElement(element, attrs) {
     });
     return newElement;
 }
-function isPublic(element) {
+function isPublic$1(element) {
     return !element.closest('Private');
 }
 /** @returns a new [[`tag`]] element owned by [[`doc`]]. */
@@ -26049,8 +26049,8 @@ function updateTerminals$2(element, names) {
     return updates.filter((update) => update);
 }
 /** Updates `Bay` attributes and cross-referenced elements
- * @param update - update action on `Bay` attributes
- * @returns Completed update action array */
+ * @param update - update edit on `Bay` attributes
+ * @returns Completed update edit array */
 function updateBay(update) {
     if (update.element.tagName !== "Bay")
         return [update];
@@ -26111,8 +26111,8 @@ function updateTerminals$1(element, names) {
     return updates.filter((update) => update);
 }
 /** Updates `VoltageLevel` attributes and cross-referenced elements
- * @param update - update action on `VoltageLevel` attributes
- * @returns Completed update action array */
+ * @param update - update edit on `VoltageLevel` attributes
+ * @returns Completed update edit array */
 function updateVoltageLevel(update) {
     if (update.element.tagName !== "VoltageLevel")
         return [update];
@@ -26171,8 +26171,8 @@ function updateTerminals(substation, names) {
     return updates.filter((update) => update);
 }
 /** Updates `Substation` attributes and cross-referenced elements
- * @param update - update action on `Substation` attributes
- * @returns Completed update action array */
+ * @param update - update edit on `Substation` attributes
+ * @returns Completed update edit array */
 function updateSubstation(update) {
     if (update.element.tagName !== "Substation")
         return [update];
@@ -26996,6 +26996,7 @@ const tagSet$1 = new Set(sCLTags$1);
 function isSCLTag$1(tag) {
     return tagSet$1.has(tag);
 }
+
 /**
  * Helper function for to determine schema valid `reference` for OpenSCD
  * core Insert event.
@@ -27024,6 +27025,130 @@ function getReference$1(parent, tag) {
         index += 1;
     }
     return nextSibling ?? null;
+}
+
+/** @returns object reference acc. IEC 61850-7-3 for control block elements */
+function controlBlockObjRef(ctrlBlock) {
+    const iedName = ctrlBlock.closest("IED")?.getAttribute("name");
+    const ldInst = ctrlBlock.closest("LDevice")?.getAttribute("inst");
+    const parentLn = ctrlBlock.closest("LN,LN0");
+    const prefix = parentLn?.getAttribute("prefix") ?? "";
+    const lnClass = parentLn?.getAttribute("lnClass");
+    const lnInst = parentLn?.getAttribute("inst") ?? "";
+    const cbName = ctrlBlock.getAttribute("name");
+    if (!iedName || !ldInst || !lnClass || !cbName)
+        return null;
+    return `${iedName}${ldInst}/${prefix}${lnClass}${lnInst}.${cbName}`;
+}
+
+function isPublic(element) {
+    return !element.closest("Private");
+}
+const elementsWithIedNameAttribute = [
+    "LNode",
+    "ConnectedAP",
+    "KDC",
+    "ExtRef",
+    "ClientLN",
+    "Association",
+];
+function updateIEDNameTextContent(ied, oldIedName, newIedName) {
+    return Array.from(ied.ownerDocument.getElementsByTagName("IEDName"))
+        .filter(isPublic)
+        .filter((iedName) => iedName.textContent === oldIedName)
+        .map((iedName) => {
+        const node = Array.from(iedName.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+        return [
+            { node },
+            { parent: iedName, node: document.createTextNode(newIedName) },
+        ];
+    });
+}
+/** Valid is:
+ * 1. there is an control block in the IED with the name change (ied)
+ * 2. this control block is subscribed in otherIED (iedName, srcLDInst and srcCBName match)
+ * 3. there is a LGOS/LSVS > ... > setSrcRef holding this control block object reference
+ */
+function validSubscriptionSupervision(ied, otherIED, oldIedName) {
+    // for GSEControl elements
+    const lgosVals = Array.from(ied.querySelectorAll("GSEControl"))
+        .filter((srcCB) => {
+        //filter out all control blocks that are not subscribed in otherIED
+        const srcLDInst = srcCB.closest("LDevice")?.getAttribute("inst");
+        return !!otherIED.querySelector(`:scope > AccessPoint > Server > LDevice 
+        ExtRef[iedName="${oldIedName}"][srcLDInst="${srcLDInst}"][srcCBName="${srcCB.getAttribute("name")}"]`);
+    })
+        .map((srcCB) => {
+        const objRef = controlBlockObjRef(srcCB);
+        return Array.from(otherIED.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="LGOS"] > 
+            DOI[name="GoCBRef"] > DAI[name="setSrcRef"] > Val`)).find((val) => val.textContent === objRef);
+    })
+        .filter((val) => val);
+    // for SampledValueControl elements
+    const lsvsVals = Array.from(ied.querySelectorAll("SampledValueControl"))
+        .filter((srcCB) => {
+        //filter out all control blocks that are not subscribed in otherIED
+        const srcLDInst = srcCB.closest("LDevice")?.getAttribute("inst");
+        return !!otherIED.querySelector(`:scope > AccessPoint > Server > LDevice 
+          ExtRef[iedName="${oldIedName}"][srcLDInst="${srcLDInst}"][srcCBName="${srcCB.getAttribute("name")}"]`);
+    })
+        .map((srcCB) => {
+        const objRef = controlBlockObjRef(srcCB);
+        return Array.from(otherIED.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="LSVS"] > 
+          DOI[name="SvCBRef"] > DAI[name="setSrcRef"] > Val`)).find((val) => val.textContent === objRef);
+    })
+        .filter((val) => val);
+    return [...lgosVals, ...lsvsVals];
+}
+function updateSubscriptionSupervision(ied, oldIedName, newIedName) {
+    const vals = Array.from(ied.ownerDocument.querySelectorAll(":root > IED")).flatMap((otherIED) => validSubscriptionSupervision(ied, otherIED, oldIedName));
+    return vals.flatMap((val) => {
+        const oldContent = val.textContent;
+        const newContent = oldContent.replace(oldIedName, newIedName);
+        const newTextNode = document.createTextNode(newContent);
+        const node = Array.from(val.childNodes).find((childNode) => childNode.nodeType === Node.TEXT_NODE);
+        return [{ node }, { parent: val, node: newTextNode }];
+    });
+}
+function updateIedNameAttributes(ied, oldIedName, newIedName) {
+    const selector = elementsWithIedNameAttribute
+        .map((iedNameElement) => `${iedNameElement}[iedName="${oldIedName}"]`)
+        .join(",");
+    return Array.from(ied.ownerDocument.querySelectorAll(selector))
+        .filter(isPublic)
+        .map((element) => {
+        return { element, attributes: { iedName: newIedName } };
+    });
+}
+/**
+ * Function to schema valid update name and other attribute(s) in IED element
+ * (rename IED)
+ * ```md
+ * The function makes sure to also
+ * 1. Update all elements with iedName attribute referenced to the IED.name
+ *    attribute such as LNode, ClientLN, ExtRef, KDC, Association, ConnectedAP
+ * 2. Update all control block object references pointing to the IED
+ * 3. Updates IEDName elements text content
+ * ```
+ * @param update - IED element and attributes to be changed in the IED element
+ * @returns - Set of addition edits updating all references SCL elements
+ */
+function updateIED(update) {
+    if (update.element.tagName !== "IED")
+        return [];
+    if (!update.attributes.name)
+        return [update];
+    const ied = update.element;
+    const oldIedName = ied.getAttribute("name");
+    const newIedName = update.attributes.name;
+    if (!oldIedName)
+        return [];
+    return [
+        update,
+        ...updateIedNameAttributes(ied, oldIedName, newIedName),
+        ...updateSubscriptionSupervision(ied, oldIedName, newIedName),
+        ...updateIEDNameTextContent(ied, oldIedName, newIedName),
+    ];
 }
 
 const maxGseMacAddress = 0x010ccd0101ff;
@@ -34006,7 +34131,7 @@ function createBayWizard(parent) {
         },
     ];
 }
-function updateAction$i(element) {
+function updateAction$k(element) {
     return (inputs) => {
         const name = inputs.find(i => i.label === 'name').value;
         const desc = getValue(inputs.find(i => i.label === 'desc'));
@@ -34023,7 +34148,7 @@ function editBayWizard(element) {
             primary: {
                 icon: 'edit',
                 label: 'save',
-                action: updateAction$i(element),
+                action: updateAction$k(element),
             },
             content: renderBayWizard(element.getAttribute('name'), element.getAttribute('desc')),
         },
@@ -36735,7 +36860,7 @@ function editBDaWizard(element) {
     const valKind = element.getAttribute('valKind');
     const valImport = element.getAttribute('valImport');
     const daOrEnumTypes = Array.from(doc.querySelectorAll('DAType, EnumType'))
-        .filter(isPublic)
+        .filter(isPublic$1)
         .filter(daOrEnumType => daOrEnumType.getAttribute('id'));
     const data = element.closest('DataTypeTemplates');
     return [
@@ -36949,7 +37074,7 @@ function createAction$d(parent) {
 }
 function reservedNamesConductingEquipment(parent, currentName) {
     return Array.from(parent.querySelectorAll('ConductingEquipment'))
-        .filter(isPublic)
+        .filter(isPublic$1)
         .map(condEq => { var _a; return (_a = condEq.getAttribute('name')) !== null && _a !== void 0 ? _a : ''; })
         .filter(name => currentName && name !== currentName);
 }
@@ -36967,7 +37092,7 @@ function createConductingEquipmentWizard(parent) {
         },
     ];
 }
-function updateAction$h(element) {
+function updateAction$j(element) {
     return (inputs) => {
         const name = getValue(inputs.find(i => i.label === 'name'));
         const desc = getValue(inputs.find(i => i.label === 'desc'));
@@ -36986,7 +37111,7 @@ function editConductingEquipmentWizard(element) {
             primary: {
                 icon: 'edit',
                 label: 'save',
-                action: updateAction$h(element),
+                action: updateAction$j(element),
             },
             content: renderConductingEquipmentWizard(element.getAttribute('name'), element.getAttribute('desc'), 'edit', typeName(element), reservedNames),
         },
@@ -38270,7 +38395,7 @@ const parts = new WeakMap();
  *     container. Render options must *not* change between renders to the same
  *     container, as those changes will not effect previously rendered DOM.
  */
-const render$3 = (result, container, options) => {
+const render$5 = (result, container, options) => {
     let part = parts.get(container);
     if (part === undefined) {
         removeNodes(container, container.firstChild);
@@ -38575,7 +38700,7 @@ const prepareTemplateStyles = (scopeName, renderedDOM, template) => {
  * non-shorthand names (for example `border` and `border-width`) is not
  * supported.
  */
-const render$2 = (result, container, options) => {
+const render$4 = (result, container, options) => {
     if (!options || typeof options !== 'object' || !options.scopeName) {
         throw new Error('The `scopeName` option is required.');
     }
@@ -38589,7 +38714,7 @@ const render$2 = (result, container, options) => {
     // On first scope render, render into a fragment; this cannot be a single
     // fragment that is reused since nested renders can occur synchronously.
     const renderContainer = firstScopeRender ? document.createDocumentFragment() : container;
-    render$3(result, renderContainer, Object.assign({ templateFactory: shadyTemplateFactory(scopeName) }, options));
+    render$5(result, renderContainer, Object.assign({ templateFactory: shadyTemplateFactory(scopeName) }, options));
     // When performing first scope render,
     // (1) We've rendered into a fragment so that there's a chance to
     // `prepareTemplateStyles` before sub-elements hit the DOM
@@ -39790,7 +39915,7 @@ LitElement['finalized'] = true;
  *
  * @nocollapse
  */
-LitElement.render = render$2;
+LitElement.render = render$4;
 /** @nocollapse */
 LitElement.shadowRootOptions = { mode: 'open' };
 
@@ -41491,7 +41616,7 @@ function existConnectedAp(accessPoint) {
     const iedName = (_a = accessPoint.closest('IED')) === null || _a === void 0 ? void 0 : _a.getAttribute('name');
     const apName = accessPoint.getAttribute('name');
     const connAp = accessPoint.ownerDocument.querySelector(`ConnectedAP[iedName="${iedName}"][apName="${apName}"]`);
-    return (_b = (connAp && isPublic(connAp))) !== null && _b !== void 0 ? _b : false;
+    return (_b = (connAp && isPublic$1(connAp))) !== null && _b !== void 0 ? _b : false;
 }
 /** @returns single page  [[`Wizard`]] for creating SCL element ConnectedAP. */
 function createConnectedApWizard(element) {
@@ -41527,7 +41652,7 @@ function createConnectedApWizard(element) {
         },
     ];
 }
-function updateAction$g(element) {
+function updateAction$i(element) {
     return (inputs, wizard) => {
         var _a, _b, _c;
         const typeRestriction = (_c = (_b = (_a = wizard.shadowRoot) === null || _a === void 0 ? void 0 : _a.querySelector('#typeRestriction')) === null || _b === void 0 ? void 0 : _b.checked) !== null && _c !== void 0 ? _c : false;
@@ -41548,7 +41673,7 @@ function editConnectedApWizard(element) {
             primary: {
                 icon: 'save',
                 label: 'save',
-                action: updateAction$g(element),
+                action: updateAction$i(element),
             },
             content: [...contentAddress({ element, types: getTypes(element) })],
         },
@@ -41638,7 +41763,7 @@ function createDaWizard(element) {
     const qchg = null;
     const dupd = null;
     const doTypes = Array.from(doc.querySelectorAll('DAType, EnumType'))
-        .filter(isPublic)
+        .filter(isPublic$1)
         .filter(doType => doType.getAttribute('id'));
     const data = element.closest('DataTypeTemplates');
     return [
@@ -41734,7 +41859,7 @@ function editDAWizard(element) {
     const qchg = element.getAttribute('qchg');
     const dupd = element.getAttribute('dupd');
     const doTypes = Array.from(doc.querySelectorAll('DAType, EnumType'))
-        .filter(isPublic)
+        .filter(isPublic$1)
         .filter(doType => doType.getAttribute('id'));
     const data = element.closest('DataTypeTemplates');
     return [
@@ -42080,7 +42205,7 @@ function createEnumValWizard(parent) {
         },
     ];
 }
-function updateAction$f(element) {
+function updateAction$h(element) {
     return (inputs) => {
         var _a;
         const value = (_a = getValue(inputs.find(i => i.label === 'value'))) !== null && _a !== void 0 ? _a : '';
@@ -42116,7 +42241,7 @@ function editEnumValWizard(element) {
             primary: {
                 icon: '',
                 label: 'Save',
-                action: updateAction$f(element),
+                action: updateAction$h(element),
             },
             content: renderContent$2({ ord, desc, value }),
         },
@@ -42263,7 +42388,7 @@ function createEqFunctionWizard(parent) {
         },
     ];
 }
-function updateAction$e(element) {
+function updateAction$g(element) {
     return (inputs) => {
         const attributes = {};
         const functionKeys = ['name', 'desc', 'type'];
@@ -42289,7 +42414,7 @@ function editEqFunctionWizard(element) {
             primary: {
                 icon: 'save',
                 label: 'save',
-                action: updateAction$e(element),
+                action: updateAction$g(element),
             },
             content: [
                 ...contentFunctionWizard({
@@ -42344,7 +42469,7 @@ function createEqSubFunctionWizard(parent) {
         },
     ];
 }
-function updateAction$d(element) {
+function updateAction$f(element) {
     return (inputs) => {
         const attributes = {};
         const functionKeys = ['name', 'desc', 'type'];
@@ -42370,7 +42495,7 @@ function editEqSubFunctionWizard(element) {
             primary: {
                 icon: 'save',
                 label: 'save',
-                action: updateAction$d(element),
+                action: updateAction$f(element),
             },
             content: [
                 ...contentFunctionWizard({
@@ -42456,7 +42581,7 @@ function createGeneralEquipmentWizard(parent) {
         },
     ];
 }
-function updateAction$c(element) {
+function updateAction$e(element) {
     return (inputs) => {
         const attributes = {};
         const generalEquipmentKeys = ['name', 'desc', 'type', 'virtual'];
@@ -42483,7 +42608,7 @@ function editGeneralEquipmentWizard(element) {
             primary: {
                 icon: 'save',
                 label: 'save',
-                action: updateAction$c(element),
+                action: updateAction$e(element),
             },
             content: [
                 ...contentGeneralEquipmentWizard({
@@ -42531,7 +42656,7 @@ function mxxTimeUpdateAction(gse, oldMxxTime, newTimeValue, option) {
         { node: oldMxxTime },
     ];
 }
-function updateAction$b(element) {
+function updateAction$d(element) {
     return (inputs, wizard) => {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j;
         const action = [];
@@ -42569,7 +42694,7 @@ function editGseWizard(element) {
             primary: {
                 label: 'save',
                 icon: 'save',
-                action: updateAction$b(element),
+                action: updateAction$d(element),
             },
             content: [
                 ...contentAddress({ element, types }),
@@ -42588,6 +42713,112 @@ function editGseWizard(element) {
           type="number"
         ></oscd-textfield>`,
             ],
+        },
+    ];
+}
+
+/* eslint-disable import/no-extraneous-dependencies */
+function render$3(name, iedNames, desc, type, manufacturer, owner) {
+    return [
+        x `<oscd-textfield
+      label="name"
+      .maybeValue=${name}
+      .reservedValues=${iedNames}
+      required
+      dialogInitialFocus
+    ></oscd-textfield>`,
+        x `<oscd-textfield
+      label="desc"
+      .maybeValue=${desc}
+      nullable
+    ></oscd-textfield>`,
+        x `<oscd-textfield
+      label="type"
+      .maybeValue=${type}
+      disabled
+    ></oscd-textfield>`,
+        x `<oscd-textfield
+      label="manufacturer"
+      .maybeValue=${manufacturer}
+      disabled
+    ></oscd-textfield>`,
+        x `<oscd-textfield
+      label="owner"
+      .maybeValue=${owner}
+      disabled
+    ></oscd-textfield>`,
+    ];
+}
+function updateAction$c(element) {
+    return (inputs) => {
+        const name = inputs.find(i => i.label === 'name').value;
+        const desc = getValue(inputs.find(i => i.label === 'desc'));
+        if (name === element.getAttribute('name') &&
+            desc === element.getAttribute('desc'))
+            return [];
+        return updateIED({
+            element,
+            attributes: { name, desc },
+        });
+    };
+}
+function iEDEditWizard(element) {
+    var _a;
+    const iedNames = Array.from(element.ownerDocument.querySelectorAll(':root > IED')).map(ied => ied.getAttribute('name'));
+    return [
+        {
+            title: 'Edit IED',
+            primary: {
+                icon: 'edit',
+                label: 'save',
+                action: updateAction$c(element),
+            },
+            content: render$3((_a = element.getAttribute('name')) !== null && _a !== void 0 ? _a : '', iedNames, element.getAttribute('desc'), element.getAttribute('type'), element.getAttribute('manufacturer'), element.getAttribute('owner')),
+        },
+    ];
+}
+
+/* eslint-disable import/no-extraneous-dependencies */
+function render$2(inst, name, ldNames) {
+    return [
+        x `<oscd-textfield
+      label="inst"
+      .maybeValue=${inst}
+      disabled
+    ></oscd-textfield>`,
+        x `<oscd-textfield
+      label="name"
+      .maybeValue=${name}
+      nullable
+      .reservedValues=${ldNames}
+    ></oscd-textfield>`,
+    ];
+}
+function updateAction$b(element) {
+    return (inputs) => {
+        const name = inputs.find(i => i.label === 'name').value;
+        if (name === element.getAttribute('name'))
+            return [];
+        return [
+            {
+                element,
+                attributes: { name },
+            },
+        ];
+    };
+}
+function lDeviceEditWizard(element) {
+    var _a;
+    const ldNames = Array.from(element.ownerDocument.querySelectorAll(':root > IED > AccessPoint > Server > LDevice')).map(ied => ied.getAttribute('name'));
+    return [
+        {
+            title: 'Edit LDevice',
+            primary: {
+                icon: 'edit',
+                label: 'save',
+                action: updateAction$b(element),
+            },
+            content: render$2((_a = element.getAttribute('inst')) !== null && _a !== void 0 ? _a : '', element.getAttribute('name'), ldNames),
         },
     ];
 }
@@ -42777,7 +43008,7 @@ function createAction$8(parent) {
 }
 function reservedNamesPowerTransformer(parent, currentName) {
     return Array.from(parent.querySelectorAll('PowerTransformer'))
-        .filter(isPublic)
+        .filter(isPublic$1)
         .map(pwt => { var _a; return (_a = pwt.getAttribute('name')) !== null && _a !== void 0 ? _a : ''; })
         .filter(name => currentName && name !== currentName);
 }
@@ -44119,6 +44350,10 @@ const wizards = {
         edit: emptyWizard,
         create: emptyWizard,
     },
+    IED: {
+        edit: iEDEditWizard,
+        create: emptyWizard,
+    },
     IEDName: {
         edit: emptyWizard,
         create: emptyWizard,
@@ -44136,7 +44371,7 @@ const wizards = {
         create: emptyWizard,
     },
     LDevice: {
-        edit: emptyWizard,
+        edit: lDeviceEditWizard,
         create: emptyWizard,
     },
     LN: {
