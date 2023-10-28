@@ -1,10 +1,10 @@
 import { LitElement, TemplateResult } from 'lit';
-import '@material/mwc-button';
-import '@material/mwc-dialog';
-import '@material/mwc-formfield';
 import '@material/mwc-snackbar';
-import '@material/mwc-switch';
 import type { Snackbar } from '@material/mwc-snackbar';
+/**
+ * A plugin which supplements data in the Communication section
+ * to show subscribing data for GSE and SMV addresses.
+ */
 export default class NetworkData extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
