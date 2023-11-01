@@ -2,11 +2,11 @@ import { LitElement, TemplateResult } from 'lit';
 import '@material/mwc-checkbox';
 import '@material/mwc-formfield';
 import type { Checkbox } from '@material/mwc-checkbox';
-import '../foundation/components/oscd-checkbox.js';
-import '../foundation/components/oscd-select.js';
-import '../foundation/components/oscd-textfield.js';
-import type { OscdTextfield } from '../foundation/components/oscd-textfield.js';
-import type { OscdCheckbox } from '../foundation/components/oscd-checkbox.js';
+import '../../foundation/components/oscd-checkbox.js';
+import '../../foundation/components/oscd-select.js';
+import '../../foundation/components/oscd-textfield.js';
+import type { OscdTextfield } from '../../foundation/components/oscd-textfield.js';
+import type { OscdCheckbox } from '../../foundation/components/oscd-checkbox.js';
 export declare class SampledValueControlElementEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;

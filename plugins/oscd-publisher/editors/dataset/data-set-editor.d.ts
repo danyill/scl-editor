@@ -4,8 +4,8 @@ import '@material/mwc-icon-button';
 import '@material/mwc-list/mwc-list-item';
 import type { Button } from '@material/mwc-button';
 import './data-set-element-editor.js';
-import '../foundation/components/oscd-filtered-list.js';
-import type { OscdFilteredList } from '../foundation/components/oscd-filtered-list.js';
+import '../../foundation/components/oscd-filtered-list.js';
+import type { OscdFilteredList } from '../../foundation/components/oscd-filtered-list.js';
 export declare class DataSetEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
