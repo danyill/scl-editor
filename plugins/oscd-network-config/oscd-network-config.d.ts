@@ -22,15 +22,18 @@ export default class NetworkConfig extends LitElement {
         switchName: string;
         portName: string;
         iedName: string;
+        receivingPortName: string;
     }[] | null;
     switchNames: string[];
     inputUI: TextField;
+    importCsvUI: HTMLInputElement;
     outputUI: TextField;
     ethernetSwitchUI: TextField;
     nativeVlanUI: TextField;
     refreshInputData(): void;
     buildOutputConfiguration(): void;
     protected firstUpdated(): void;
+    importData(): void;
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }
