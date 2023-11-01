@@ -6439,6 +6439,7 @@ class NetworkConfig extends s$1 {
         const interfaceDescriptions = portsToConfigure
             .filter(portInfo => iedPorts.includes(portInfo.iedName))
             .map(portInfo => {
+            var _a, _b, _c, _d;
             const { iedName } = portInfo;
             const gsePublish = Array.from(this.doc.querySelectorAll(`:root > Communication > SubNetwork > ConnectedAP[iedName="${iedName}"] > GSE`));
             const smvPublish = Array.from(this.doc.querySelectorAll(`:root > Communication > SubNetwork > ConnectedAP[iedName="${iedName}"] > SMV`));
@@ -6471,8 +6472,8 @@ class NetworkConfig extends s$1 {
                     .querySelector('Address > P[type="MAC-Address"]')) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : '';
             })
                 .filter(smv => smv !== '');
-            const macFilterInACL = `al-${portInfo.portName.replace(/ \//, '')}-in in`;
-            const macFilterOutACL = `al-${portInfo.portName.replace(/ \//, '')}-out out`;
+            const macFilterInACL = `al-${portInfo.portName.replace(/ \//, '')}-in`;
+            const macFilterOutACL = `al-${portInfo.portName.replace(/ \//, '')}-out`;
             if (smvMacsIngress.length > 0)
                 accessListsIn.push([
                     `mac access-list extended ${macFilterInACL}`,
@@ -6487,15 +6488,26 @@ class NetworkConfig extends s$1 {
                     `  deny   any any`,
                     `!`
                 ].join('\n'));
+            const manufacturer = (_b = (_a = this.doc
+                .querySelector(`:root > IED[name="${iedName}"]`)) === null || _a === void 0 ? void 0 : _a.getAttribute('manufacturer')) !== null && _b !== void 0 ? _b : 'Unknown';
+            const type = (_d = (_c = this.doc
+                .querySelector(`:root > IED[name="${iedName}"]`)) === null || _c === void 0 ? void 0 : _c.getAttribute('type')) !== null && _d !== void 0 ? _d : 'Unknown';
+            let selSpecial = null;
+            if (manufacturer === 'SEL' &&
+                (type === 'SEL_411L_2S' || type === 'SEL_487E_5S')) {
+                selSpecial = `\n  speed nonegotiate`;
+            }
             return `interface ${portInfo.portName}
   description ${this.substation} Protection ${this.protectionSystem} LAN ${this.prpNetwork} to ${iedName} ${portInfo.receivingPortName} 
   switchport trunk native vlan ${this.nativeVlanUI.value}
   switchport trunk allowed vlan ${this.nativeVlanUI.value}${vlans.length > 1 ? `,${vlans.join(',')}` : ''}
   switchport mode trunk
-  load-interval 30
+  load-interval 30${selSpecial !== null ? selSpecial : ''}
   spanning-tree portfast trunk
   service-policy input pm-dss-prot-vlan-mark-in
-  service-policy output pm-dss-lan-out${smvMacsIngress.length > 0 ? `\n  mac access-group ${macFilterInACL}` : ''}${smvMacsEgress.length > 0 ? `\n  mac access-group ${macFilterOutACL}` : ''}
+  service-policy output pm-dss-lan-out${smvMacsIngress.length > 0 ? `\n  mac access-group ${macFilterInACL} in` : ''}${smvMacsEgress.length > 0
+                ? `\n  mac access-group ${macFilterOutACL} out`
+                : ''}
 !`;
         })
             .join('\n');
@@ -6507,6 +6519,9 @@ class NetworkConfig extends s$1 {
     }
     firstUpdated() {
         this.refreshInputData();
+        this.addEventListener('updated-input-data-file', () => {
+            this.refreshInputData();
+        });
     }
     // eslint-disable-next-line class-methods-use-this
     importData() { }
@@ -6534,11 +6549,12 @@ class NetworkConfig extends s$1 {
             navigator.clipboard.readText().then(
             // eslint-disable-next-line no-return-assign
             pasteText => (this.inputUI.value = pasteText));
+            this.refreshInputData();
         }}
           >Paste
           <md-icon slot="icon">content_paste</md-icon>
         </md-outlined-button>
-        <md-outlined-button class="clippy" @click=${() => {
+        <md-outlined-button class="clippy" @click=${async () => {
             this.importCsvUI.click();
             this.refreshInputData();
         }}
@@ -6642,6 +6658,7 @@ class NetworkConfig extends s$1 {
             if (!file)
                 return;
             this.inputUI.value = await file.text();
+            this.dispatchEvent(new CustomEvent('updated-input-data-file'));
         }} id="csv-input" accept=".csv,.txt" type="file"></input>
     `;
     }
