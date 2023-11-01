@@ -6553,12 +6553,9 @@ class NetworkConfig extends s$1 {
             selectedEthernetSwitch.slice(6, 7) === '1' ? '1' : '2';
         this.prpNetwork =
             parseInt(selectedEthernetSwitch.slice(8, 9), 10) % 2 === 1 ? 'A' : 'B';
-        console.log('Ports', portsToConfigure, 'Substation', this.substation, 'Protection System', this.protectionSystem, 'PRP Network', this.prpNetwork, 'Native VLAN', this.nativeVlanUI.value);
-        console.log('hi');
         const iedPorts = Array.from(this.doc.querySelectorAll(':root > IED')).map(ied => ied.getAttribute('name'));
         const accessListsIn = [];
         const accessListsOut = [];
-        console.log(iedPorts);
         const interfaceDescriptions = portsToConfigure
             .filter(portInfo => iedPorts.includes(portInfo.iedName))
             .map(portInfo => {
@@ -6594,8 +6591,8 @@ class NetworkConfig extends s$1 {
                     .querySelector('Address > P[type="MAC-Address"]')) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : '';
             })
                 .filter(smv => smv !== '');
-            const macFilterInACL = `al-${portInfo.portName.replace(/ \//, '')}-in`;
-            const macFilterOutACL = `al-${portInfo.portName.replace(/ \//, '')}-out`;
+            const macFilterInACL = `al-${portInfo.portName.replace(/ \//, '')}-in in`;
+            const macFilterOutACL = `al-${portInfo.portName.replace(/ \//, '')}-out out`;
             if (smvMacsIngress.length > 0)
                 accessListsIn.push([
                     `mac access-list extended ${macFilterInACL}`,
@@ -6622,7 +6619,6 @@ class NetworkConfig extends s$1 {
 !`;
         })
             .join('\n');
-        console.log(interfaceDescriptions);
         this.outputUI.value = [
             interfaceDescriptions,
             accessListsIn.join('\n'),
