@@ -10,7 +10,7 @@ export default class BaseSubstationElementEditor extends LitElement {
     editCount: number;
     /** Whether function type element shall be shown */
     showfunctions: boolean;
-    addMenu: Menu;
+    addMenu?: Menu;
     addButton: IconButton;
     private openCreateWizard;
     openEditWizard(): void;

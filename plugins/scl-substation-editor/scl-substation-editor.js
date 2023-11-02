@@ -3199,7 +3199,8 @@ class BaseSubstationElementEditor extends s {
         }));
     }
     updated() {
-        this.addMenu.anchor = this.addButton;
+        if (this.addMenu)
+            this.addMenu.anchor = this.addButton;
     }
     renderAddButtons() {
         return childTags(this.element).map(child => x `<mwc-list-item value="${child}"
@@ -3211,7 +3212,8 @@ class BaseSubstationElementEditor extends s {
       <mwc-icon-button
         icon="playlist_add"
         @click=${() => {
-            this.addMenu.open = true;
+            if (this.addMenu)
+                this.addMenu.open = true;
         }}
       ></mwc-icon-button
       ><mwc-menu
@@ -4146,10 +4148,6 @@ let ConductingEquipmentEditor = class ConductingEquipmentEditor extends BaseSubs
 ConductingEquipmentEditor.styles = i$5 `
     ${styles}
 
-    :host(.moving) {
-      opacity: 0.3;
-    }
-
     abbr {
       text-decoration: none;
       border-bottom: none;
@@ -4506,13 +4504,13 @@ let PowerTransformerEditor = class PowerTransformerEditor extends BaseSubstation
 PowerTransformerEditor.styles = i$5 `
     ${styles}
 
-    :host(.moving) {
-      opacity: 0.3;
-    }
-
     abbr {
       text-decoration: none;
       border-bottom: none;
+    }
+
+    transformer-winding-editor[showfunctions] {
+      margin: 4px 8px 16px;
     }
   `;
 __decorate([
@@ -4765,10 +4763,6 @@ let ProcessEditor = class ProcessEditor extends BaseSubstationElementEditor {
 };
 ProcessEditor.styles = i$5 `
     ${styles}
-
-    :host(.moving) {
-      opacity: 0.3;
-    }
 
     abbr {
       text-decoration: none;
