@@ -4787,6 +4787,59 @@ function changeGSEContent(element, options) {
     return addressEdits.concat(timeEdits);
 }
 
+/**
+ * Utility function to update SampledValueControl element attributes.
+ * ```md
+ * These attributes trigger addition edits
+ * - name: also updates SMV.cbName and supervision references
+ * - datSet: update reference DataSet.name - when DataSet is single use
+ *
+ * >NOTE: confRev attribute is updated +10000 every time this function is called
+ * ```
+ * @param update - diff holding the `SampledValueControl` as element
+ * @returns action array to update all `SampledValueControl` attributes
+ */
+function updateSampledValueControl(update) {
+    if (update.element.tagName !== "SampledValueControl")
+        return [];
+    const updates = [];
+    if (update.attributes.name) {
+        const extRefUpdates = findControlBlockSubscription(update.element).map((extRef) => ({
+            element: extRef,
+            attributes: { srcCBName: update.attributes.name },
+        }));
+        const supervisionUpdates = Array.from(update.element.ownerDocument.querySelectorAll(':root > IED > AccessPoint > Server > LDevice > LN[lnClass="LSVS"] > DOI[name="SvCBRef"] > DAI[name="setSrcRef"] > Val'))
+            .filter((val) => val.textContent === controlBlockObjRef(update.element))
+            .flatMap((val) => {
+            const [path] = controlBlockObjRef(update.element).split(".");
+            const oldValContent = Array.from(val.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+            const newValContent = update.element.ownerDocument.createTextNode(`${path}.${update.attributes.name}`);
+            return [
+                { node: oldValContent },
+                { parent: val, node: newValContent, reference: null },
+            ];
+        });
+        const smvUpdate = [];
+        const sMV = controlBlockGseOrSmv(update.element);
+        if (sMV) {
+            smvUpdate.push({
+                element: sMV,
+                attributes: { cbName: update.attributes.name },
+            });
+        }
+        updates.push(...extRefUpdates, ...supervisionUpdates, ...smvUpdate);
+    }
+    if (update.attributes.datSet) {
+        const updateDataSet = updateDatSet(update);
+        if (updateDataSet)
+            updates.push(updateDataSet);
+        else
+            delete update.attributes.datSet; // remove datSet from the update to avoid schema invalidity
+    }
+    update.attributes.confRev = updatedConfRev(update.element); // +10000 for update
+    return [update, ...updates];
+}
+
 function changeSMVContent(element, options) {
     return changeGseOrSmvAddress(element, options);
 }
@@ -4857,7 +4910,11 @@ function createDataSet(parent, options = { attributes: {} }) {
     const dataSet = createElement$1(anyLn.ownerDocument, "DataSet", {
         ...dataSetAttributes,
     });
-    return { parent, node: dataSet, reference: getReference(parent, "DataSet") };
+    return {
+        parent: anyLn,
+        node: dataSet,
+        reference: getReference(parent, "DataSet"),
+    };
 }
 
 /** Utility function to update `DataSet` element and the `datSet` attribute of
@@ -19611,21 +19668,24 @@ DataSetEditor = __decorate([
     e$7('data-set-editor')
 ], DataSetEditor);
 
-const sMVselectors = {
-    'MAC-Address': ':scope > Address > P[type="MAC-Address"]',
-    APPID: ':scope > Address > P[type="APPID"]',
-    'VLAN-ID': ':scope > Address > P[type="VLAN-ID"]',
-    'VLAN-PRIORITY': ':scope > Address > P[type="VLAN-PRIORITY"]',
-};
+function pElementContent$1(smv, type) {
+    var _a, _b, _c;
+    return ((_c = (_b = (_a = Array.from(smv.querySelectorAll(':scope > Address > P'))
+        .find(p => p.getAttribute('type') === type)) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : null);
+}
+function pElement(smv, type) {
+    var _a;
+    return ((_a = Array.from(smv.querySelectorAll(':scope > Address > P')).find(p => p.getAttribute('type') === type)) !== null && _a !== void 0 ? _a : null);
+}
 /** @returns Whether the `sMV`s element attributes or instType has changed */
 function checkSMVDiff(sMV, attributes = { pTypes: {} }) {
-    const pTypeDiff = Object.entries(attributes.pTypes).some(([key, value]) => { var _a, _b; return ((_b = (_a = sMV.querySelector(sMVselectors[key])) === null || _a === void 0 ? void 0 : _a.textContent) !== null && _b !== void 0 ? _b : null) !== value; });
+    const pTypeDiff = Object.entries(attributes.pTypes).some(([key, value]) => pElementContent$1(sMV, key) !== value);
     if (pTypeDiff)
         return true;
     if (attributes.instType === undefined)
         return false;
     const instTypeDiff = Object.keys(attributes.pTypes).some(key => {
-        const pType = sMV.querySelector(sMVselectors[key]);
+        const pType = pElement(sMV, key);
         if (!pType)
             return false;
         const hasInstType = pType.hasAttribute('xsi:type');
@@ -19634,13 +19694,34 @@ function checkSMVDiff(sMV, attributes = { pTypes: {} }) {
     return instTypeDiff;
 }
 
+function pElementContent(smv, type) {
+    var _a, _b, _c;
+    return ((_c = (_b = (_a = Array.from(smv.querySelectorAll(':scope > Address > P'))
+        .find(p => p.getAttribute('type') === type)) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : null);
+}
+const smvOptsHelpers = {
+    refreshTime: 'SMV stream includes refresh time',
+    sampleSynchronized: 'SMV stream includes synchronized information',
+    sampleRate: 'SMV streams includes sampled rate information',
+    dataSet: 'SMV streams includes data set reference',
+    security: 'SMV streams includes security setting',
+    timestamp: 'SMV streams includes time stamp information',
+    synchSourceId: 'SMV streams includes synchronization source',
+};
+const smvHelpers = {
+    'MAC-Address': 'MAC address (01-0C-CD-04-xx-xx)',
+    APPID: 'APP ID (4xxx in hex)',
+    'VLAN-ID': 'VLAN ID (XXX in hex)',
+    'VLAN-PRIORITY': 'VLAN Priority (0-7)',
+};
 let SampledValueControlElementEditor = class SampledValueControlElementEditor extends s$2 {
     constructor() {
         super(...arguments);
         /** SCL change indicator */
-        this.editCount = 0;
+        this.editCount = -1;
         this.sMVdiff = false;
         this.smvOptsDiff = false;
+        this.sampledValueControlDiff = false;
     }
     get sMV() {
         var _a, _b, _c;
@@ -19648,9 +19729,34 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         const iedName = (_a = this.element.closest('IED')) === null || _a === void 0 ? void 0 : _a.getAttribute('name');
         const apName = (_b = this.element.closest('AccessPoint')) === null || _b === void 0 ? void 0 : _b.getAttribute('name');
         const ldInst = (_c = this.element.closest('LDevice')) === null || _c === void 0 ? void 0 : _c.getAttribute('inst');
-        return this.element.ownerDocument.querySelector(`:root > Communication > SubNetwork > ` +
-            `ConnectedAP[iedName="${iedName}"][apName="${apName}"] > ` +
-            `SMV[ldInst="${ldInst}"][cbName="${cbName}"]`);
+        return this.element.ownerDocument.querySelector(`:root > Communication > SubNetwork 
+      > ConnectedAP[iedName="${iedName}"][apName="${apName}"] 
+      > SMV[ldInst="${ldInst}"][cbName="${cbName}"]`);
+    }
+    onSampledValueControlInputChange() {
+        var _a, _b, _c;
+        if (Array.from((_a = this.sampledValueControlInputs) !== null && _a !== void 0 ? _a : []).some(input => !input.checkValidity())) {
+            this.sampledValueControlDiff = false;
+            return;
+        }
+        const sampledValueControlAttrs = {};
+        for (const input of (_b = this.sampledValueControlInputs) !== null && _b !== void 0 ? _b : [])
+            sampledValueControlAttrs[input.label] = input.maybeValue;
+        this.sampledValueControlDiff = Array.from((_c = this.sampledValueControlInputs) !== null && _c !== void 0 ? _c : []).some(input => { var _a; return ((_a = this.element) === null || _a === void 0 ? void 0 : _a.getAttribute(input.label)) !== input.maybeValue; });
+    }
+    saveSampledValueControlChanges() {
+        var _a, _b;
+        if (!this.element)
+            return;
+        const sampledValueControlAttrs = {};
+        for (const input of (_a = this.sampledValueControlInputs) !== null && _a !== void 0 ? _a : [])
+            if (((_b = this.element) === null || _b === void 0 ? void 0 : _b.getAttribute(input.label)) !== input.maybeValue)
+                sampledValueControlAttrs[input.label] = input.maybeValue;
+        this.dispatchEvent(newEditEvent(updateSampledValueControl({
+            element: this.element,
+            attributes: sampledValueControlAttrs,
+        })));
+        this.onSampledValueControlInputChange();
     }
     onSMVInputChange() {
         var _a, _b, _c;
@@ -19717,41 +19823,40 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         const { sMV } = this;
         if (!sMV)
             return x ` <h3>
-        <div>'publisher.smv.commsetting</div>
-        <div class="headersubtitle">publisher.smv.noconnectionap'</div>
+        <div>'Communication Settings (SMV)</div>
+        <div class="headersubtitle">No connection available</div>
       </h3>`;
-        const hasInstType = Array.from(sMV.querySelectorAll('Address > P')).some(pType => pType.getAttribute('xsi:type'));
+        const hasInstType = Array.from(sMV.querySelectorAll(':scope > Address > P')).some(pType => pType.getAttribute('xsi:type'));
         const attributes = {};
         ['MAC-Address', 'APPID', 'VLAN-ID', 'VLAN-PRIORITY'].forEach(key => {
-            var _a, _b, _c;
             if (!attributes[key])
-                attributes[key] =
-                    (_c = (_b = (_a = sMV
-                        .querySelector(`Address > P[type="${key}"]`)) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : null;
+                attributes[key] = pElementContent(sMV, key);
         });
         return x ` <div class="content smv">
-      <h3>Communication Settings (SMV)</h3>
-      <mwc-formfield label="connectedap.wizard.addschemainsttype"
-        ><mwc-checkbox
-          id="instType"
-          ?checked="${hasInstType}"
-          @change=${this.onSMVInputChange}
-        ></mwc-checkbox></mwc-formfield
-      >${Object.entries(attributes).map(([key, value]) => x `<oscd-textfield
-            label="${key}"
-            ?nullable=${typeNullable[key]}
-            .maybeValue=${value}
-            pattern="${typePattern[key]}"
-            required
-            @input=${this.onSMVInputChange}
-          ></oscd-textfield>`)}<mwc-button
+        <h3>Communication Settings (SMV)</h3>
+        <mwc-formfield label="Add XMLSchema-instance type"
+          ><mwc-checkbox
+            id="instType"
+            ?checked="${hasInstType}"
+            @change=${this.onSMVInputChange}
+          ></mwc-checkbox></mwc-formfield
+        >${Object.entries(attributes).map(([key, value]) => x `<oscd-textfield
+              label="${key}"
+              ?nullable=${typeNullable[key]}
+              .maybeValue=${value}
+              pattern="${typePattern[key]}"
+              required
+              helper="${smvHelpers[key]}"
+              @input=${this.onSMVInputChange}
+            ></oscd-textfield>`)}
+      </div>
+      <mwc-button
         class="save"
         label="save"
         icon="save"
         ?disabled=${!this.sMVdiff}
         @click=${() => this.saveSMVChanges()}
-      ></mwc-button>
-    </div>`;
+      ></mwc-button>`;
     }
     renderSmvOptsContent() {
         const [refreshTime, sampleSynchronized, sampleRate, dataSet, security, timestamp, synchSourceId,] = [
@@ -19764,8 +19869,8 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
             'synchSourceId',
         ].map(attr => { var _a, _b; return (_b = (_a = this.element.querySelector('SmvOpts')) === null || _a === void 0 ? void 0 : _a.getAttribute(attr)) !== null && _b !== void 0 ? _b : null; });
         return x `<div class="content smvopts">
-      <h3>'Sampled Value Options'</h3>
-      ${Object.entries({
+        <h3>Sampled Value Options</h3>
+        ${Object.entries({
             refreshTime,
             sampleSynchronized,
             sampleRate,
@@ -19774,19 +19879,20 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
             timestamp,
             synchSourceId,
         }).map(([key, value]) => x `<oscd-checkbox
-            label="${key}"
-            .maybeValue=${value}
-            nullable
-            helper="scl.key"
-            @input=${this.onSmvOptsInputChange}
-          ></oscd-checkbox>`)}<mwc-button
+              label="${key}"
+              .maybeValue=${value}
+              nullable
+              helper="${smvOptsHelpers[key]}"
+              @input=${this.onSmvOptsInputChange}
+            ></oscd-checkbox>`)}
+      </div>
+      <mwc-button
         class="save"
         label="save"
         icon="save"
         ?disabled=${!this.smvOptsDiff}
         @click=${() => this.saveSmvOptsChanges()}
-      ></mwc-button>
-    </div>`;
+      ></mwc-button>`;
     }
     renderOtherElements() {
         return x `<div class="content">
@@ -19804,77 +19910,82 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
             'nofASDU',
             'securityEnabled',
         ].map(attr => { var _a; return (_a = this.element) === null || _a === void 0 ? void 0 : _a.getAttribute(attr); });
-        return x `<div class="content">
+        return x `<div class="content smvcontrol">
       <oscd-textfield
         label="name"
         .maybeValue=${name}
-        helper="scl.name"
+        helper="Sampled Value Name"
         required
-        validationMessage="textfield.required')}"
         pattern="${patterns.asciName}"
         maxLength="${maxLength.cbName}"
         dialogInitialFocus
-        disabled
+        @input="${this.onSampledValueControlInputChange}"
       ></oscd-textfield>
       <oscd-textfield
         label="desc"
         .maybeValue=${desc}
         nullable
-        helper="scl.desc')}"
-        disabled
+        helper="Sampled Value Description"
+        @input="${this.onSampledValueControlInputChange}"
       ></oscd-textfield>
-      ${multicast === 'true'
+      ${multicast === null || multicast === 'true'
             ? x ``
             : x `<oscd-checkbox
             label="multicast"
             .maybeValue=${multicast}
-            helper="scl.multicast')}"
-            disabled
+            helper="Whether Sample Value Stream is multicast"
+            @input="${this.onSampledValueControlInputChange}"
           ></oscd-checkbox>`}
       <oscd-textfield
         label="smvID"
         .maybeValue=${smvID}
-        helper="scl.id')}"
+        helper="Sampled Value ID"
         required
-        voscd-textfield="textfield.nonempty')}"
-        disabled
+        @input="${this.onSampledValueControlInputChange}"
       ></oscd-textfield>
       <oscd-select
         label="smpMod"
         .maybeValue=${smpMod}
         nullable
         required
-        helper="scl.smpMod')}"
-        disabled
+        helper="Sample mode (Samples per Second, Sampled per Period, Seconds per Sample)"
+        @selected="${this.onSampledValueControlInputChange}"
         >${['SmpPerPeriod', 'SmpPerSec', 'SecPerSmp'].map(option => x `<mwc-list-item value="${option}">${option}</mwc-list-item>`)}</oscd-select
       >
       <oscd-textfield
         label="smpRate"
         .maybeValue=${smpRate}
-        helper="scl.smpRate')}"
+        helper="Sample Rate (Based on Sample Mode)"
         required
         type="number"
         moscd-textfield
         oscd-textfield
+        @input="${this.onSampledValueControlInputChange}"
       ></oscd-textfield>
       <oscd-textfield
         label="nofASDU"
         .maybeValue=${nofASDU}
-        helper="scl.nofASDU')}"
+        helper="Number of Samples per Ethernet packet"
         required
         type="number"
         min="0"
-        disabled
+        @input="${this.onSampledValueControlInputChange}"
       ></oscd-textfield>
       <oscd-select
         label="securityEnabled"
         .maybeValue=${securityEnabled}
         nullable
         required
-        helper="scl.securityEnable')}"
-        disabled
+        helper="Sampled Value Security Setting"
+        @selected="${this.onSampledValueControlInputChange}"
         >${['None', 'Signature', 'SignatureAndEncryption'].map(type => x `<mwc-list-item value="${type}">${type}</mwc-list-item>`)}</oscd-select
-      >
+      ><mwc-button
+        class="save"
+        label="save"
+        icon="save"
+        ?disabled=${!this.sampledValueControlDiff}
+        @click="${this.saveSampledValueControlChanges}"
+      ></mwc-button>
     </div>`;
     }
     render() {
@@ -19898,7 +20009,13 @@ SampledValueControlElementEditor.styles = i$5 `
     }
 
     .content {
+      display: flex;
+      flex-direction: column;
       border-left: thick solid var(--mdc-theme-on-primary);
+    }
+
+    .save {
+      align-self: flex-end;
     }
 
     .content > * {
@@ -19951,6 +20068,12 @@ __decorate([
 __decorate([
     t$1()
 ], SampledValueControlElementEditor.prototype, "smvOptsDiff", void 0);
+__decorate([
+    t$1()
+], SampledValueControlElementEditor.prototype, "sampledValueControlDiff", void 0);
+__decorate([
+    e$4('.content.smvcontrol > oscd-textfield, .content.smvcontrol > oscd-select, .content.smvcontrol > oscd-checkbox')
+], SampledValueControlElementEditor.prototype, "sampledValueControlInputs", void 0);
 __decorate([
     e$4('.content.smv > oscd-textfield')
 ], SampledValueControlElementEditor.prototype, "sMVInputs", void 0);
@@ -20108,7 +20231,7 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
         return x `<mwc-button
       class="change scl element"
       outlined
-      label="'publisher.selectbutton', { type: 'SMV' })}"
+      label="Select Sampled Value Control"
       @click=${() => {
             this.selectionList.classList.remove('hidden');
             this.selectSampledValueControlButton.classList.add('hidden');
