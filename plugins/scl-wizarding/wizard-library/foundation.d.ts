@@ -3,27 +3,27 @@ import { List } from '@material/mwc-list';
 import { Select } from '@material/mwc-select';
 import { TextField } from '@material/mwc-textfield';
 import { Edit } from '@openscd/open-scd-core';
-import { OscdTextfield } from '../foundation/components/oscd-textfield.js';
-import { OscdSelect } from '../foundation/components/oscd-select.js';
-import { OscdCheckbox } from '../foundation/components/oscd-checkbox.js';
+import { SclTextfield } from '../foundation/components/scl-textfield.js';
+import { SclSelect } from '../foundation/components/scl-select.js';
+import { SclCheckbox } from '../foundation/components/scl-checkbox.js';
 /** Throws an error bearing `message`, never returning. */
 export declare function unreachable(message: string): never;
 /** @returns the cartesian product of `arrays` */
 export declare function crossProduct<T>(...arrays: T[][]): T[][];
-export declare const wizardInputSelector = "oscd-textfield, mwc-textfield, ace-editor, mwc-select, oscd-select, oscd-checkbox";
-export type WizardInputElement = OscdTextfield | TextField | Select | OscdSelect;
+export declare const wizardInputSelector = "scl-textfield, mwc-textfield, ace-editor, mwc-select, scl-select, scl-checkbox";
+export type WizardInputElement = SclTextfield | TextField | Select | SclSelect;
 /** @returns [[`EditorAction`]]s to dispatch on [[`WizardDialog`]] commit. */
 export type WizardActor = (inputs: WizardInputElement[], wizard: Element, list?: List | null) => Edit[];
-export declare function canCheckValidity(type: any): type is OscdTextfield | OscdSelect | TextField | Select;
+export declare function canCheckValidity(type: any): type is SclTextfield | SclSelect | TextField | Select;
 /** @returns the validity of `input` depending on type. */
 export declare function checkValidity(input: WizardInputElement): boolean;
-export declare function canReportValidity(type: any): type is OscdTextfield | OscdSelect | TextField | Select;
+export declare function canReportValidity(type: any): type is SclTextfield | SclSelect | TextField | Select;
 /** reports the validity of `input` depending on type. */
 export declare function reportValidity(input: WizardInputElement): boolean;
-export declare function isInputWithMaybeValue(type: any): type is OscdTextfield | OscdCheckbox | OscdSelect;
+export declare function isInputWithMaybeValue(type: any): type is SclTextfield | SclCheckbox | SclSelect;
 /** @returns the `value` or `maybeValue` of `input` depending on type. */
 export declare function getValue(input: WizardInputElement): string | null;
-export declare function isOScdTextfield(type: any): type is OscdTextfield;
+export declare function isSclTextfield(type: any): type is SclTextfield;
 /** @returns the `multiplier` of `input` if available. */
 export declare function getMultiplier(input: WizardInputElement): string | null;
 /** @returns [[`WizardAction`]]s to dispatch on [[`WizardDialog`]] menu action. */

@@ -4,7 +4,7 @@ import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-list/mwc-check-list-item';
 import '@material/mwc-icon';
 import '@openscd/oscd-filtered-list';
-import '../../foundation/components/oscd-textfield.js';
+import '../../foundation/components/scl-textfield.js';
 import { Wizard } from '../foundation.js';
 /** @returns single page  [[`Wizard`]] for creating SCL element ConnectedAP. */
 export declare function createConnectedApWizard(element: Element): Wizard;

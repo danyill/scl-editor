@@ -2,7 +2,7 @@ import { TemplateResult } from 'lit';
 import { Edit } from '@openscd/open-scd-core';
 import '@material/mwc-checkbox';
 import '@material/mwc-formfield';
-import '../../foundation/components/oscd-textfield.js';
+import '../../foundation/components/scl-textfield.js';
 interface AddressContentOptions {
     element: Element;
     types: string[];

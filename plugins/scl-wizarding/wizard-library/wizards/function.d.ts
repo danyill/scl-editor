@@ -1,5 +1,5 @@
 import { TemplateResult } from 'lit';
-import '../../foundation/components/oscd-textfield.js';
+import '../../foundation/components/scl-textfield.js';
 import { Wizard } from '../foundation.js';
 type Content = {
     name: string | null;

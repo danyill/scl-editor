@@ -4,7 +4,7 @@ import { Select } from '@material/mwc-select';
 /** A potentially `nullable` `Select`.
  *
  * NB: Use `maybeValue: string | null` instead of `value` if `nullable`! */
-export declare class OscdSelect extends Select {
+export declare class SclSelect extends Select {
     /** Whether [[`maybeValue`]] may be `null` */
     nullable: boolean;
     private isNull;

@@ -5,7 +5,7 @@ import type { Checkbox } from '@material/mwc-checkbox';
 import type { Switch } from '@material/mwc-switch';
 import { LitElement } from 'lit';
 /** A potentially `nullable` labelled checkbox. */
-export declare class OscdCheckbox extends LitElement {
+export declare class SclCheckbox extends LitElement {
     label: string;
     /** Parenthetical information rendered after the label: `label (helper)` */
     helper: string;

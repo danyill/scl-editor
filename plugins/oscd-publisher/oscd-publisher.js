@@ -4913,7 +4913,7 @@ function createDataSet(parent, options = { attributes: {} }) {
     return {
         parent: anyLn,
         node: dataSet,
-        reference: getReference(parent, "DataSet"),
+        reference: getReference(anyLn, "DataSet"),
     };
 }
 
