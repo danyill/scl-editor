@@ -6,8 +6,8 @@ import type { Button } from '@material/mwc-button';
 import type { Dialog } from '@material/mwc-dialog';
 import '../dataset/data-set-element-editor.js';
 import './gse-control-element-editor.js';
-import '../../foundation/components/oscd-filtered-list.js';
-import type { OscdFilteredList } from '../../foundation/components/oscd-filtered-list.js';
+import '../../foundation/components/scl-filtered-list.js';
+import type { SclFilteredList } from '../../foundation/components/scl-filtered-list.js';
 export declare class GseControlEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
@@ -15,7 +15,7 @@ export declare class GseControlEditor extends LitElement {
     editCount: number;
     selectedGseControl?: Element;
     selectedDataSet?: Element | null;
-    selectionList: OscdFilteredList;
+    selectionList: SclFilteredList;
     selectGSEControlButton: Button;
     selectDataSetDialog: Dialog;
     /** Resets selected GOOSE and its DataSet, if not existing in new doc */

@@ -2,12 +2,12 @@ import { LitElement, TemplateResult } from 'lit';
 import '@material/mwc-formfield';
 import '@material/mwc-checkbox';
 import type { Checkbox } from '@material/mwc-checkbox';
-import '../../foundation/components/oscd-checkbox.js';
-import '../../foundation/components/oscd-select.js';
-import '../../foundation/components/oscd-textfield.js';
-import type { OscdCheckbox } from '../../foundation/components/oscd-checkbox.js';
-import type { OscdSelect } from '../../foundation/components/oscd-select.js';
-import type { OscdTextfield } from '../../foundation/components/oscd-textfield.js';
+import '../../foundation/components/scl-checkbox.js';
+import '../../foundation/components/scl-select.js';
+import '../../foundation/components/scl-textfield.js';
+import type { SclCheckbox } from '../../foundation/components/scl-checkbox.js';
+import type { SclSelect } from '../../foundation/components/scl-select.js';
+import type { SclTextfield } from '../../foundation/components/scl-textfield.js';
 export declare class GseControlElementEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
@@ -22,8 +22,8 @@ export declare class GseControlElementEditor extends LitElement {
     private saveGSEControlChanges;
     private onGSEInputChange;
     private saveGSEChanges;
-    gSEInputs?: OscdTextfield[];
-    gSEControlInputs?: (OscdTextfield | OscdSelect | OscdCheckbox)[];
+    gSEInputs?: SclTextfield[];
+    gSEControlInputs?: (SclTextfield | SclSelect | SclCheckbox)[];
     instType?: Checkbox;
     private renderGseContent;
     private renderGseControlContent;

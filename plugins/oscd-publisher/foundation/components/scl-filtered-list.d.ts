@@ -6,7 +6,7 @@ import type { TextField } from '@material/mwc-textfield';
 /**
  * A mwc-list with mwc-textfield that filters the list items for given or separated terms
  */
-export declare class OscdFilteredList extends ListBase {
+export declare class SclFilteredList extends ListBase {
     /** search mwc-textfield label property */
     searchFieldLabel?: string;
     /** Whether the check all option (checkbox next to search text field) is activated */

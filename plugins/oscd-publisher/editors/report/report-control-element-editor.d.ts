@@ -1,10 +1,10 @@
 import { LitElement, TemplateResult } from 'lit';
-import '../../foundation/components/oscd-checkbox.js';
-import '../../foundation/components/oscd-select.js';
-import '../../foundation/components/oscd-textfield.js';
-import type { OscdCheckbox } from '../../foundation/components/oscd-checkbox.js';
-import type { OscdSelect } from '../../foundation/components/oscd-select.js';
-import type { OscdTextfield } from '../../foundation/components/oscd-textfield.js';
+import '../../foundation/components/scl-checkbox.js';
+import '../../foundation/components/scl-select.js';
+import '../../foundation/components/scl-textfield.js';
+import type { SclCheckbox } from '../../foundation/components/scl-checkbox.js';
+import type { SclSelect } from '../../foundation/components/scl-select.js';
+import type { SclTextfield } from '../../foundation/components/scl-textfield.js';
 export declare class ReportControlElementEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
@@ -21,10 +21,10 @@ export declare class ReportControlElementEditor extends LitElement {
     private saveTrgOpsChanges;
     private onReportControlInputChange;
     private saveReportControlChanges;
-    optFieldsInputs?: OscdCheckbox[];
-    trgOpsInputs?: OscdCheckbox[];
-    reportControlInputs?: (OscdTextfield | OscdSelect | OscdCheckbox)[];
-    rptEnabledInput: OscdTextfield;
+    optFieldsInputs?: SclCheckbox[];
+    trgOpsInputs?: SclCheckbox[];
+    reportControlInputs?: (SclTextfield | SclSelect | SclCheckbox)[];
+    rptEnabledInput: SclTextfield;
     private renderOptFieldsContent;
     private renderTrgOpsContent;
     private renderChildElements;

@@ -2,12 +2,12 @@ import { LitElement, TemplateResult } from 'lit';
 import '@material/mwc-checkbox';
 import '@material/mwc-formfield';
 import type { Checkbox } from '@material/mwc-checkbox';
-import '../../foundation/components/oscd-checkbox.js';
-import '../../foundation/components/oscd-select.js';
-import '../../foundation/components/oscd-textfield.js';
-import type { OscdCheckbox } from '../../foundation/components/oscd-checkbox.js';
-import type { OscdSelect } from '../../foundation/components/oscd-select.js';
-import type { OscdTextfield } from '../../foundation/components/oscd-textfield.js';
+import '../../foundation/components/scl-checkbox.js';
+import '../../foundation/components/scl-select.js';
+import '../../foundation/components/scl-textfield.js';
+import type { SclCheckbox } from '../../foundation/components/scl-checkbox.js';
+import type { SclSelect } from '../../foundation/components/scl-select.js';
+import type { SclTextfield } from '../../foundation/components/scl-textfield.js';
 export declare class SampledValueControlElementEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
@@ -25,9 +25,9 @@ export declare class SampledValueControlElementEditor extends LitElement {
     private saveSMVChanges;
     private onSmvOptsInputChange;
     private saveSmvOptsChanges;
-    sampledValueControlInputs?: (OscdTextfield | OscdSelect | OscdCheckbox)[];
-    sMVInputs?: OscdTextfield[];
-    smvOptsInputs?: OscdCheckbox[];
+    sampledValueControlInputs?: (SclTextfield | SclSelect | SclCheckbox)[];
+    sMVInputs?: SclTextfield[];
+    smvOptsInputs?: SclCheckbox[];
     instType?: Checkbox;
     private renderSmvContent;
     private renderSmvOptsContent;
