@@ -6390,9 +6390,95 @@ MdIcon = __decorate([
     t$1('md-icon')
 ], MdIcon);
 
+// XAT111 = PRP A
+// XAT112 = PRP B
+// Prot 1
+// PRP          A                 B
+// Tier 1 = 101                 102
+// Tier 2 = 111 / 113           112 / 114
+// Tier 3 = 131 / 133 / 135     132 / 134 / 135
+// Prot 2
+// PRP          A                 B
+// Tier 1 = 201                 202
+// Tier 2 = 211 / 213           212 / 214
+// Tier 3 = 231 / 233 / 235     232 / 234 / 235
 // Add: SEL-2440, SEL-751, P746 ??
 // Update versions
+const TPNS = 'https://transpower.co.nz/SCL/SCD/Communication/v1';
 const sampleData = ``;
+function getAllocatedVlans(doc) {
+    const vlanContainer = doc.querySelector('Private[type="Transpower-VLAN-Allocation"]');
+    const stationVlanContainer = vlanContainer === null || vlanContainer === void 0 ? void 0 : vlanContainer.getElementsByTagNameNS(TPNS, 'Station');
+    const busVlanContainer = vlanContainer === null || vlanContainer === void 0 ? void 0 : vlanContainer.getElementsByTagNameNS(TPNS, 'Bus');
+    let stationVlans = [];
+    let busVlans = [];
+    // eslint-disable-next-line no-undef
+    const getVlans = (container) => {
+        if (container) {
+            return Array.from(container[0].getElementsByTagNameNS(TPNS, 'VLAN')).map(vlan => {
+                var _a, _b, _c, _d, _e, _f;
+                return ({
+                    serviceName: (_a = vlan.getAttribute('serviceName')) !== null && _a !== void 0 ? _a : '',
+                    serviceType: (_b = vlan.getAttribute('serviceType')) !== null && _b !== void 0 ? _b : '',
+                    useCase: (_c = vlan.getAttribute('useCase')) !== null && _c !== void 0 ? _c : '',
+                    prot1Id: (_d = vlan.getAttribute('prot1Id')) !== null && _d !== void 0 ? _d : '',
+                    prot2Id: (_e = vlan.getAttribute('prot2Id')) !== null && _e !== void 0 ? _e : '',
+                    busName: (_f = vlan.getAttribute('busName')) !== null && _f !== void 0 ? _f : ''
+                });
+            });
+        }
+        return null;
+    };
+    stationVlans = getVlans(stationVlanContainer);
+    busVlans = getVlans(busVlanContainer);
+    return { stationVlans, busVlans };
+}
+function getVlanNames(doc, vlansOnSwitch) {
+    const outputConfigString = [];
+    const vlans = getAllocatedVlans(doc);
+    const usedVlans = [];
+    if (vlans.busVlans) {
+        usedVlans.push(...vlans.busVlans);
+    }
+    if (vlans.stationVlans) {
+        usedVlans.push(...vlans.stationVlans);
+    }
+    const vlanMap = new Map();
+    usedVlans.forEach(vlan => {
+        if (!vlan)
+            return;
+        const prot1Id = parseInt(vlan.prot1Id, 16);
+        const prot2Id = parseInt(vlan.prot2Id, 16);
+        if (vlansOnSwitch.has(prot1Id)) {
+            let name = '';
+            name = `${vlan.serviceName} ${vlan.serviceType} ${vlan.useCase}`.replace(' ', '_');
+            if (vlan.busName)
+                name = `${name}_${vlan.busName}`.replace(' ', '_');
+            vlanMap.set(prot1Id, [
+                '!',
+                `vlan ${prot1Id}`,
+                `  name ${name.slice(0, 32).replace(/ /g, '_')}`
+            ]);
+        }
+        if (vlansOnSwitch.has(prot2Id)) {
+            let name = '';
+            name = `${vlan.serviceName} ${vlan.serviceType} ${vlan.useCase}`;
+            if (vlan.busName)
+                name = `${name} ${vlan.busName}`;
+            vlanMap.set(prot2Id, [
+                '!',
+                `vlan ${prot2Id}`,
+                `  name ${name.slice(0, 32).replace(/ /g, '_')}`
+            ]);
+        }
+    });
+    Array.from(vlanMap.keys())
+        .sort((a, b) => a - b)
+        .forEach(vlan => {
+        outputConfigString.push(vlanMap.get(vlan).join('\n'));
+    });
+    return outputConfigString.join('\n');
+}
 /**
  * A plugin which supplements data in the Communication section
  * to show subscribing data for GSE and SMV addresses.
@@ -6436,6 +6522,8 @@ class NetworkConfig extends s$1 {
         const iedPorts = Array.from(this.doc.querySelectorAll(':root > IED')).map(ied => ied.getAttribute('name'));
         const accessListsIn = [];
         const accessListsOut = [];
+        const vlansOnSwitch = new Set();
+        const aclRemovalCommand = ['!'];
         const interfaceDescriptions = portsToConfigure
             .filter(portInfo => iedPorts.includes(portInfo.iedName))
             .map(portInfo => {
@@ -6458,6 +6546,7 @@ class NetworkConfig extends s$1 {
             ]
                 .filter(vlan => vlan !== 0)
                 .sort();
+            vlans.forEach(vlan => vlansOnSwitch.add(vlan));
             const smvMacsIngress = smvPublish
                 .map(smv => {
                 var _a, _b, _c;
@@ -6474,22 +6563,28 @@ class NetworkConfig extends s$1 {
                 .filter(smv => smv !== '');
             const macFilterInACL = `al-${portInfo.portName.replace(/ \//, '')}-in`;
             const macFilterOutACL = `al-${portInfo.portName.replace(/ \//, '')}-out`;
-            if (smvMacsIngress.length > 0)
+            if (smvMacsIngress.length > 0) {
+                const name = `mac access-list extended ${macFilterInACL}`;
                 accessListsIn.push([
-                    `mac access-list extended ${macFilterInACL}`,
-                    smvMacsIngress.map(mac => `  permit host ${mac} any`).join('\n'),
+                    name,
+                    smvMacsIngress.map(mac => `  permit any host ${mac}`).join('\n'),
                     `  deny any any 0x88ba 0x0`,
                     `  permit   any any`,
                     `!`
                 ].join('\n'));
-            if (smvMacsEgress.length > 0)
+                aclRemovalCommand.push(`no ${name}`);
+            }
+            if (smvMacsEgress.length > 0) {
+                const name = `mac access-list extended ${macFilterOutACL}`;
                 accessListsIn.push([
-                    `mac access-list extended ${macFilterOutACL}`,
-                    smvMacsEgress.map(mac => `  permit host ${mac} any`).join('\n'),
+                    name,
+                    smvMacsEgress.map(mac => `  permit any host ${mac}`).join('\n'),
                     `  deny any any 0x88ba 0x0`,
                     `  permit   any any`,
                     `!`
                 ].join('\n'));
+                aclRemovalCommand.push(`no ${name}`);
+            }
             const manufacturer = (_b = (_a = this.doc
                 .querySelector(`:root > IED[name="${iedName}"]`)) === null || _a === void 0 ? void 0 : _a.getAttribute('manufacturer')) !== null && _b !== void 0 ? _b : 'Unknown';
             const type = (_d = (_c = this.doc
@@ -6513,10 +6608,16 @@ class NetworkConfig extends s$1 {
 !`;
         })
             .join('\n');
+        const vlanNames = getVlanNames(this.doc, vlansOnSwitch);
         this.outputUI.value = [
+            vlanNames,
             interfaceDescriptions,
             accessListsIn.join('\n'),
-            accessListsOut.join('\n')
+            accessListsOut.join('\n'),
+            '!',
+            '! ACL Removal Command',
+            '!',
+            aclRemovalCommand.join('\n')
         ].join('\n');
     }
     firstUpdated() {
