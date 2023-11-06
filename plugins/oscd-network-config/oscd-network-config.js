@@ -6478,14 +6478,16 @@ class NetworkConfig extends s$1 {
                 accessListsIn.push([
                     `mac access-list extended ${macFilterInACL}`,
                     smvMacsIngress.map(mac => `  permit host ${mac} any`).join('\n'),
-                    `  deny   any any`,
+                    `  deny any any 0x88ba 0x0`,
+                    `  permit   any any`,
                     `!`
                 ].join('\n'));
             if (smvMacsEgress.length > 0)
                 accessListsIn.push([
                     `mac access-list extended ${macFilterOutACL}`,
                     smvMacsEgress.map(mac => `  permit host ${mac} any`).join('\n'),
-                    `  deny   any any`,
+                    `  deny any any 0x88ba 0x0`,
+                    `  permit   any any`,
                     `!`
                 ].join('\n'));
             const manufacturer = (_b = (_a = this.doc
