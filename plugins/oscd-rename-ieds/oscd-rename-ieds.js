@@ -4816,7 +4816,7 @@ ${secondLine}"
     render() {
         if (!this.doc)
             return x ``;
-        return x `<md-dialog>
+        return x `<md-dialog @cancel=${(event) => event.preventDefault()}>
       <div slot="headline">Rename IEDs</div>
       <div slot="content">
         <md-outlined-text-field
