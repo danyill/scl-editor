@@ -1988,10 +1988,17 @@ function getUsedCBs(doc) {
 }
 
 function getCommEdit(address, privateSCL, iedName) {
-    // const apIedNameRx = address.closest('ConnectedAP')!.getAttribute('iedName');
-    const apName = address.closest('ConnectedAP').getAttribute('apName');
-    const subNetwork = address.closest('SubNetwork');
+    var _a, _b, _c;
     const doc = address.ownerDocument;
+    const subNetwork = address.closest('SubNetwork');
+    const cbName = address.getAttribute('cbName');
+    // The apName is associated with the AccessPoint of the subscribing ExtRef
+    // but this is not easy to determine if there are ServerAt directives and
+    // the Services section
+    const apName = (_c = (_b = (_a = doc
+        .querySelector(`:root > IED[name="${iedName}"] > AccessPoint > Server > LDevice > LN0 > Inputs > ExtRef[srcCBName="${cbName}"], 
+                     :root > IED[name="${iedName}"] > AccessPoint > Server > LDevice > LN > Inputs > ExtRef[srcCBName="${cbName}"]`)) === null || _a === void 0 ? void 0 : _a.closest('AccessPoint')) === null || _b === void 0 ? void 0 : _b.getAttribute('name')) !== null && _c !== void 0 ? _c : 'No Access Point Found';
+    // const otherAPs = Array.from(doc.querySelectorAll(`:root > IED[name="${iedName}"] > AccessPoint > ServerAt[apName="${apName}"]`)).map(serverAt => serverAt.closest('AccessPoint')?.getAttribute('name'))
     const connectedAp = subNetwork.querySelector(`ConnectedAP[iedName="${iedName}"][apName="${apName}"]`);
     let edit;
     if (connectedAp) {
