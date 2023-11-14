@@ -19,6 +19,7 @@ export declare class ReportControlEditor extends LitElement {
     selectDataSetDialog: Dialog;
     /** Resets selected Report and its DataSet, if not existing in new doc */
     update(props: Map<string | number | symbol, unknown>): void;
+    private addNewDataSet;
     private selectDataSet;
     private selectReportControl;
     private renderSelectDataSetDialog;

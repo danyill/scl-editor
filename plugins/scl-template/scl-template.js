@@ -11415,6 +11415,10 @@ OscdTextfield = __decorate([
     e$7('oscd-textfield')
 ], OscdTextfield);
 
+function items(list) {
+    var _a, _b;
+    return (_b = (_a = list.querySelector('slot')) === null || _a === void 0 ? void 0 : _a.assignedElements()) !== null && _b !== void 0 ? _b : [];
+}
 function slotItem(item) {
     if (!item.closest('action-filtered-list') || !item.parentElement)
         return item;
@@ -11422,12 +11426,12 @@ function slotItem(item) {
         return item;
     return slotItem(item.parentElement);
 }
-function hideFiltered(item, searchText) {
-    const itemInnerText = `${item.innerText}\n`;
-    const childInnerText = Array.from(item.children)
+function hideFiltered(infoItem, searchText, actionItems) {
+    const itemInnerText = `${infoItem.innerText}\n`;
+    const childInnerText = Array.from(infoItem.children)
         .map(child => child.innerText)
         .join('\n');
-    const { value } = item;
+    const { value } = infoItem;
     const filterTarget = (itemInnerText +
         childInnerText +
         value).toUpperCase();
@@ -11436,18 +11440,22 @@ function hideFiltered(item, searchText) {
         .replace(/[.+^${}()|[\]\\]/g, '\\$&')
         .trim()
         .split(/\s+/g);
-    (terms.length === 1 && terms[0] === '') ||
-        terms.every(term => {
-            // regexp escape
-            const reTerm = new RegExp(`*${term}*`.replace(/\*/g, '.*').replace(/\?/g, '.{1}'), 'i');
-            return reTerm.test(filterTarget);
-        })
-        ? slotItem(item).classList.remove('hidden')
-        : slotItem(item).classList.add('hidden');
+    const isEmptyFilter = terms.length === 1 && terms[0] === '';
+    const meetsFilter = terms.every(term => {
+        const reTerm = new RegExp(`*${term}*`.replace(/\*/g, '.*').replace(/\?/g, '.{1}'), 'i');
+        return reTerm.test(filterTarget);
+    });
+    if (isEmptyFilter || meetsFilter) {
+        actionItems.forEach(actionItem => slotItem(actionItem).classList.remove('hidden'));
+        slotItem(infoItem).classList.remove('hidden');
+    }
+    else {
+        actionItems.forEach(actionItem => slotItem(actionItem).classList.add('hidden'));
+        slotItem(infoItem).classList.add('hidden');
+    }
 }
 function redispatchEvent(element, event) {
     element.requestUpdate();
-    // For bubbling events in SSR light DOM (or composed), stop their propagation  // and dispatch the copy.
     const copy = Reflect.construct(event.constructor, [event.type, event]);
     if (event.bubbles && (!element.shadowRoot || event.composed)) {
         event.stopPropagation();
@@ -11459,25 +11467,12 @@ function redispatchEvent(element, event) {
     }
     return dispatched;
 }
-/**
- * @fires {ActionEvent} action - Fired when a selection has been made via click or keyboard action.
- * @fires {SelectedEvent} selected - Fired when a selection has been made. `index` is the selected index (will be of type `Set<number>` if multi and `number` if single), and `diff` (of type `IndexDiff`\*\*) represents the diff of added and removed indices from previous selection.
- * @summary A list with a textfield that filters the list items for given or separated terms.
- * @tag action-filtered-list
- */
 let ActionFilteredList = class ActionFilteredList extends s$1 {
-    /** Selected list item(s). When `true`, `selected` is of type `ListItemBase[]`
-     *  When `false`, `selected` is of type `ListItemBase`.
-     * `selected` is `null` when no item is selected. */
     get selected() {
-        return this.list.selected;
+        return this.infoList.selected;
     }
-    /** Selected item(s) index. When `true`, `index` is of type `number`.
-     * When `false`, `index` is of type `Set<number>`. Unset indices are `-1` and
-     * empty `Set<number>` for single and multi selection respectively.
-     * */
     get index() {
-        return this.list.index;
+        return this.infoList.index;
     }
     get existCheckListItem() {
         return this.items.some(item => item instanceof CheckListItem);
@@ -11504,7 +11499,18 @@ let ActionFilteredList = class ActionFilteredList extends s$1 {
         });
     }
     onFilterInput() {
-        Array.from(this.querySelectorAll('mwc-list-item, mwc-check-list-item, mwc-radio-list-item')).forEach(item => hideFiltered(item, this.searchField.value));
+        this.infoList.items.forEach(item => {
+            var _a, _b;
+            const index = this.infoList.items.indexOf(item);
+            const actionItems = [];
+            const primaryItem = (_a = items(this.listPrimary)[index]) !== null && _a !== void 0 ? _a : undefined;
+            if (primaryItem)
+                actionItems.push(primaryItem);
+            const secondaryItem = (_b = items(this.listSecondary)[index]) !== null && _b !== void 0 ? _b : undefined;
+            if (secondaryItem)
+                actionItems.push(secondaryItem);
+            hideFiltered(item, this.searchField.value, actionItems);
+        });
     }
     firstUpdated() {
         var _a, _b;
@@ -11512,15 +11518,9 @@ let ActionFilteredList = class ActionFilteredList extends s$1 {
     }
     constructor() {
         super();
-        /** Whether the check all option is available */
         this.disableCheckAll = false;
-        /** Whether multiple selection is enabled. */
         this.multi = false;
-        /** Sets activated attribute on selected items providing focus highlight. */
         this.activatable = false;
-        /** All list items that are available for selection. Eligible items have the
-         * `[mwc-list-item]` attribute which `ListItemBase` applies automatically.
-         * */
         this.items = [];
         this.addEventListener('selected', event => {
             redispatchEvent(this, event);
@@ -11545,9 +11545,10 @@ let ActionFilteredList = class ActionFilteredList extends s$1 {
     }
     render() {
         var _a;
-        return x `<div id="tfcontainer">
+        return x `<div class="search container">
         <abbr title="Filter">
           <mwc-textfield
+            class="search input"
             label="${(_a = this.searchFieldLabel) !== null && _a !== void 0 ? _a : ''}"
             iconTrailing="search"
             outlined
@@ -11559,21 +11560,26 @@ let ActionFilteredList = class ActionFilteredList extends s$1 {
       </div>
       <div style="display: flex; flex-direction: columns;">
         <mwc-list
+          class="list info"
           style="flex: auto"
           .multi=${this.multi}
           .activatable=${this.activatable}
         >
           <slot></slot>
         </mwc-list>
-        <mwc-list><slot name="primaryAction"></slot></mwc-list>
-        <mwc-list><slot name="secondaryAction"></slot></mwc-list>
+        <mwc-list class="list primary"
+          ><slot name="primaryAction"></slot
+        ></mwc-list>
+        <mwc-list class="list secondary"
+          ><slot name="secondaryAction"></slot
+        ></mwc-list>
       </div> `;
     }
 };
 ActionFilteredList.styles = i$5 `
     ${r$2(List.styles)}
 
-    #tfcontainer {
+    .search.container {
       display: flex;
       flex: auto;
     }
@@ -11610,17 +11616,11 @@ __decorate([
     n$2({ type: Boolean })
 ], ActionFilteredList.prototype, "disableCheckAll", void 0);
 __decorate([
-    n$2({ type: String })
-], ActionFilteredList.prototype, "filter", void 0);
-__decorate([
     n$2({ type: Boolean })
 ], ActionFilteredList.prototype, "multi", void 0);
 __decorate([
     n$2({ type: Boolean })
 ], ActionFilteredList.prototype, "activatable", void 0);
-__decorate([
-    i$2('mwc-list')
-], ActionFilteredList.prototype, "list", void 0);
 __decorate([
     n$2({ attribute: false })
 ], ActionFilteredList.prototype, "items", void 0);
@@ -11634,7 +11634,16 @@ __decorate([
     t$1()
 ], ActionFilteredList.prototype, "isSomeSelected", null);
 __decorate([
-    i$2('mwc-textfield')
+    i$2('.list.info')
+], ActionFilteredList.prototype, "infoList", void 0);
+__decorate([
+    i$2('.list.primary')
+], ActionFilteredList.prototype, "listPrimary", void 0);
+__decorate([
+    i$2('.list.secondary')
+], ActionFilteredList.prototype, "listSecondary", void 0);
+__decorate([
+    i$2('.search.input')
 ], ActionFilteredList.prototype, "searchField", void 0);
 ActionFilteredList = __decorate([
     e$7('action-filtered-list')
@@ -13780,8 +13789,8 @@ class TemplatesPlugin extends s$1 {
                 .closest('DataTypeTemplates')) === null || _a === void 0 ? void 0 : _a.querySelector(`DOType[id="${element.getAttribute('type')}"]`);
             if (doType) {
                 this.selectedDOType = doType;
-                this.selectedDAType = null;
-                this.selectedEnumType = null;
+                this.selectedDAType = undefined;
+                this.selectedEnumType = undefined;
             }
         }
         else if (element.tagName === 'DA' || element.tagName === 'BDA') {
@@ -13791,14 +13800,14 @@ class TemplatesPlugin extends s$1 {
                 if (enumType)
                     this.selectedEnumType = enumType;
                 if (element.tagName === 'DA')
-                    this.selectedDAType = null;
+                    this.selectedDAType = undefined;
             }
             else if (element.getAttribute('bType') === 'Struct') {
                 const daType = (_c = element
                     .closest('DataTypeTemplates')) === null || _c === void 0 ? void 0 : _c.querySelector(`DAType[id="${element.getAttribute('type')}"]`);
                 if (daType) {
                     this.selectedDAType = daType;
-                    this.selectedEnumType = null;
+                    this.selectedEnumType = undefined;
                 }
             }
         }
@@ -13996,19 +14005,16 @@ class TemplatesPlugin extends s$1 {
                 </mwc-list-item>
                 <mwc-list-item
                   slot="primaryAction"
-                  hasMeta
                   ?noninteractive=${!dAorBda.getAttribute('type')}
                   @request-selected="${(e) => {
             e.stopPropagation();
             this.selectReferencedChild(dAorBda);
         }}"
-                  ><mwc-icon
-                    ><span class="material-symbols-outlined">
-                      ${dAorBda.getAttribute('type')
+                  ><mwc-icon>
+                    ${dAorBda.getAttribute('type')
             ? 'navigate_next'
             : 'last_page'}
-                    </span></mwc-icon
-                  >
+                  </mwc-icon>
                 </mwc-list-item>`)}
         </action-filtered-list>
       </div>
@@ -14143,19 +14149,16 @@ class TemplatesPlugin extends s$1 {
                 </mwc-list-item>
                 <mwc-list-item
                   slot="primaryAction"
-                  hasMeta
                   ?noninteractive=${!sDOorDa.getAttribute('type')}
                   @request-selected="${(e) => {
             e.stopPropagation();
             this.selectReferencedChild(sDOorDa);
         }}"
-                  ><mwc-icon
-                    ><span class="material-symbols-outlined">
-                      ${sDOorDa.getAttribute('type')
+                  ><mwc-icon>
+                    ${sDOorDa.getAttribute('type')
             ? 'navigate_next'
             : 'last_page'}
-                    </span></mwc-icon
-                  ></mwc-list-item
+                  </mwc-icon></mwc-list-item
                 >`)}
         </action-filtered-list>
       </div>
@@ -14274,16 +14277,11 @@ class TemplatesPlugin extends s$1 {
                   <span>${dO.getAttribute('name')}</span></mwc-list-item
                 ><mwc-list-item
                   slot="primaryAction"
-                  hasMeta
                   @request-selected="${(e) => {
             e.stopPropagation();
             this.selectReferencedChild(dO);
         }}"
-                  ><mwc-icon
-                    ><span class="material-symbols-outlined">
-                      navigate_next
-                    </span></mwc-icon
-                  ></mwc-list-item
+                  ><mwc-icon>navigate_next</mwc-icon></mwc-list-item
                 >`)}
         </action-filtered-list>
       </div>

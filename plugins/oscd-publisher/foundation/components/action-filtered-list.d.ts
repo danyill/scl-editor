@@ -5,7 +5,7 @@ import '@material/mwc-list/mwc-list-item-base';
 import '@material/mwc-textfield';
 import { List } from '@material/mwc-list';
 import type { TextField } from '@material/mwc-textfield';
-import type { ListItemBase } from '@material/mwc-list/mwc-list-item-base';
+import { ListItemBase } from '@material/mwc-list/mwc-list-item-base';
 export declare function redispatchEvent(element: LitElement, event: Event): boolean;
 export declare class ActionFilteredList extends LitElement {
     searchFieldLabel?: string;

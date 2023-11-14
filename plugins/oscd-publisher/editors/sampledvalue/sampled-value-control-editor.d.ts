@@ -19,6 +19,7 @@ export declare class SampledValueControlEditor extends LitElement {
     selectDataSetDialog: Dialog;
     /** Resets selected SMV and its DataSet, if not existing in new doc */
     update(props: Map<string | number | symbol, unknown>): void;
+    private addNewDataSet;
     private selectDataSet;
     private selectSMVControl;
     private renderSelectDataSetDialog;

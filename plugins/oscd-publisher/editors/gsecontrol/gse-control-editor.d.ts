@@ -20,6 +20,7 @@ export declare class GseControlEditor extends LitElement {
     selectDataSetDialog: Dialog;
     /** Resets selected GOOSE and its DataSet, if not existing in new doc */
     update(props: Map<string | number | symbol, unknown>): void;
+    private addNewDataSet;
     private selectDataSet;
     private selectGSEControl;
     private renderSelectDataSetDialog;
