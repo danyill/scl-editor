@@ -3,15 +3,33 @@ import { css, html, nothing, LitElement, svg } from 'lit';
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
-import { ref } from 'lit/directives/ref.js';
+import { createRef, ref } from 'lit/directives/ref.js';
 import { newEditEvent } from '@openscd/open-scd-core';
 import '@material/mwc-dialog';
 import '@material/mwc-list';
 import '@material/mwc-list/mwc-list-item.js';
 import '@material/mwc-textfield';
 import { getReference, identity } from '@openscd/oscd-scl';
-import { bayGraphic, equipmentGraphic, movePath, resizePath, symbols, voltageLevelGraphic, } from './icons.js';
-import { attributes, connectionStartPoints, elementPath, isBusBar, newConnectEvent, newPlaceEvent, newPlaceLabelEvent, newResizeEvent, newRotateEvent, newStartConnectEvent, newStartPlaceEvent, newStartPlaceLabelEvent, newStartResizeEvent, privType, removeNode, removeTerminal, sldNs, svgNs, xmlBoolean, } from './util.js';
+import { bayGraphic, eqRingPath, equipmentGraphic, movePath, resizePath, symbols, voltageLevelGraphic, } from './icons.js';
+import { attributes, connectionStartPoints, elementPath, isBusBar, isEqType, newConnectEvent, newPlaceEvent, newPlaceLabelEvent, newResizeEvent, newRotateEvent, newStartConnectEvent, newStartPlaceEvent, newStartPlaceLabelEvent, newStartResizeEvent, privType, removeNode, removeTerminal, ringedEqTypes, sldNs, svgNs, uuid, xmlBoolean, } from './util.js';
+const parentTags = {
+    ConductingEquipment: 'Bay',
+    Bay: 'VoltageLevel',
+    VoltageLevel: 'Substation',
+};
+const singleTerminal = new Set([
+    'BAT',
+    'EFN',
+    'FAN',
+    'GEN',
+    'IFL',
+    'MOT',
+    'PMP',
+    'RRC',
+    'SAR',
+    'SMC',
+    'VTR',
+]);
 function newEditWizardEvent(element) {
     return new CustomEvent('oscd-edit-wizard-request', {
         bubbles: true,
@@ -53,30 +71,56 @@ function cleanPath(path) {
 function isBay(element) {
     return element.tagName === 'Bay' && !isBusBar(element);
 }
-const parentTags = {
-    ConductingEquipment: 'Bay',
-    Bay: 'VoltageLevel',
-    VoltageLevel: 'Substation',
-};
-const singleTerminal = new Set([
-    'VTR',
-    'GEN',
-    'MOT',
-    'FAN',
-    'PMP',
-    'EFN',
-    'BAT',
-    'RRC',
-    'SAR',
-    'SMC',
-    'IFL',
-]);
 function preventDefault(e) {
     e.preventDefault();
 }
+function copy(element, nsp) {
+    const clone = element.cloneNode(true);
+    const terminals = new Set(Array.from(element.querySelectorAll('Terminal')));
+    const cNodes = new Set();
+    terminals.forEach(terminal => {
+        const cNode = element.ownerDocument.querySelector(`ConnectivityNode[pathName="${terminal.getAttribute('connectivityNode')}"]`);
+        if (cNode)
+            cNodes.add(cNode);
+    });
+    const foreignCNodes = new Set();
+    cNodes.forEach(cNode => {
+        const foreignTerminal = Array.from(element.ownerDocument.querySelectorAll(`Terminal[connectivityNode="${cNode.getAttribute('pathName')}"]`)).find(terminal => !terminals.has(terminal));
+        if (foreignTerminal)
+            foreignCNodes.add(cNode);
+    });
+    foreignCNodes.forEach(cNode => {
+        var _a;
+        if (cNode.closest(element.tagName) === element) {
+            (_a = clone
+                .querySelector(`ConnectivityNode[pathName="${cNode.getAttribute('pathName')}"]`)) === null || _a === void 0 ? void 0 : _a.remove();
+        }
+        terminals.forEach(terminal => {
+            var _a;
+            if (terminal.getAttribute('connectivityNode') ===
+                cNode.getAttribute('pathName'))
+                (_a = clone
+                    .querySelector(`[*|uuid="${terminal.getAttributeNS(sldNs, 'uuid')}"]`)) === null || _a === void 0 ? void 0 : _a.remove();
+        });
+    });
+    Array.from(clone.querySelectorAll('Terminal')).forEach(terminal => {
+        const oldUUID = terminal.getAttributeNS(sldNs, 'uuid');
+        const newUUID = uuid();
+        Array.from(clone.querySelectorAll(`Vertex[*|uuid="${oldUUID}"`)).forEach(vertex => vertex.setAttributeNS(sldNs, `${nsp}:uuid`, newUUID));
+        terminal.setAttributeNS(sldNs, `${nsp}:uuid`, newUUID);
+    });
+    return clone;
+}
 function renderMenuFooter(element) {
     const name = element.getAttribute('name');
-    const desc = element.getAttribute('desc') || element.getAttribute('type');
+    let detail = element.getAttribute('desc');
+    const type = element.getAttribute('type');
+    if (type) {
+        if (detail)
+            detail = html `${type} &mdash; ${detail}`;
+        else
+            detail = type;
+    }
     let footerGraphic = equipmentGraphic(null);
     if (element.tagName === 'ConductingEquipment')
         footerGraphic = equipmentGraphic(element.getAttribute('type'));
@@ -86,9 +130,16 @@ function renderMenuFooter(element) {
         footerGraphic = bayGraphic;
     else if (element.tagName === 'VoltageLevel')
         footerGraphic = voltageLevelGraphic;
-    return html `<mwc-list-item ?twoline=${desc} graphic="avatar" noninteractive>
+    return html `<mwc-list-item ?twoline=${detail} graphic="avatar" noninteractive>
     <span>${name}</span>
-    ${desc ? html `<span slot="secondary">${desc}</span>` : nothing}
+    ${detail
+        ? html `<span
+          slot="secondary"
+          style="display: inline-block; max-width: 15em; overflow: hidden; text-overflow: ellipsis;"
+        >
+          ${detail}
+        </span>`
+        : nothing}
     ${footerGraphic}
   </mwc-list-item>`;
 }
@@ -102,13 +153,36 @@ let SLDEditor = class SLDEditor extends LitElement {
         this.mouseY = 0;
         this.mouseX2 = 0;
         this.mouseY2 = 0;
+        this.coordinatesRef = createRef();
         this.handleKeydown = ({ key }) => {
             if (key === 'Escape')
                 this.menu = undefined;
         };
-        this.handleClick = (_e) => {
-            this.menu = undefined;
+        this.handleClick = (e) => {
+            if (this.menu &&
+                !e
+                    .composedPath()
+                    .find(elm => 'id' in elm && elm.id === 'sld-context-menu')) {
+                e.stopImmediatePropagation();
+                this.menu = undefined;
+            }
         };
+    }
+    positionCoordinates(e) {
+        var _a;
+        const coordinatesDiv = (_a = this.coordinatesRef) === null || _a === void 0 ? void 0 : _a.value;
+        if (coordinatesDiv) {
+            coordinatesDiv.style.top = `${e.clientY}px`;
+            coordinatesDiv.style.left = `${e.clientX + 16}px`;
+        }
+    }
+    openMenu(element, e) {
+        if (!this.placing &&
+            !this.resizing &&
+            !this.placingLabel &&
+            !this.connecting)
+            this.menu = { element, left: e.clientX, top: e.clientY };
+        e.preventDefault();
     }
     svgCoordinates(clientX, clientY) {
         const p = new DOMPoint(clientX, clientY);
@@ -173,12 +247,14 @@ let SLDEditor = class SLDEditor extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         window.addEventListener('keydown', this.handleKeydown);
-        window.addEventListener('click', this.handleClick);
+        window.addEventListener('click', this.handleClick, true);
+        window.addEventListener('click', this.positionCoordinates);
     }
     disconnectedCallback() {
         super.disconnectedCallback();
         window.removeEventListener('keydown', this.handleKeydown);
         window.removeEventListener('click', this.handleClick);
+        window.removeEventListener('click', this.positionCoordinates);
     }
     nearestOpenTerminal(equipment) {
         if (!equipment)
@@ -288,6 +364,13 @@ let SLDEditor = class SLDEditor extends LitElement {
           </svg>
         </mwc-list-item>`,
                 handler: () => this.dispatchEvent(newStartPlaceEvent(equipment)),
+            },
+            {
+                content: html `<mwc-list-item graphic="icon">
+          <span>Move Label</span>
+          <mwc-icon slot="graphic">text_rotation_none</mwc-icon>
+        </mwc-list-item>`,
+                handler: () => this.dispatchEvent(newStartPlaceLabelEvent(equipment)),
             },
             {
                 content: html `<mwc-list-item graphic="icon">
@@ -410,6 +493,13 @@ let SLDEditor = class SLDEditor extends LitElement {
             },
             {
                 content: html `<mwc-list-item graphic="icon">
+          <span>Move Label</span>
+          <mwc-icon slot="graphic">text_rotation_none</mwc-icon>
+        </mwc-list-item>`,
+                handler: () => this.dispatchEvent(newStartPlaceLabelEvent(busBar)),
+            },
+            {
+                content: html `<mwc-list-item graphic="icon">
           <span>Edit</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
         </mwc-list-item>`,
@@ -462,6 +552,13 @@ let SLDEditor = class SLDEditor extends LitElement {
             },
             {
                 content: html `<mwc-list-item graphic="icon">
+          <span>Move Label</span>
+          <mwc-icon slot="graphic">text_rotation_none</mwc-icon>
+        </mwc-list-item>`,
+                handler: () => this.dispatchEvent(newStartPlaceLabelEvent(bayOrVL)),
+            },
+            {
+                content: html `<mwc-list-item graphic="icon">
           <span>Edit</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
         </mwc-list-item>`,
@@ -503,22 +600,27 @@ let SLDEditor = class SLDEditor extends LitElement {
             items = this.containerMenuItems(element);
         return html `
       <menu
+        id="sld-context-menu"
         style="position: fixed; top: ${this.menu.top}px; left: ${this.menu
-            .left}px; background: var(--oscd-base3, white); margin: 0px; padding: 0px; box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); --mdc-list-vertical-padding: 0px;"
-        ${ref(async (m) => {
-            if (!(m instanceof HTMLElement))
+            .left}px; background: var(--oscd-base3, white); margin: 0px; padding: 0px; box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); --mdc-list-vertical-padding: 0px; overflow-y: auto;"
+        ${ref(async (menu) => {
+            if (!(menu instanceof HTMLElement))
                 return;
+            const nav = this.parentElement.getRootNode().querySelector('nav');
+            const navHeight = nav.offsetHeight + 8;
             await this.updateComplete;
-            const { bottom, right } = m.getBoundingClientRect();
-            if (bottom > window.innerHeight) {
-                m.style.removeProperty('top');
+            const { bottom, right } = menu.getBoundingClientRect();
+            if (bottom > window.innerHeight - navHeight) {
+                menu.style.removeProperty('top');
                 // eslint-disable-next-line no-param-reassign
-                m.style.bottom = '0px';
+                menu.style.bottom = `${navHeight}px`;
+                // eslint-disable-next-line no-param-reassign
+                menu.style.maxHeight = `calc(100vh - ${navHeight + 68}px)`;
             }
             if (right > window.innerWidth) {
-                m.style.removeProperty('left');
+                menu.style.removeProperty('left');
                 // eslint-disable-next-line no-param-reassign
-                m.style.right = '0px';
+                menu.style.right = '0px';
             }
         })}
       >
@@ -537,10 +639,19 @@ let SLDEditor = class SLDEditor extends LitElement {
     `;
     }
     render() {
-        var _a, _b;
+        var _a, _b, _c;
         const { dim: [w, h], } = attributes(this.substation);
         const placingTarget = ((_a = this.placing) === null || _a === void 0 ? void 0 : _a.tagName) === 'VoltageLevel'
             ? svg `<rect width="100%" height="100%" fill="url(#grid)" />`
+            : nothing;
+        const placingLabelTarget = this.placingLabel
+            ? svg `<rect width="100%" height="100%" fill="url(#halfgrid)"
+      @click=${() => {
+                const element = this.placingLabel;
+                const [x, y] = this.renderedLabelPosition(element);
+                this.dispatchEvent(newPlaceLabelEvent({ element, x, y }));
+            }}
+      />`
             : nothing;
         let placingElement = svg ``;
         if (this.placing) {
@@ -551,38 +662,31 @@ let SLDEditor = class SLDEditor extends LitElement {
             else if (isBusBar(this.placing))
                 placingElement = this.renderBusBar(this.placing);
         }
-        let placingIndicator = svg ``;
+        let coordinates = html ``;
+        let invalid = false;
+        let hidden = true;
         if (this.placing) {
             const { dim: [w0, h0], } = attributes(this.placing);
-            const invalid = !this.canPlaceAt(this.placing, this.mouseX, this.mouseY, w0, h0);
-            placingIndicator = svg `
-      <foreignObject x="${this.mouseX + 1}" y="${this.mouseY}"
-          width="1" height="1" class="preview"
-          style="pointer-events: none; overflow: visible;">
-        <span class="${classMap({ indicator: true, invalid })}">
-        (${this.mouseX},${this.mouseY})
-        </span>
-      </foreignObject>
-    `;
+            hidden = false;
+            invalid = !this.canPlaceAt(this.placing, this.mouseX, this.mouseY, w0, h0);
+            coordinates = html `${this.mouseX},${this.mouseY}`;
         }
-        let resizingIndicator = svg ``;
         if (this.resizing && !isBusBar(this.resizing)) {
             const { pos: [x, y], } = attributes(this.resizing);
             const newW = Math.max(1, this.mouseX - x + 1);
             const newH = Math.max(1, this.mouseY - y + 1);
-            const invalid = !this.canResizeTo(this.resizing, newW, newH);
-            resizingIndicator = svg `
-      <foreignObject x="${this.mouseX + 1}" y="${this.mouseY}"
-        width="1" height="1" class="preview"
-        style="pointer-events: none; overflow: visible;">
-        <span class="${classMap({ indicator: true, invalid })}">
-        (${newW}&times;${newH})
-        </span>
-      </foreignObject>
-    `;
+            hidden = false;
+            invalid = !this.canResizeTo(this.resizing, newW, newH);
+            coordinates = html `${newW}&times;${newH}`;
         }
+        const coordinateTooltip = html `<div
+      ${ref(this.coordinatesRef)}
+      class="${classMap({ coordinates: true, invalid, hidden })}"
+    >
+      (${coordinates})
+    </div>`;
         const connectionPreview = [];
-        if (this.connecting) {
+        if (((_b = this.connecting) === null || _b === void 0 ? void 0 : _b.equipment.closest('Substation')) === this.substation) {
             const { equipment, path, terminal } = this.connecting;
             let i = 0;
             while (i < path.length - 2) {
@@ -664,19 +768,10 @@ let SLDEditor = class SLDEditor extends LitElement {
             this.mouseY = Math.floor(y);
             this.mouseX2 = Math.floor(x * 2) / 2;
             this.mouseY2 = Math.floor(y * 2) / 2;
+            this.positionCoordinates(e);
         }}
       >
         <style>
-          .indicator {
-            font-size: 0.6px;
-            overflow: visible;
-            font-family: 'Roboto', sans-serif;
-            background: white;
-            color: rgb(0, 0, 0 / 0.83);
-          }
-          .indicator.invalid {
-            color: #bb1326;
-          }
           .handle {
             visibility: hidden;
           }
@@ -693,10 +788,11 @@ let SLDEditor = class SLDEditor extends LitElement {
             visibility: visible;
             opacity: 1;
           }
-          rect {
+          g.voltagelevel > rect,
+          g.bay > rect {
             shape-rendering: crispEdges;
           }
-          section:not(:hover) .preview {
+          svg:not(:hover) .preview {
             visibility: hidden;
           }
           .preview {
@@ -710,7 +806,7 @@ let SLDEditor = class SLDEditor extends LitElement {
             .filter(child => child.tagName === 'VoltageLevel')
             .map(vl => svg `${this.renderContainer(vl)}`)}
         ${connectionPreview}
-        ${((_b = this.connecting) === null || _b === void 0 ? void 0 : _b.equipment.closest('Substation')) === this.substation
+        ${((_c = this.connecting) === null || _c === void 0 ? void 0 : _c.equipment.closest('Substation')) === this.substation
             ? Array.from(this.substation.querySelectorAll('ConductingEquipment')).map(eq => this.renderEquipment(eq, { connect: true }))
             : nothing}
         ${Array.from(this.substation.querySelectorAll('ConnectivityNode'))
@@ -725,10 +821,12 @@ let SLDEditor = class SLDEditor extends LitElement {
                 node.closest(this.placing.tagName) === this.placing) &&
             isBusBar(node.parentElement))
             .map(cNode => this.renderConnectivityNode(cNode))}
-        ${placingElement} ${placingIndicator} ${resizingIndicator}
-        ${Array.from(this.substation.querySelectorAll('VoltageLevel, Bay, ConductingEquipment')).map(element => this.renderLabel(element))}
+        ${Array.from(this.substation.querySelectorAll('VoltageLevel, Bay, ConductingEquipment'))
+            .filter(e => !this.placing || e.closest(this.placing.tagName) !== this.placing)
+            .map(element => this.renderLabel(element))}
+        ${placingLabelTarget} ${placingElement}
       </svg>
-      ${menu}
+      ${menu} ${coordinateTooltip}
       <mwc-dialog
         id="resizeSubstationUI"
         heading="Resize ${this.substation.getAttribute('name')}"
@@ -804,21 +902,34 @@ let SLDEditor = class SLDEditor extends LitElement {
         const [x, y] = this.renderedLabelPosition(element);
         const name = element.getAttribute('name');
         const fontSize = element.tagName === 'ConductingEquipment' ? 0.45 : 0.6;
-        let cursor = 'default';
+        let events = 'none';
         let handleClick = nothing;
-        if (this.placingLabel === element)
-            handleClick = () => this.dispatchEvent(newPlaceLabelEvent({ element, x, y }));
-        else if (!this.placing && !this.resizing) {
-            cursor = 'move';
+        if (!this.placing &&
+            !this.resizing &&
+            !this.connecting &&
+            !this.placingLabel) {
+            events = 'all';
             handleClick = () => this.dispatchEvent(newStartPlaceLabelEvent(element));
         }
-        const id = identity(element);
+        const id = element.closest('Substation') === this.substation
+            ? identity(element)
+            : nothing;
         return svg `<g class="label" id="label:${id}">
-        <rect x="${x}" y="${y - 1}" width="1" height="1" fill="none"
-        style="cursor: ${cursor};" @click=${handleClick} pointer-events="all" />
-        <text x="${x + 0.1}" y="${y - 0.2}" @click=${handleClick}
-          pointer-events="all" fill="#000000" fill-opacity="0.83"
-          style="font: ${fontSize}px sans-serif; cursor: ${cursor};">${name}</text>
+        <text x="${x + 0.1}" y="${y - 0.2}"
+          @mousedown=${preventDefault}
+          @auxclick=${(e) => {
+            if (e.button === 1) {
+                // middle mouse button
+                this.dispatchEvent(newEditWizardEvent(element));
+                e.preventDefault();
+            }
+        }}
+          @click=${handleClick}
+          @contextmenu=${(e) => this.openMenu(element, e)}
+          pointer-events="${events}" fill="#000000" fill-opacity="0.83"
+          style="font: ${fontSize}px sans-serif; cursor: default;">
+          ${name}
+        </text>
       </g>`;
     }
     renderContainer(bayOrVL, preview = false) {
@@ -876,38 +987,34 @@ let SLDEditor = class SLDEditor extends LitElement {
             this.resizing.parentElement === bayOrVL)
             resizingTarget = svg `<rect x="${x}" y="${y}" width="${w}" height="${h}"
         fill="url(#grid)" />`;
-        if (!this.placing && !this.resizing && !this.connecting) {
-            moveHandle = svg `
-<a class="handle" href="#0" @click=${() => this.dispatchEvent(newStartPlaceEvent(bayOrVL))}>
-  <svg xmlns="${svgNs}" height="1" width="1" fill="black" opacity="0.83"
-    viewBox="0 96 960 960" x="${x}" y="${y}">
-    <rect fill="white" x="0" y="0" width="100%" height="100%" />
-    ${movePath}
-  </svg>
-</a>
-    `;
-            resizeHandle = svg `
-<a class="handle" href="#0" @click=${() => this.dispatchEvent(newStartResizeEvent(bayOrVL))}>
-  <svg xmlns="${svgNs}" height="1" width="1" fill="black" opacity="0.83"
-    viewBox="0 96 960 960" x="${w + x - 1}" y="${h + y - 1}">
-    <rect fill="white" x="0" y="0" width="100%" height="100%" />
-    ${resizePath}
-  </svg>
-</a>
-      `;
+        if (!this.placing &&
+            !this.resizing &&
+            !this.connecting &&
+            !this.placingLabel) {
+            moveHandle = svg `<svg class="handle" xmlns="${svgNs}" height="1" width="1"
+          fill="black" opacity="0.83" viewBox="0 96 960 960" 
+          @click=${(e) => this.dispatchEvent(newStartPlaceEvent(e.shiftKey ? copy(bayOrVL, this.nsp) : bayOrVL))}
+          x="${x}" y="${y}">
+        <rect fill="white" x="0" y="0" width="100%" height="100%" />
+        ${movePath}
+      </svg>`;
+            resizeHandle = svg `<svg class="handle" xmlns="${svgNs}" height="1" width="1"
+          fill="black" opacity="0.83" viewBox="0 96 960 960" 
+          @click=${() => this.dispatchEvent(newStartResizeEvent(bayOrVL))}
+          x="${w + x - 1}" y="${h + y - 1}">
+        <rect fill="white" x="0" y="0" width="100%" height="100%" />
+        ${resizePath}
+      </svg>`;
         }
-        return svg `<g id="${bayOrVL.parentElement ? identity(bayOrVL) : nothing}" class=${classMap({
+        return svg `<g id="${bayOrVL.closest('Substation') === this.substation
+            ? identity(bayOrVL)
+            : nothing}" class=${classMap({
             voltagelevel: isVL,
             bay: !isVL,
             preview,
         })} tabindex="0" pointer-events="all" style="outline: none;">
       <rect x="${x}" y="${y}" width="${w}" height="${h}"
-        @contextmenu=${(e) => {
-            if (e.getModifierState('Shift'))
-                return;
-            this.menu = { element: bayOrVL, left: e.clientX, top: e.clientY };
-            e.preventDefault();
-        }}
+        @contextmenu=${(e) => this.openMenu(bayOrVL, e)}
         @click=${handleClick || nothing}
         fill="white" stroke-dasharray="${isVL ? nothing : '0.18'}"
         stroke="${
@@ -925,6 +1032,11 @@ let SLDEditor = class SLDEditor extends LitElement {
                 .filter(child => child.getAttribute('name') !== 'grounded')
                 .map(cNode => this.renderConnectivityNode(cNode))
             : nothing}
+        ${preview
+            ? Array.from(bayOrVL.querySelectorAll('Bay, ConductingEquipment'))
+                .concat(bayOrVL)
+                .map(element => this.renderLabel(element))
+            : nothing}
       ${placingTarget}
       ${resizeHandle}
       ${resizingTarget}
@@ -941,11 +1053,22 @@ let SLDEditor = class SLDEditor extends LitElement {
         const { flip, rot } = attributes(equipment);
         const deg = 90 * rot;
         const eqType = equipment.getAttribute('type');
-        const symbol = ['CBR', 'CTR', 'VTR', 'DIS', 'IFL'].includes(eqType)
-            ? eqType
-            : 'ConductingEquipment';
-        let handleClick = () => {
-            this.dispatchEvent(newStartPlaceEvent(equipment));
+        const ringed = ringedEqTypes.has(eqType);
+        const symbol = isEqType(eqType) ? eqType : 'ConductingEquipment';
+        const icon = ringed
+            ? svg `<svg
+    viewBox="0 0 25 25"
+    width="1"
+    height="1"
+  >
+    ${eqRingPath}
+  </svg>`
+            : svg `<use href="#${symbol}" pointer-events="none" />`;
+        let handleClick = (e) => {
+            let placing = equipment;
+            if (e.shiftKey)
+                placing = copy(equipment, this.nsp);
+            this.dispatchEvent(newStartPlaceEvent(placing));
         };
         if (this.placing === equipment) {
             const parent = Array.from(this.substation.querySelectorAll(':root > Substation > VoltageLevel > Bay')).find(vl => containsRect(vl, x, y, 1, 1));
@@ -968,8 +1091,6 @@ let SLDEditor = class SLDEditor extends LitElement {
       fill="#BB1326" stroke="#F5E214"
     @click=${() => this.dispatchEvent(newStartConnectEvent({ equipment, terminal: 'top' }))}
     @contextmenu=${(e) => {
-                if (e.getModifierState('Shift'))
-                    return;
                 e.preventDefault();
                 this.groundTerminal(equipment, 'T1');
             }}
@@ -997,8 +1118,6 @@ let SLDEditor = class SLDEditor extends LitElement {
       fill="#BB1326" stroke="#F5E214"
     @click=${() => this.dispatchEvent(newStartConnectEvent({ equipment, terminal: 'bottom' }))}
     @contextmenu=${(e) => {
-                if (e.getModifierState('Shift'))
-                    return;
                 e.preventDefault();
                 this.groundTerminal(equipment, 'T2');
             }}
@@ -1021,10 +1140,16 @@ let SLDEditor = class SLDEditor extends LitElement {
             equipment: true,
             preview: this.placing === equipment,
         })}"
-    id="${equipment.parentElement ? identity(equipment) : nothing}"
+    id="${equipment.closest('Substation') === this.substation
+            ? identity(equipment)
+            : nothing}"
     transform="translate(${x} ${y}) rotate(${deg})${flip ? ' scale(-1,1)' : ''}" transform-origin="0.5 0.5">
       <title>${equipment.getAttribute('name')}</title>
-      <use href="#${symbol}" pointer-events="none" />
+      ${icon}
+      ${ringed
+            ? svg `<use transform="rotate(${-deg} 0.5 0.5)" href="#${symbol}"
+        pointer-events="none" />`
+            : nothing}
       <rect width="1" height="1" fill="none" pointer-events="${connect ? 'none' : 'all'}"
         @mousedown=${preventDefault}
         @click=${handleClick}
@@ -1035,12 +1160,7 @@ let SLDEditor = class SLDEditor extends LitElement {
                 e.preventDefault();
             }
         }}
-        @contextmenu=${(e) => {
-            if (e.getModifierState('Shift'))
-                return;
-            this.menu = { element: equipment, left: e.clientX, top: e.clientY };
-            e.preventDefault();
-        }}
+        @contextmenu=${(e) => this.openMenu(equipment, e)}
       />
       ${topConnector}
       ${topIndicator}
@@ -1048,7 +1168,8 @@ let SLDEditor = class SLDEditor extends LitElement {
       ${bottomConnector}
       ${bottomIndicator}
       ${bottomGrounded}
-    </g>`;
+    </g>
+    <g class="preview">${preview ? this.renderLabel(equipment) : nothing}</g>`;
     }
     renderBusBar(busBar) {
         const [x, y] = this.renderedPosition(busBar);
@@ -1068,7 +1189,9 @@ let SLDEditor = class SLDEditor extends LitElement {
                     }));
             }}
         />`;
-        return svg `<g class="bus" id="${busBar.parentElement ? identity(busBar) : nothing}">
+        return svg `<g class="bus" id="${busBar.closest('Substation') === this.substation
+            ? identity(busBar)
+            : nothing}">
       <title>${busBar.getAttribute('name')}</title>
       ${this.renderConnectivityNode(busBar.querySelector('ConnectivityNode'))}
       ${placingTarget}
@@ -1112,12 +1235,7 @@ let SLDEditor = class SLDEditor extends LitElement {
                         if (button === 1)
                             this.dispatchEvent(newStartResizeEvent(bay));
                     };
-                    handleContextMenu = (e) => {
-                        if (e.getModifierState('Shift'))
-                            return;
-                        this.menu = { element: bay, left: e.clientX, top: e.clientY };
-                        e.preventDefault();
-                    };
+                    handleContextMenu = (e) => this.openMenu(bay, e);
                 }
                 if (busBar && this.resizing === bay) {
                     if (section !== sections.find(s => xmlBoolean(s.getAttribute('bus'))))
@@ -1182,13 +1300,13 @@ let SLDEditor = class SLDEditor extends LitElement {
                 lines.push(svg `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
                 @click=${handleClick} @auxclick=${handleAuxClick}
                 @contextmenu=${handleContextMenu} @mousedown=${preventDefault}
-                pointer-events="all" stroke="none" stroke-width="1" />`);
-                if (![x1, y1].find(n => Number.isInteger(n)))
+                pointer-events="all" stroke-width="${this.connecting ? 1 : 0.7}" />`);
+                if (this.connecting && ![x1, y1].find(n => Number.isInteger(n)))
                     lines.push(svg `<rect x="${x1 - 0.5}" y="${y1 - 0.5}" width="1" height="1"
                 @click=${handleClick} @auxclick=${handleAuxClick}
                 @contextmenu=${handleContextMenu} @mousedown=${preventDefault}
                 pointer-events="all" fill="none" />`);
-                if (![x2, y2].find(n => Number.isInteger(n)))
+                if (this.connecting && ![x2, y2].find(n => Number.isInteger(n)))
                     lines.push(svg `<rect x="${x2 - 0.5}" y="${y2 - 0.5}" width="1" height="1"
                 @click=${handleClick} @auxclick=${handleAuxClick}
                 @contextmenu=${handleContextMenu} @mousedown=${preventDefault}
@@ -1196,7 +1314,9 @@ let SLDEditor = class SLDEditor extends LitElement {
                 i += 1;
             }
         });
-        const id = cNode.parentElement.parentElement ? identity(cNode) : nothing;
+        const id = cNode.closest('Substation') === this.substation
+            ? identity(cNode)
+            : nothing;
         return svg `<g class="node" id="${id}" >
         <title>${cNode.getAttribute('pathName')}</title>
         ${circles}
@@ -1212,6 +1332,30 @@ SLDEditor.styles = css `
       margin-bottom: 4px;
       --mdc-icon-button-size: 28px;
       --mdc-icon-size: 24px;
+    }
+
+    .hidden {
+      display: none;
+    }
+    svg:not(:hover) ~ .coordinates {
+      display: none;
+    }
+    .coordinates {
+      position: fixed;
+      pointer-events: none;
+      font-size: 16px;
+      font-family: 'Roboto', sans-serif;
+      padding: 8px;
+      border-radius: 16px;
+      background: #fffd;
+      color: rgb(0, 0, 0 / 0.83);
+    }
+    .coordinates.invalid {
+      color: #bb1326;
+    }
+
+    * {
+      user-select: none;
     }
   `;
 __decorate([

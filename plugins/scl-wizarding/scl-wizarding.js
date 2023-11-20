@@ -25363,14 +25363,6 @@ Dialog = __decorate$1([
     e$7('mwc-dialog')
 ], Dialog);
 
-function newEditEvent(edit) {
-    return new CustomEvent('oscd-edit', {
-        composed: true,
-        bubbles: true,
-        detail: edit,
-    });
-}
-
 /**
  * @license
  * Copyright 2021 Google LLC
@@ -25594,6 +25586,14 @@ Button = __decorate$1([
     e$7('mwc-button')
 ], Button);
 
+function newEditEvent(edit) {
+    return new CustomEvent('oscd-edit', {
+        composed: true,
+        bubbles: true,
+        detail: edit,
+    });
+}
+
 /** Throws an error bearing `message`, never returning. */
 /** @returns the cartesian product of `arrays` */
 function crossProduct$1(...arrays) {
@@ -25803,6 +25803,16 @@ function compareNames(a, b) {
         return ((_b = a.getAttribute('name')) !== null && _b !== void 0 ? _b : '').localeCompare((_c = b.getAttribute('name')) !== null && _c !== void 0 ? _c : '');
     return 0;
 }
+/** @returns reserved siblings names attributes */
+function reservedNames(element, tagName) {
+    if (tagName)
+        return getChildElementsByTagName$1(element, tagName).map(sibling => sibling.getAttribute('name'));
+    if (!element.parentElement)
+        return [];
+    return getChildElementsByTagName$1(element.parentElement, element.tagName)
+        .filter(sibling => sibling !== element)
+        .map(sibling => sibling.getAttribute('name'));
+}
 
 function isCreateRequest(wizard) {
     return 'parent' in wizard;
@@ -25828,7 +25838,7 @@ function dialogValid(dialog) {
 }
 /** A wizard style dialog consisting of several pages commiting some
  * [[`EditorAction`]] on completion and aborting on dismissal. */
-let WizardDialog = class WizardDialog extends s$1 {
+let SclWizardDialog = class SclWizardDialog extends s$1 {
     /** The `Dialog` showing the active [[`WizardPage`]]. */
     get dialog() {
         return this.dialogs[this.pageIndex];
@@ -25971,7 +25981,7 @@ let WizardDialog = class WizardDialog extends s$1 {
         return x `${this.wizard.map(this.renderPage)}`;
     }
 };
-WizardDialog.styles = i$5 `
+SclWizardDialog.styles = i$5 `
     mwc-dialog {
       --mdc-dialog-max-width: 92vw;
     }
@@ -25999,22 +26009,106 @@ WizardDialog.styles = i$5 `
   `;
 __decorate$1([
     e$6({ type: Array })
-], WizardDialog.prototype, "wizard", void 0);
+], SclWizardDialog.prototype, "wizard", void 0);
 __decorate$1([
     e$6({ attribute: false })
-], WizardDialog.prototype, "wizardRequest", void 0);
+], SclWizardDialog.prototype, "wizardRequest", void 0);
+__decorate$1([
+    e$6({ attribute: false })
+], SclWizardDialog.prototype, "element", void 0);
 __decorate$1([
     t$1()
-], WizardDialog.prototype, "pageIndex", void 0);
+], SclWizardDialog.prototype, "pageIndex", void 0);
 __decorate$1([
     e$4('mwc-dialog')
-], WizardDialog.prototype, "dialogs", void 0);
+], SclWizardDialog.prototype, "dialogs", void 0);
 __decorate$1([
     e$4(wizardInputSelector)
-], WizardDialog.prototype, "inputs", void 0);
-WizardDialog = __decorate$1([
-    e$7('wizard-dialog')
-], WizardDialog);
+], SclWizardDialog.prototype, "inputs", void 0);
+SclWizardDialog = __decorate$1([
+    e$7('scl-wizard-dialog')
+], SclWizardDialog);
+
+function formatXml(xml, tab = '\t') {
+    let formatted = '';
+    let indent = '';
+    xml.split(/>\s*</).forEach(node => {
+        if (node.match(/^\/\w/))
+            indent = indent.substring(tab.length);
+        formatted += `${indent}<${node}>\r\n`;
+        if (node.match(/^<?\w[^>]*[^/]$/))
+            indent += tab;
+    });
+    return formatted.substring(1, formatted.length - 3);
+}
+function codeEdits(oldElement, newElementText) {
+    const parent = oldElement.parentElement;
+    if (!parent)
+        return [];
+    const remove = { node: oldElement };
+    const insert = {
+        parent: oldElement.parentElement,
+        node: new DOMParser().parseFromString(newElementText, 'application/xml')
+            .documentElement,
+        reference: oldElement.nextSibling,
+    };
+    return [remove, insert];
+}
+/**  */
+let CodeDialog = class CodeDialog extends s$1 {
+    save(element) {
+        const text = this.editor.value;
+        if (!text)
+            return;
+        const edits = codeEdits(element, text);
+        if (!edits.length)
+            return;
+        this.dispatchEvent(newEditEvent(edits));
+    }
+    onClosed(ae) {
+        if (ae.detail.action === 'save')
+            this.save(this.element);
+        this.dispatchEvent(new CustomEvent('closed'));
+    }
+    render() {
+        if (!this.element)
+            return x `No SCL Element`;
+        return x `<mwc-dialog
+      heading="Edit ${this.element.tagName}"
+      open
+      @closed=${this.onClosed}
+    >
+      <ace-editor
+        wrap
+        soft-tabs
+        mode="ace/mode/xml"
+        theme="ace/theme/solarized_light"
+        value="${formatXml(new XMLSerializer().serializeToString(this.element))}"
+      ></ace-editor>
+      <mwc-button slot="secondaryAction" dialogAction="close"
+        >Cancel</mwc-button
+      >
+      <mwc-button slot="primaryAction" icon="save" dialogAction="save"
+        >Save</mwc-button
+      >
+    </mwc-dialog>`;
+    }
+};
+CodeDialog.styles = i$5 `
+    mwc-dialog {
+      --mdc-dialog-min-width: 85vw;
+      --mdc-dialog-max-height: calc(100vh - 200px);
+    }
+  `;
+__decorate$1([
+    e$6({ attribute: false })
+], CodeDialog.prototype, "element", void 0);
+__decorate$1([
+    i$2('ace-editor')
+], CodeDialog.prototype, "editor", void 0);
+CodeDialog = __decorate$1([
+    e$7('code-dialog')
+], CodeDialog);
 
 function updateConnectivityNodes$2(element, names) {
     const cNodes = Array.from(element.getElementsByTagName("ConnectivityNode"));
@@ -33742,7 +33836,7 @@ let SclTextfield = class SclTextfield extends TextField {
     checkValidity() {
         if (this.reservedValues &&
             this.reservedValues.some(array => array === this.value)) {
-            this.setCustomValidity('textfield.unique');
+            this.setCustomValidity('Value already used');
             return false;
         }
         this.setCustomValidity('');
@@ -33791,7 +33885,7 @@ let SclTextfield = class SclTextfield extends TextField {
     renderMulplierList() {
         return x `${this.multipliers.map(multiplier => x `<mwc-list-item ?selected=${multiplier === this.multiplier}
           >${multiplier === null
-            ? 'textfield.noMultiplier'
+            ? 'Nulled multiplier'
             : multiplier}</mwc-list-item
         >`)}`;
     }
@@ -34687,17 +34781,18 @@ function getReference(parent, tag) {
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function renderBayWizard(name, desc) {
+function renderBayWizard(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${name}
+      .maybeValue=${options.name}
       required
+      .reservedValues="${options.reservedValues}"
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
     ];
@@ -34727,7 +34822,11 @@ function createBayWizard(parent) {
                 label: 'add',
                 action: createAction$f(parent),
             },
-            content: renderBayWizard('', ''),
+            content: renderBayWizard({
+                name: '',
+                reservedValues: reservedNames(parent, 'Bay'),
+                desc: '',
+            }),
         },
     ];
 }
@@ -34750,7 +34849,11 @@ function editBayWizard(element) {
                 label: 'save',
                 action: updateAction$k(element),
             },
-            content: renderBayWizard(element.getAttribute('name'), element.getAttribute('desc')),
+            content: renderBayWizard({
+                name: element.getAttribute('name'),
+                reservedValues: reservedNames(element),
+                desc: element.getAttribute('desc'),
+            }),
         },
     ];
 }
@@ -37595,19 +37698,19 @@ function renderTypeSelector(option, type) {
         <mwc-list-item selected value="0">${type}</mwc-list-item>
       </mwc-select>`;
 }
-function renderConductingEquipmentWizard(name, desc, option, type, reservedNames) {
+function renderConductingEquipmentWizard(options) {
     return [
-        renderTypeSelector(option, type),
+        renderTypeSelector(options.option, options.type),
         x `<scl-textfield
       label="name"
-      .maybeValue=${name}
+      .maybeValue=${options.name}
       required
       dialogInitialFocus
-      .reservedValues=${reservedNames}
+      .reservedValues=${options.reservedValues}
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
     ];
@@ -37672,14 +37775,7 @@ function createAction$e(parent) {
         return [action, terminalAction, cNodeAction];
     };
 }
-function reservedNamesConductingEquipment(parent, currentName) {
-    return Array.from(parent.querySelectorAll('ConductingEquipment'))
-        .filter(isPublic$1)
-        .map(condEq => { var _a; return (_a = condEq.getAttribute('name')) !== null && _a !== void 0 ? _a : ''; })
-        .filter(name => currentName && name !== currentName);
-}
 function createConductingEquipmentWizard(parent) {
-    const reservedNames = reservedNamesConductingEquipment(parent);
     return [
         {
             title: 'Add ConductingEquipment',
@@ -37688,7 +37784,13 @@ function createConductingEquipmentWizard(parent) {
                 label: 'add',
                 action: createAction$e(parent),
             },
-            content: renderConductingEquipmentWizard('', '', 'create', '', reservedNames),
+            content: renderConductingEquipmentWizard({
+                name: '',
+                desc: '',
+                option: 'create',
+                type: '',
+                reservedValues: reservedNames(parent, 'ConductingEquipment'),
+            }),
         },
     ];
 }
@@ -37704,7 +37806,6 @@ function updateAction$j(element) {
     };
 }
 function editConductingEquipmentWizard(element) {
-    const reservedNames = reservedNamesConductingEquipment(element.parentNode, element.getAttribute('name'));
     return [
         {
             title: 'Edit ConductingEquipment',
@@ -37713,7 +37814,13 @@ function editConductingEquipmentWizard(element) {
                 label: 'save',
                 action: updateAction$j(element),
             },
-            content: renderConductingEquipmentWizard(element.getAttribute('name'), element.getAttribute('desc'), 'edit', typeName(element), reservedNames),
+            content: renderConductingEquipmentWizard({
+                name: element.getAttribute('name'),
+                desc: element.getAttribute('desc'),
+                option: 'edit',
+                type: typeName(element),
+                reservedValues: reservedNames(element),
+            }),
         },
     ];
 }
@@ -42522,7 +42629,7 @@ function createDATypeWizard(parent) {
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function renderContent$3(content) {
+function renderContent$4(content) {
     return [
         x `<scl-textfield
       label="name"
@@ -42595,7 +42702,7 @@ function createDoWizard(parent) {
         {
             title: 'Add DO',
             primary: { icon: '', label: 'save', action: createDoAction(parent) },
-            content: renderContent$3({
+            content: renderContent$4({
                 name,
                 desc,
                 transient,
@@ -42640,7 +42747,7 @@ function editDoWizard(element) {
         {
             title: 'Edit DO',
             primary: { icon: '', label: 'save', action: updateDoAction(element) },
-            content: renderContent$3({
+            content: renderContent$4({
                 name,
                 desc,
                 transient,
@@ -42743,7 +42850,7 @@ function createEnumTypeWizard(parent) {
     ];
 }
 
-function renderContent$2(content) {
+function renderContent$3(content) {
     return [
         x `<scl-textfield
       label="ord"
@@ -42801,7 +42908,7 @@ function createEnumValWizard(parent) {
                 label: 'Save',
                 action: createAction$d(parent),
             },
-            content: renderContent$2({ ord, desc, value }),
+            content: renderContent$3({ ord, desc, value }),
         },
     ];
 }
@@ -42843,29 +42950,29 @@ function editEnumValWizard(element) {
                 label: 'Save',
                 action: updateAction$h(element),
             },
-            content: renderContent$2({ ord, desc, value }),
+            content: renderContent$3({ ord, desc, value }),
         },
     ];
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function contentFunctionWizard(content) {
+function contentFunctionWizard(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${content.name}
+      .maybeValue=${options.name}
       required
-      .reservedValues=${content.reservedNames}
+      .reservedValues=${options.reservedValues}
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${content.desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
         x `<scl-textfield
       label="type"
-      .maybeValue=${content.type}
+      .maybeValue=${options.type}
       nullable
     ></scl-textfield>`,
     ];
@@ -42887,7 +42994,6 @@ function createFunctionWizard(parent) {
     const name = '';
     const desc = null;
     const type = null;
-    const reservedNames = Array.from(parent.querySelectorAll('Function')).map(fUnction => fUnction.getAttribute('name'));
     return [
         {
             title: 'Add Function',
@@ -42901,7 +43007,7 @@ function createFunctionWizard(parent) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(parent, 'Function'),
                 }),
             ],
         },
@@ -42924,9 +43030,6 @@ function editFunctionWizard(element) {
     const name = element.getAttribute('name');
     const desc = element.getAttribute('desc');
     const type = element.getAttribute('type');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'Function')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit Function',
@@ -42940,7 +43043,7 @@ function editFunctionWizard(element) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(element),
                 }),
             ],
         },
@@ -42968,7 +43071,6 @@ function createEqFunctionWizard(parent) {
     const name = '';
     const desc = null;
     const type = null;
-    const reservedNames = Array.from(parent.querySelectorAll('EqFunction')).map(fUnction => fUnction.getAttribute('name'));
     return [
         {
             title: 'Add EqFunction',
@@ -42982,7 +43084,7 @@ function createEqFunctionWizard(parent) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(parent, 'EqFunction'),
                 }),
             ],
         },
@@ -43005,9 +43107,6 @@ function editEqFunctionWizard(element) {
     const name = element.getAttribute('name');
     const desc = element.getAttribute('desc');
     const type = element.getAttribute('type');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'EqFunction')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit EqFunction',
@@ -43021,7 +43120,7 @@ function editEqFunctionWizard(element) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(element),
                 }),
             ],
         },
@@ -43049,7 +43148,6 @@ function createEqSubFunctionWizard(parent) {
     const name = '';
     const desc = null;
     const type = null;
-    const reservedNames = Array.from(parent.querySelectorAll('EqSubFunction')).map(eqSubFunction => eqSubFunction.getAttribute('name'));
     return [
         {
             title: 'Add EqSubFunction',
@@ -43063,7 +43161,7 @@ function createEqSubFunctionWizard(parent) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(parent, 'EqSubFunction'),
                 }),
             ],
         },
@@ -43086,9 +43184,6 @@ function editEqSubFunctionWizard(element) {
     const name = element.getAttribute('name');
     const desc = element.getAttribute('desc');
     const type = element.getAttribute('type');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'EqSubFunction')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit EqSubFunction',
@@ -43102,7 +43197,7 @@ function editEqSubFunctionWizard(element) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(element),
                 }),
             ],
         },
@@ -43110,30 +43205,30 @@ function editEqSubFunctionWizard(element) {
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function contentGeneralEquipmentWizard(content) {
+function contentGeneralEquipmentWizard(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${content.name}
+      .maybeValue=${options.name}
       required
-      .reservedValues=${content.reservedNames}
+      .reservedValues=${options.reservedValues}
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${content.desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
         x `<scl-textfield
       label="type"
-      .maybeValue=${content.type}
+      .maybeValue=${options.type}
       minLength="3"
       pattern="AXN|BAT|MOT|FAN|FIL|PMP|TNK|VLV|E[A-Z]*"
       required
     ></scl-textfield>`,
         x `<scl-checkbox
       label="virtual"
-      .maybeValue=${content.virtual}
+      .maybeValue=${options.virtual}
       nullable
     ></scl-checkbox>`,
     ];
@@ -43160,7 +43255,6 @@ function createGeneralEquipmentWizard(parent) {
     const desc = null;
     const type = null;
     const virtual = null;
-    const reservedNames = Array.from(parent.querySelectorAll('GeneralEquipment')).map(generalEquipment => generalEquipment.getAttribute('name'));
     return [
         {
             title: 'Add GeneralEquipment',
@@ -43175,7 +43269,7 @@ function createGeneralEquipmentWizard(parent) {
                     desc,
                     type,
                     virtual,
-                    reservedNames,
+                    reservedValues: reservedNames(parent, 'GeneralEquipment'),
                 }),
             ],
         },
@@ -43199,9 +43293,6 @@ function editGeneralEquipmentWizard(element) {
     const desc = element.getAttribute('desc');
     const type = element.getAttribute('type');
     const virtual = element.getAttribute('virtual');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'GeneralEquipment')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit GeneralEquipment',
@@ -43216,7 +43307,7 @@ function editGeneralEquipmentWizard(element) {
                     desc,
                     type,
                     virtual,
-                    reservedNames,
+                    reservedValues: reservedNames(element),
                 }),
             ],
         },
@@ -43424,34 +43515,34 @@ function lDeviceEditWizard(element) {
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function renderContent$1(name, desc, type, nomFreq, numPhases) {
+function renderContent$2(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${name}
+      .maybeValue=${options.name}
       required
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
         x `<scl-textfield
       label="type"
-      .maybeValue=${type}
+      .maybeValue=${options.type}
       nullable
     ></scl-textfield>`,
         x `<scl-textfield
       label="nomFreq"
-      .maybeValue=${nomFreq}
+      .maybeValue=${options.nomFreq}
       nullable
       suffix="Hz"
       pattern="${patterns.unsigned}"
     ></scl-textfield>`,
         x `<scl-textfield
       label="numPhases"
-      .maybeValue=${numPhases}
+      .maybeValue=${options.numPhases}
       nullable
       suffix="#"
       type="number"
@@ -43477,6 +43568,7 @@ function createLineWizard(parent) {
     const type = '';
     const nomFreq = '';
     const numPhases = '';
+    const reservedValues = reservedNames(parent, 'Line');
     return [
         {
             title: 'Add Line',
@@ -43485,7 +43577,16 @@ function createLineWizard(parent) {
                 label: 'save',
                 action: createAction$a(parent),
             },
-            content: [...renderContent$1(name, desc, type, nomFreq, numPhases)],
+            content: [
+                ...renderContent$2({
+                    name,
+                    reservedValues,
+                    desc,
+                    type,
+                    nomFreq,
+                    numPhases,
+                }),
+            ],
         },
     ];
 }
@@ -43512,7 +43613,14 @@ function editLineWizard(element) {
                 label: 'save',
                 action: updateAction$a(element),
             },
-            content: renderContent$1((_a = element.getAttribute('name')) !== null && _a !== void 0 ? _a : '', element.getAttribute('desc'), element.getAttribute('type'), element.getAttribute('nomFreq'), element.getAttribute('numPhases')),
+            content: renderContent$2({
+                name: (_a = element.getAttribute('name')) !== null && _a !== void 0 ? _a : '',
+                reservedValues: reservedNames(element),
+                desc: element.getAttribute('desc'),
+                type: element.getAttribute('type'),
+                nomFreq: element.getAttribute('nomFreq'),
+                numPhases: element.getAttribute('numPhases'),
+            }),
         },
     ];
 }
@@ -44654,23 +44762,23 @@ function createLNodeTypeWizard(parent) {
 
 /* eslint-disable import/no-extraneous-dependencies */
 const defaultPowerTransformerType = 'PTR';
-function renderPowerTransformerWizard(name, desc, type, reservedNames) {
+function renderPowerTransformerWizard(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${name}
+      .maybeValue=${options.name}
       required
       dialogInitialFocus
-      .reservedValues=${reservedNames}
+      .reservedValues=${options.reservedValues}
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
         x `<scl-textfield
       label="type"
-      .maybeValue=${type}
+      .maybeValue=${options.type}
       disabled
     ></scl-textfield>`,
     ];
@@ -44693,14 +44801,7 @@ function createAction$8(parent) {
         ];
     };
 }
-function reservedNamesPowerTransformer(parent, currentName) {
-    return Array.from(parent.querySelectorAll('PowerTransformer'))
-        .filter(isPublic$1)
-        .map(pwt => { var _a; return (_a = pwt.getAttribute('name')) !== null && _a !== void 0 ? _a : ''; })
-        .filter(name => currentName && name !== currentName);
-}
 function createPowerTransformerWizard(parent) {
-    const reservedNames = reservedNamesPowerTransformer(parent);
     return [
         {
             title: 'Add PowerTransformer',
@@ -44709,7 +44810,12 @@ function createPowerTransformerWizard(parent) {
                 label: 'add',
                 action: createAction$8(parent),
             },
-            content: renderPowerTransformerWizard('', null, defaultPowerTransformerType, reservedNames),
+            content: renderPowerTransformerWizard({
+                name: '',
+                reservedValues: reservedNames(parent, 'PowerTransformer'),
+                desc: null,
+                type: defaultPowerTransformerType,
+            }),
         },
     ];
 }
@@ -44724,7 +44830,6 @@ function updateAction$9(element) {
     };
 }
 function editPowerTransformerWizard(element) {
-    const reservedNames = reservedNamesPowerTransformer(element.parentNode, element.getAttribute('name'));
     return [
         {
             title: 'Edit PowerTransformer',
@@ -44733,7 +44838,12 @@ function editPowerTransformerWizard(element) {
                 label: 'save',
                 action: updateAction$9(element),
             },
-            content: renderPowerTransformerWizard(element.getAttribute('name'), element.getAttribute('desc'), element.getAttribute('type'), reservedNames),
+            content: renderPowerTransformerWizard({
+                name: element.getAttribute('name'),
+                reservedValues: reservedNames(element),
+                desc: element.getAttribute('desc'),
+                type: element.getAttribute('type'),
+            }),
         },
     ];
 }
@@ -44840,7 +44950,7 @@ function editProcessWizard(element) {
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function renderContent(content) {
+function renderContent$1(content) {
     return [
         x `<scl-textfield
       label="name"
@@ -44892,7 +45002,7 @@ function createSDoWizard(parent) {
         {
             title: 'Add SDO',
             primary: { icon: '', label: 'save', action: createSDoAction(parent) },
-            content: renderContent({
+            content: renderContent$1({
                 name,
                 desc,
                 type,
@@ -44925,7 +45035,7 @@ function editSDoWizard(element) {
         {
             title: 'Edit SDO',
             primary: { icon: '', label: 'save', action: updateSDoAction(element) },
-            content: renderContent({
+            content: renderContent$1({
                 name,
                 desc,
                 type,
@@ -44969,24 +45079,24 @@ function editSMvWizard(element) {
     ];
 }
 
-function contentSubEquipmentWizard(content) {
+function contentSubEquipmentWizard(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${content.name}
-      .reservedValues=${content.reservedNames}
+      .maybeValue=${options.name}
+      .reservedValues=${options.reservedValues}
       required
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${content.desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
         x `<scl-select
       label="phase"
       fixedMenuPosition
-      .maybeValue=${content.phase}
+      .maybeValue=${options.phase}
       nullable
     >
       ${['A', 'B', 'C', 'N', 'all', 'none', 'AB', 'BC', 'CA'].map(value => x `<mwc-list-item value="${value}">
@@ -44995,7 +45105,7 @@ function contentSubEquipmentWizard(content) {
     </scl-select> `,
         x `<scl-checkbox
       label="virtual"
-      .maybeValue=${content.virtual}
+      .maybeValue=${options.virtual}
       nullable
     ></scl-checkbox>`,
     ];
@@ -45022,7 +45132,6 @@ function createSubEquipmentWizard(parent) {
     const desc = null;
     const phase = null;
     const virtual = null;
-    const reservedNames = Array.from(parent.querySelectorAll('SubEquipment')).map(subEquipment => subEquipment.getAttribute('name'));
     return [
         {
             title: 'Add SubEquipment',
@@ -45037,7 +45146,7 @@ function createSubEquipmentWizard(parent) {
                     desc,
                     phase,
                     virtual,
-                    reservedNames,
+                    reservedValues: reservedNames(parent, 'SubEquipment'),
                 }),
             ],
         },
@@ -45060,9 +45169,6 @@ function editSubEquipmentWizard(element) {
     const desc = element.getAttribute('desc');
     const phase = element.getAttribute('phase');
     const virtual = element.getAttribute('virtual');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'SubEquipment')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit SubEquipment',
@@ -45077,7 +45183,7 @@ function editSubEquipmentWizard(element) {
                     desc,
                     phase,
                     virtual,
-                    reservedNames,
+                    reservedValues: reservedNames(element),
                 }),
             ],
         },
@@ -45105,7 +45211,6 @@ function createSubFunctionWizard(parent) {
     const name = '';
     const desc = null;
     const type = null;
-    const reservedNames = Array.from(parent.querySelectorAll('SubFunction')).map(fUnction => fUnction.getAttribute('name'));
     return [
         {
             title: 'Add SubFunction',
@@ -45119,7 +45224,7 @@ function createSubFunctionWizard(parent) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(parent, 'SubFunction'),
                 }),
             ],
         },
@@ -45142,9 +45247,6 @@ function editSubFunctionWizard(element) {
     const name = element.getAttribute('name');
     const desc = element.getAttribute('desc');
     const type = element.getAttribute('type');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'SubFunction')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit SubFunction',
@@ -45158,7 +45260,7 @@ function editSubFunctionWizard(element) {
                     name,
                     desc,
                     type,
-                    reservedNames,
+                    reservedValues: reservedNames(element),
                 }),
             ],
         },
@@ -45172,7 +45274,7 @@ const initial$1 = {
     bitrate: '100',
     multiplier: 'M',
 };
-function contentSubNetwork(options) {
+function renderContent(options) {
     return [
         x `<scl-textfield
       label="name"
@@ -45240,8 +45342,9 @@ function createSubNetworkWizard(parent) {
                 label: 'add',
                 action: createAction$4(parent),
             },
-            content: contentSubNetwork({
+            content: renderContent({
                 name: '',
+                reservedValues: reservedNames(parent, 'SubNetwork'),
                 desc: '',
                 type: initial$1.type,
                 BitRate: initial$1.bitrate,
@@ -45324,6 +45427,7 @@ function editSubNetworkWizard(element) {
     const type = element.getAttribute('type');
     const BitRate = (_c = (_b = (_a = element.querySelector('SubNetwork > BitRate')) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : null;
     const multiplier = (_e = (_d = element.querySelector('SubNetwork > BitRate')) === null || _d === void 0 ? void 0 : _d.getAttribute('multiplier')) !== null && _e !== void 0 ? _e : null;
+    const reservedValues = reservedNames(element);
     return [
         {
             title: 'Edit SubNetwork',
@@ -45332,23 +45436,31 @@ function editSubNetworkWizard(element) {
                 label: 'save',
                 action: updateAction$4(element),
             },
-            content: contentSubNetwork({ name, desc, type, BitRate, multiplier }),
+            content: renderContent({
+                name,
+                reservedValues,
+                desc,
+                type,
+                BitRate,
+                multiplier,
+            }),
         },
     ];
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function render$1(name, desc) {
+function render$1(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${name}
+      .maybeValue=${options.name}
       required
+      .reservedValues="${options.reservedValues}"
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
     ];
@@ -45380,7 +45492,11 @@ function createSubstationWizard(parent) {
                 label: 'add',
                 action: createAction$3(parent),
             },
-            content: render$1('', ''),
+            content: render$1({
+                name: '',
+                reservedValues: reservedNames(parent, 'Substation'),
+                desc: '',
+            }),
         },
     ];
 }
@@ -45404,34 +45520,38 @@ function editSubstationWizard(element) {
                 label: 'save',
                 action: updateAction$3(element),
             },
-            content: render$1((_a = element.getAttribute('name')) !== null && _a !== void 0 ? _a : '', element.getAttribute('desc')),
+            content: render$1({
+                name: (_a = element.getAttribute('name')) !== null && _a !== void 0 ? _a : '',
+                reservedValues: reservedNames(element),
+                desc: element.getAttribute('desc'),
+            }),
         },
     ];
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function contentTapChangerWizard(content) {
+function contentTapChangerWizard(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${content.name}
+      .maybeValue=${options.name}
       required
-      .reservedValues=${content.reservedNames}
+      .reservedValues=${options.reservedValues}
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${content.desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
         x `<scl-textfield
       label="type"
-      .maybeValue=${content.type}
+      .maybeValue=${options.type}
       disabled
     ></scl-textfield>`,
         x `<scl-checkbox
       label="virtual"
-      .maybeValue=${content.virtual}
+      .maybeValue=${options.virtual}
       nullable
     ></scl-checkbox>`,
     ];
@@ -45458,7 +45578,6 @@ function createTapChangerWizard(parent) {
     const desc = null;
     const type = 'LTC';
     const virtual = null;
-    const reservedNames = Array.from(parent.querySelectorAll('TapChanger')).map(TapChanger => TapChanger.getAttribute('name'));
     return [
         {
             title: 'Add TapChanger',
@@ -45473,7 +45592,7 @@ function createTapChangerWizard(parent) {
                     desc,
                     type,
                     virtual,
-                    reservedNames,
+                    reservedValues: reservedNames(parent, 'TapChanger'),
                 }),
             ],
         },
@@ -45496,9 +45615,6 @@ function editTapChangerWizard(element) {
     const desc = element.getAttribute('desc');
     const type = element.getAttribute('type');
     const virtual = element.getAttribute('virtual');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'TapChanger')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit TapChanger',
@@ -45513,7 +45629,7 @@ function editTapChangerWizard(element) {
                     desc,
                     type,
                     virtual,
-                    reservedNames,
+                    reservedValues: reservedNames(element),
                 }),
             ],
         },
@@ -45521,28 +45637,28 @@ function editTapChangerWizard(element) {
 }
 
 /* eslint-disable import/no-extraneous-dependencies */
-function contentTransformerWindingWizard(content) {
+function contentTransformerWindingWizard(options) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${content.name}
+      .maybeValue=${options.name}
       required
-      .reservedValues=${content.reservedNames}
+      .reservedValues=${options.reservedValues}
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${content.desc}
+      .maybeValue=${options.desc}
       nullable
     ></scl-textfield>`,
         x `<scl-textfield
       label="type"
-      .maybeValue=${content.type}
+      .maybeValue=${options.type}
       disabled
     ></scl-textfield>`,
         x `<scl-checkbox
       label="virtual"
-      .maybeValue=${content.virtual}
+      .maybeValue=${options.virtual}
       nullable
     ></scl-checkbox>`,
     ];
@@ -45569,7 +45685,6 @@ function createTransformerWindingWizard(parent) {
     const desc = null;
     const type = null;
     const virtual = null;
-    const reservedNames = Array.from(parent.querySelectorAll('TransformerWinding')).map(TransformerWinding => TransformerWinding.getAttribute('name'));
     return [
         {
             title: 'Add TransformerWinding',
@@ -45581,10 +45696,10 @@ function createTransformerWindingWizard(parent) {
             content: [
                 ...contentTransformerWindingWizard({
                     name,
+                    reservedValues: reservedNames(parent, 'TransformerWinding'),
                     desc,
                     type,
                     virtual,
-                    reservedNames,
                 }),
             ],
         },
@@ -45607,9 +45722,6 @@ function editTransformerWindingWizard(element) {
     const desc = element.getAttribute('desc');
     const type = element.getAttribute('type');
     const virtual = element.getAttribute('virtual');
-    const reservedNames = getChildElementsByTagName$1(element.parentElement, 'TransformerWinding')
-        .filter(sibling => sibling !== element)
-        .map(sibling => sibling.getAttribute('name'));
     return [
         {
             title: 'Edit TransformerWinding',
@@ -45621,10 +45733,10 @@ function editTransformerWindingWizard(element) {
             content: [
                 ...contentTransformerWindingWizard({
                     name,
+                    reservedValues: reservedNames(element),
                     desc,
                     type,
                     virtual,
-                    reservedNames,
                 }),
             ],
         },
@@ -45638,25 +45750,26 @@ const initial = {
     Voltage: '110',
     multiplier: 'k',
 };
-function render(name, desc, nomFreq, numPhases, Voltage, multiplier) {
+function render(option) {
     return [
         x `<scl-textfield
       label="name"
-      .maybeValue=${name}
+      .maybeValue=${option.name}
       helper="VoltageLevel name attribute"
       required
       validationMessage="Required information"
+      .reservedValues="${option.reservedValues}"
       dialogInitialFocus
     ></scl-textfield>`,
         x `<scl-textfield
       label="desc"
-      .maybeValue=${desc}
+      .maybeValue=${option.desc}
       nullable
       helper="VoltageLevel name attribute"
     ></scl-textfield>`,
         x `<scl-textfield
       label="nomFreq"
-      .maybeValue=${nomFreq}
+      .maybeValue=${option.nomFreq}
       nullable
       helper="Nominal Frequency"
       suffix="Hz"
@@ -45665,7 +45778,7 @@ function render(name, desc, nomFreq, numPhases, Voltage, multiplier) {
     ></scl-textfield>`,
         x `<scl-textfield
       label="numPhases"
-      .maybeValue=${numPhases}
+      .maybeValue=${option.numPhases}
       nullable
       helper="Number of Phases"
       suffix="#"
@@ -45677,11 +45790,11 @@ function render(name, desc, nomFreq, numPhases, Voltage, multiplier) {
     ></scl-textfield>`,
         x `<scl-textfield
       label="Voltage"
-      .maybeValue=${Voltage}
+      .maybeValue=${option.Voltage}
       nullable
       unit="V"
       .multipliers=${[null, 'G', 'M', 'k', '', 'm']}
-      .multiplier=${multiplier}
+      .multiplier=${option.multiplier}
       helper="Voltage"
       required
       validationMessage="Number bigger than 0"
@@ -45728,7 +45841,15 @@ function voltageLevelCreateWizard(parent) {
                 label: 'add',
                 action: createAction(parent),
             },
-            content: render('', '', initial.nomFreq, initial.numPhases, initial.Voltage, initial.multiplier),
+            content: render({
+                name: '',
+                reservedValues: reservedNames(parent, 'VoltageLevel'),
+                desc: '',
+                nomFreq: initial.nomFreq,
+                numPhases: initial.numPhases,
+                Voltage: initial.Voltage,
+                multiplier: initial.multiplier,
+            }),
         },
     ];
 }
@@ -45815,8 +45936,17 @@ function voltageLevelEditWizard(element) {
                 label: 'save',
                 action: updateAction(element),
             },
-            content: render((_a = element.getAttribute('name')) !== null && _a !== void 0 ? _a : '', element.getAttribute('desc'), element.getAttribute('nomFreq'), element.getAttribute('numPhases'), (_d = (_c = (_b = element.querySelector('VoltageLevel > Voltage')) === null || _b === void 0 ? void 0 : _b.textContent) === null || _c === void 0 ? void 0 : _c.trim()) !== null && _d !== void 0 ? _d : null, (_f = (_e = element
-                .querySelector('VoltageLevel > Voltage')) === null || _e === void 0 ? void 0 : _e.getAttribute('multiplier')) !== null && _f !== void 0 ? _f : null),
+            content: render({
+                name: (_a = element.getAttribute('name')) !== null && _a !== void 0 ? _a : '',
+                reservedValues: reservedNames(element),
+                desc: element.getAttribute('desc'),
+                nomFreq: element.getAttribute('nomFreq'),
+                numPhases: element.getAttribute('numPhases'),
+                Voltage: (_d = (_c = (_b = element
+                    .querySelector('VoltageLevel > Voltage')) === null || _b === void 0 ? void 0 : _b.textContent) === null || _c === void 0 ? void 0 : _c.trim()) !== null && _d !== void 0 ? _d : null,
+                multiplier: (_f = (_e = element
+                    .querySelector('VoltageLevel > Voltage')) === null || _e === void 0 ? void 0 : _e.getAttribute('multiplier')) !== null && _f !== void 0 ? _f : null,
+            }),
         },
     ];
 }
@@ -46288,24 +46418,6 @@ const wizards = {
     },
 };
 
-/**
- * Format xml string in "pretty print" style and return as a string
- * @param xml - xml document as a string
- * @param tab - character to use as a tab
- * @returns string with pretty print formatting
- */
-function formatXml(xml, tab = '\t') {
-    let formatted = '';
-    let indent = '';
-    xml.split(/>\s*</).forEach(node => {
-        if (node.match(/^\/\w/))
-            indent = indent.substring(tab.length);
-        formatted += `${indent}<${node}>\r\n`;
-        if (node.match(/^<?\w[^>]*[^/]$/))
-            indent += tab;
-    });
-    return formatted.substring(1, formatted.length - 3);
-}
 let WizardCodeForm = class WizardCodeForm extends s$1 {
     constructor() {
         super(...arguments);
@@ -46320,56 +46432,8 @@ let WizardCodeForm = class WizardCodeForm extends s$1 {
         const request = this.wizardRequest;
         return (_b = wizards[request.element.tagName]) === null || _b === void 0 ? void 0 : _b.edit(request.element);
     }
-    save() {
-        const text = this.editor.value;
-        if (!this.wizardRequest)
-            return;
-        const element = isCreateRequest(this.wizardRequest)
-            ? this.wizardRequest.parent
-            : this.wizardRequest.element;
-        if (!text || !element.parentElement)
-            return;
-        const remove = {
-            node: element,
-        };
-        const insert = {
-            parent: element.parentElement,
-            node: new DOMParser().parseFromString(text, 'application/xml')
-                .documentElement,
-            reference: element.nextSibling,
-        };
-        this.dispatchEvent(newEditEvent([remove, insert]));
-    }
-    onClosed(ae) {
-        if (ae.detail.action === 'save')
-            this.save();
+    onClosed() {
         this.dispatchEvent(newCloseWizardEvent(this.wizardRequest));
-    }
-    renderCodeWizard(element) {
-        return x `<mwc-dialog
-      heading="Edit ${element.tagName}"
-      open
-      @closed=${this.onClosed}
-    >
-      <ace-editor
-        base-path="/public/ace"
-        wrap
-        soft-tabs
-        mode="ace/mode/xml"
-        value="${formatXml(new XMLSerializer().serializeToString(element))}"
-      ></ace-editor>
-      <mwc-button slot="secondaryAction" dialogAction="close"
-        >Cancel</mwc-button
-      >
-      <mwc-button slot="primaryAction" icon="save" dialogAction="save"
-        >Save</mwc-button
-      >
-    </mwc-dialog>`;
-    }
-    // eslint-disable-next-line class-methods-use-this,
-    renderFormWizard(wizard) {
-        return x `<wizard-dialog .wizard="${wizard}"></wizard-dialog>`;
-        // return html`${wizard}`;
     }
     render() {
         if (!this.wizardRequest)
@@ -46379,8 +46443,14 @@ let WizardCodeForm = class WizardCodeForm extends s$1 {
             : this.wizardRequest.element;
         const wizard = this.wizard();
         if (!wizard)
-            return this.renderCodeWizard(element);
-        return this.renderFormWizard(wizard);
+            return x `<code-dialog
+        .element=${element}
+        @closed="${this.onClosed}"
+      ></code-dialog>`;
+        return x `<scl-wizard-dialog
+      .wizard=${wizard}
+      .element=${element}
+    ></scl-wizard-dialog> `;
     }
 };
 WizardCodeForm.styles = i$5 `

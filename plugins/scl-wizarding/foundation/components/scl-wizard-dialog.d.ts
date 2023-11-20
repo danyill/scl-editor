@@ -1,4 +1,5 @@
 import { LitElement, TemplateResult } from 'lit';
+import 'ace-custom-element';
 import '@material/mwc-button';
 import '@material/mwc-dialog';
 import { Dialog } from '@material/mwc-dialog';
@@ -6,10 +7,11 @@ import { Wizard, WizardInputElement, WizardPage, WizardActor } from '../../wizar
 import { CreateWizardRequest, EditWizardRequest } from '../../foundation.js';
 /** A wizard style dialog consisting of several pages commiting some
  * [[`EditorAction`]] on completion and aborting on dismissal. */
-export declare class WizardDialog extends LitElement {
+export declare class SclWizardDialog extends LitElement {
     /** The [[`Wizard`]] implemented by this dialog. */
     wizard: Wizard;
     wizardRequest: EditWizardRequest | CreateWizardRequest | null;
+    element?: Element;
     /** Index of the currently active [[`WizardPage`]] */
     pageIndex: number;
     dialogs: NodeListOf<Dialog>;

@@ -2,7 +2,8 @@ import { LitElement, TemplateResult } from 'lit';
 import 'ace-custom-element';
 import '@material/mwc-dialog';
 import AceEditor from 'ace-custom-element';
-import '../foundation/components/wizard-dialog.js';
+import '../foundation/components/scl-wizard-dialog.js';
+import '../foundation/components/code-dialog.js';
 import { EditWizardRequest, CreateWizardRequest } from '../foundation.js';
 import { Wizard } from './foundation.js';
 /**
@@ -16,12 +17,7 @@ export default class WizardCodeForm extends LitElement {
     wizardRequest: EditWizardRequest | CreateWizardRequest | null;
     editor: AceEditor;
     wizard(): Wizard | undefined;
-    save(): void;
-    onClosed(ae: CustomEvent<{
-        action: string;
-    }>): void;
-    renderCodeWizard(element: Element): TemplateResult;
-    renderFormWizard(wizard: Wizard): TemplateResult;
+    onClosed(): void;
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }

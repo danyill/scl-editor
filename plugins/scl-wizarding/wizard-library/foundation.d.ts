@@ -80,3 +80,5 @@ export declare const typeNullable: Partial<Record<string, boolean>>;
 export declare const typeMaxLength: Partial<Record<string, number>>;
 /** Sorts selected `ListItem`s to the top and disabled ones to the bottom. */
 export declare function compareNames(a: Element | string, b: Element | string): number;
+/** @returns reserved siblings names attributes */
+export declare function reservedNames(element: Element, tagName?: string): string[];
