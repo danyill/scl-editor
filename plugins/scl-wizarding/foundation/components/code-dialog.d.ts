@@ -10,6 +10,7 @@ export default class CodeDialog extends LitElement {
     onClosed(ae: CustomEvent<{
         action: string;
     }>): void;
+    updated(): void;
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }

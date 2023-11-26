@@ -2683,6 +2683,145 @@ Button = __decorate([
 
 /**
  * @license
+ * Copyright 2018 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/** @soyCompatible */
+class IconButtonBase extends s$2 {
+    constructor() {
+        super(...arguments);
+        this.disabled = false;
+        this.icon = '';
+        this.shouldRenderRipple = false;
+        this.rippleHandlers = new RippleHandlers(() => {
+            this.shouldRenderRipple = true;
+            return this.ripple;
+        });
+    }
+    /** @soyTemplate */
+    renderRipple() {
+        return this.shouldRenderRipple ? x `
+            <mwc-ripple
+                .disabled="${this.disabled}"
+                unbounded>
+            </mwc-ripple>` :
+            '';
+    }
+    focus() {
+        const buttonElement = this.buttonElement;
+        if (buttonElement) {
+            this.rippleHandlers.startFocus();
+            buttonElement.focus();
+        }
+    }
+    blur() {
+        const buttonElement = this.buttonElement;
+        if (buttonElement) {
+            this.rippleHandlers.endFocus();
+            buttonElement.blur();
+        }
+    }
+    /** @soyTemplate */
+    render() {
+        return x `<button
+        class="mdc-icon-button mdc-icon-button--display-flex"
+        aria-label="${this.ariaLabel || this.icon}"
+        aria-haspopup="${l$2(this.ariaHasPopup)}"
+        ?disabled="${this.disabled}"
+        @focus="${this.handleRippleFocus}"
+        @blur="${this.handleRippleBlur}"
+        @mousedown="${this.handleRippleMouseDown}"
+        @mouseenter="${this.handleRippleMouseEnter}"
+        @mouseleave="${this.handleRippleMouseLeave}"
+        @touchstart="${this.handleRippleTouchStart}"
+        @touchend="${this.handleRippleDeactivate}"
+        @touchcancel="${this.handleRippleDeactivate}"
+    >${this.renderRipple()}
+    ${this.icon ? x `<i class="material-icons">${this.icon}</i>` : ''}
+    <span
+      ><slot></slot
+    ></span>
+  </button>`;
+    }
+    handleRippleMouseDown(event) {
+        const onUp = () => {
+            window.removeEventListener('mouseup', onUp);
+            this.handleRippleDeactivate();
+        };
+        window.addEventListener('mouseup', onUp);
+        this.rippleHandlers.startPress(event);
+    }
+    handleRippleTouchStart(event) {
+        this.rippleHandlers.startPress(event);
+    }
+    handleRippleDeactivate() {
+        this.rippleHandlers.endPress();
+    }
+    handleRippleMouseEnter() {
+        this.rippleHandlers.startHover();
+    }
+    handleRippleMouseLeave() {
+        this.rippleHandlers.endHover();
+    }
+    handleRippleFocus() {
+        this.rippleHandlers.startFocus();
+    }
+    handleRippleBlur() {
+        this.rippleHandlers.endFocus();
+    }
+}
+__decorate([
+    n$4({ type: Boolean, reflect: true })
+], IconButtonBase.prototype, "disabled", void 0);
+__decorate([
+    n$4({ type: String })
+], IconButtonBase.prototype, "icon", void 0);
+__decorate([
+    ariaProperty,
+    n$4({ type: String, attribute: 'aria-label' })
+], IconButtonBase.prototype, "ariaLabel", void 0);
+__decorate([
+    ariaProperty,
+    n$4({ type: String, attribute: 'aria-haspopup' })
+], IconButtonBase.prototype, "ariaHasPopup", void 0);
+__decorate([
+    i$2('button')
+], IconButtonBase.prototype, "buttonElement", void 0);
+__decorate([
+    e$3('mwc-ripple')
+], IconButtonBase.prototype, "ripple", void 0);
+__decorate([
+    t$1()
+], IconButtonBase.prototype, "shouldRenderRipple", void 0);
+__decorate([
+    e$5({ passive: true })
+], IconButtonBase.prototype, "handleRippleMouseDown", null);
+__decorate([
+    e$5({ passive: true })
+], IconButtonBase.prototype, "handleRippleTouchStart", null);
+
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-LIcense-Identifier: Apache-2.0
+ */
+const styles$c = i$5 `.material-icons{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}.mdc-icon-button{font-size:24px;width:48px;height:48px;padding:12px}.mdc-icon-button .mdc-icon-button__focus-ring{display:none}.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{display:block;max-height:48px;max-width:48px}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:100%;width:100%}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{border-color:CanvasText}}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{border-color:CanvasText}}.mdc-icon-button.mdc-icon-button--reduced-size .mdc-icon-button__ripple{width:40px;height:40px;margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}.mdc-icon-button.mdc-icon-button--reduced-size.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button.mdc-icon-button--reduced-size:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{max-height:40px;max-width:40px}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-disabled-on-light, rgba(0, 0, 0, 0.38))}.mdc-icon-button svg,.mdc-icon-button img{width:24px;height:24px}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}:host{display:inline-block;outline:none}:host([disabled]){pointer-events:none}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block}:host{--mdc-ripple-color: currentcolor;-webkit-tap-highlight-color:transparent}:host,.mdc-icon-button{vertical-align:top}.mdc-icon-button{width:var(--mdc-icon-button-size, 48px);height:var(--mdc-icon-button-size, 48px);padding:calc( (var(--mdc-icon-button-size, 48px) - var(--mdc-icon-size, 24px)) / 2 )}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block;width:var(--mdc-icon-size, 24px);height:var(--mdc-icon-size, 24px)}`;
+
+/**
+ * @license
+ * Copyright 2018 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/** @soyCompatible */
+let IconButton = class IconButton extends IconButtonBase {
+};
+IconButton.styles = [styles$c];
+IconButton = __decorate([
+    e$7('mwc-icon-button')
+], IconButton);
+
+/**
+ * @license
  * Copyright 2020 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -2952,7 +3091,7 @@ __decorate([
  * Copyright 2021 Google LLC
  * SPDX-LIcense-Identifier: Apache-2.0
  */
-const styles$c = i$5 `:host{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;height:48px;display:flex;position:relative;align-items:center;justify-content:flex-start;overflow:hidden;padding:0;padding-left:var(--mdc-list-side-padding, 16px);padding-right:var(--mdc-list-side-padding, 16px);outline:none;height:48px;color:rgba(0,0,0,.87);color:var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87))}:host:focus{outline:none}:host([activated]){color:#6200ee;color:var(--mdc-theme-primary, #6200ee);--mdc-ripple-color: var( --mdc-theme-primary, #6200ee )}:host([activated]) .mdc-deprecated-list-item__graphic{color:#6200ee;color:var(--mdc-theme-primary, #6200ee)}:host([activated]) .fake-activated-ripple::before{position:absolute;display:block;top:0;bottom:0;left:0;right:0;width:100%;height:100%;pointer-events:none;z-index:1;content:"";opacity:0.12;opacity:var(--mdc-ripple-activated-opacity, 0.12);background-color:#6200ee;background-color:var(--mdc-ripple-color, var(--mdc-theme-primary, #6200ee))}.mdc-deprecated-list-item__graphic{flex-shrink:0;align-items:center;justify-content:center;fill:currentColor;display:inline-flex}.mdc-deprecated-list-item__graphic ::slotted(*){flex-shrink:0;align-items:center;justify-content:center;fill:currentColor;width:100%;height:100%;text-align:center}.mdc-deprecated-list-item__meta{width:var(--mdc-list-item-meta-size, 24px);height:var(--mdc-list-item-meta-size, 24px);margin-left:auto;margin-right:0;color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-hint-on-background, rgba(0, 0, 0, 0.38))}.mdc-deprecated-list-item__meta.multi{width:auto}.mdc-deprecated-list-item__meta ::slotted(*){width:var(--mdc-list-item-meta-size, 24px);line-height:var(--mdc-list-item-meta-size, 24px)}.mdc-deprecated-list-item__meta ::slotted(.material-icons),.mdc-deprecated-list-item__meta ::slotted(mwc-icon){line-height:var(--mdc-list-item-meta-size, 24px) !important}.mdc-deprecated-list-item__meta ::slotted(:not(.material-icons):not(mwc-icon)){-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-caption-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.75rem;font-size:var(--mdc-typography-caption-font-size, 0.75rem);line-height:1.25rem;line-height:var(--mdc-typography-caption-line-height, 1.25rem);font-weight:400;font-weight:var(--mdc-typography-caption-font-weight, 400);letter-spacing:0.0333333333em;letter-spacing:var(--mdc-typography-caption-letter-spacing, 0.0333333333em);text-decoration:inherit;text-decoration:var(--mdc-typography-caption-text-decoration, inherit);text-transform:inherit;text-transform:var(--mdc-typography-caption-text-transform, inherit)}[dir=rtl] .mdc-deprecated-list-item__meta,.mdc-deprecated-list-item__meta[dir=rtl]{margin-left:0;margin-right:auto}.mdc-deprecated-list-item__meta ::slotted(*){width:100%;height:100%}.mdc-deprecated-list-item__text{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mdc-deprecated-list-item__text ::slotted([for]),.mdc-deprecated-list-item__text[for]{pointer-events:none}.mdc-deprecated-list-item__primary-text{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;display:block;margin-top:0;line-height:normal;margin-bottom:-20px;display:block}.mdc-deprecated-list-item__primary-text::before{display:inline-block;width:0;height:32px;content:"";vertical-align:0}.mdc-deprecated-list-item__primary-text::after{display:inline-block;width:0;height:20px;content:"";vertical-align:-20px}.mdc-deprecated-list-item__secondary-text{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-body2-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.875rem;font-size:var(--mdc-typography-body2-font-size, 0.875rem);line-height:1.25rem;line-height:var(--mdc-typography-body2-line-height, 1.25rem);font-weight:400;font-weight:var(--mdc-typography-body2-font-weight, 400);letter-spacing:0.0178571429em;letter-spacing:var(--mdc-typography-body2-letter-spacing, 0.0178571429em);text-decoration:inherit;text-decoration:var(--mdc-typography-body2-text-decoration, inherit);text-transform:inherit;text-transform:var(--mdc-typography-body2-text-transform, inherit);text-overflow:ellipsis;white-space:nowrap;overflow:hidden;display:block;margin-top:0;line-height:normal;display:block}.mdc-deprecated-list-item__secondary-text::before{display:inline-block;width:0;height:20px;content:"";vertical-align:0}.mdc-deprecated-list--dense .mdc-deprecated-list-item__secondary-text{font-size:inherit}* ::slotted(a),a{color:inherit;text-decoration:none}:host([twoline]){height:72px}:host([twoline]) .mdc-deprecated-list-item__text{align-self:flex-start}:host([disabled]),:host([noninteractive]){cursor:default;pointer-events:none}:host([disabled]) .mdc-deprecated-list-item__text ::slotted(*){opacity:.38}:host([disabled]) .mdc-deprecated-list-item__text ::slotted(*),:host([disabled]) .mdc-deprecated-list-item__primary-text ::slotted(*),:host([disabled]) .mdc-deprecated-list-item__secondary-text ::slotted(*){color:#000;color:var(--mdc-theme-on-surface, #000)}.mdc-deprecated-list-item__secondary-text ::slotted(*){color:rgba(0, 0, 0, 0.54);color:var(--mdc-theme-text-secondary-on-background, rgba(0, 0, 0, 0.54))}.mdc-deprecated-list-item__graphic ::slotted(*){background-color:transparent;color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-icon-on-background, rgba(0, 0, 0, 0.38))}.mdc-deprecated-list-group__subheader ::slotted(*){color:rgba(0, 0, 0, 0.87);color:var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87))}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic{width:var(--mdc-list-item-graphic-size, 40px);height:var(--mdc-list-item-graphic-size, 40px)}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic.multi{width:auto}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(*){width:var(--mdc-list-item-graphic-size, 40px);line-height:var(--mdc-list-item-graphic-size, 40px)}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon){line-height:var(--mdc-list-item-graphic-size, 40px) !important}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(*){border-radius:50%}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic,:host([graphic=medium]) .mdc-deprecated-list-item__graphic,:host([graphic=large]) .mdc-deprecated-list-item__graphic,:host([graphic=control]) .mdc-deprecated-list-item__graphic{margin-left:0;margin-right:var(--mdc-list-item-graphic-margin, 16px)}[dir=rtl] :host([graphic=avatar]) .mdc-deprecated-list-item__graphic,[dir=rtl] :host([graphic=medium]) .mdc-deprecated-list-item__graphic,[dir=rtl] :host([graphic=large]) .mdc-deprecated-list-item__graphic,[dir=rtl] :host([graphic=control]) .mdc-deprecated-list-item__graphic,:host([graphic=avatar]) .mdc-deprecated-list-item__graphic[dir=rtl],:host([graphic=medium]) .mdc-deprecated-list-item__graphic[dir=rtl],:host([graphic=large]) .mdc-deprecated-list-item__graphic[dir=rtl],:host([graphic=control]) .mdc-deprecated-list-item__graphic[dir=rtl]{margin-left:var(--mdc-list-item-graphic-margin, 16px);margin-right:0}:host([graphic=icon]) .mdc-deprecated-list-item__graphic{width:var(--mdc-list-item-graphic-size, 24px);height:var(--mdc-list-item-graphic-size, 24px);margin-left:0;margin-right:var(--mdc-list-item-graphic-margin, 32px)}:host([graphic=icon]) .mdc-deprecated-list-item__graphic.multi{width:auto}:host([graphic=icon]) .mdc-deprecated-list-item__graphic ::slotted(*){width:var(--mdc-list-item-graphic-size, 24px);line-height:var(--mdc-list-item-graphic-size, 24px)}:host([graphic=icon]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=icon]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon){line-height:var(--mdc-list-item-graphic-size, 24px) !important}[dir=rtl] :host([graphic=icon]) .mdc-deprecated-list-item__graphic,:host([graphic=icon]) .mdc-deprecated-list-item__graphic[dir=rtl]{margin-left:var(--mdc-list-item-graphic-margin, 32px);margin-right:0}:host([graphic=avatar]:not([twoLine])),:host([graphic=icon]:not([twoLine])){height:56px}:host([graphic=medium]:not([twoLine])),:host([graphic=large]:not([twoLine])){height:72px}:host([graphic=medium]) .mdc-deprecated-list-item__graphic,:host([graphic=large]) .mdc-deprecated-list-item__graphic{width:var(--mdc-list-item-graphic-size, 56px);height:var(--mdc-list-item-graphic-size, 56px)}:host([graphic=medium]) .mdc-deprecated-list-item__graphic.multi,:host([graphic=large]) .mdc-deprecated-list-item__graphic.multi{width:auto}:host([graphic=medium]) .mdc-deprecated-list-item__graphic ::slotted(*),:host([graphic=large]) .mdc-deprecated-list-item__graphic ::slotted(*){width:var(--mdc-list-item-graphic-size, 56px);line-height:var(--mdc-list-item-graphic-size, 56px)}:host([graphic=medium]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=medium]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon),:host([graphic=large]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=large]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon){line-height:var(--mdc-list-item-graphic-size, 56px) !important}:host([graphic=large]){padding-left:0px}`;
+const styles$b = i$5 `:host{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;height:48px;display:flex;position:relative;align-items:center;justify-content:flex-start;overflow:hidden;padding:0;padding-left:var(--mdc-list-side-padding, 16px);padding-right:var(--mdc-list-side-padding, 16px);outline:none;height:48px;color:rgba(0,0,0,.87);color:var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87))}:host:focus{outline:none}:host([activated]){color:#6200ee;color:var(--mdc-theme-primary, #6200ee);--mdc-ripple-color: var( --mdc-theme-primary, #6200ee )}:host([activated]) .mdc-deprecated-list-item__graphic{color:#6200ee;color:var(--mdc-theme-primary, #6200ee)}:host([activated]) .fake-activated-ripple::before{position:absolute;display:block;top:0;bottom:0;left:0;right:0;width:100%;height:100%;pointer-events:none;z-index:1;content:"";opacity:0.12;opacity:var(--mdc-ripple-activated-opacity, 0.12);background-color:#6200ee;background-color:var(--mdc-ripple-color, var(--mdc-theme-primary, #6200ee))}.mdc-deprecated-list-item__graphic{flex-shrink:0;align-items:center;justify-content:center;fill:currentColor;display:inline-flex}.mdc-deprecated-list-item__graphic ::slotted(*){flex-shrink:0;align-items:center;justify-content:center;fill:currentColor;width:100%;height:100%;text-align:center}.mdc-deprecated-list-item__meta{width:var(--mdc-list-item-meta-size, 24px);height:var(--mdc-list-item-meta-size, 24px);margin-left:auto;margin-right:0;color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-hint-on-background, rgba(0, 0, 0, 0.38))}.mdc-deprecated-list-item__meta.multi{width:auto}.mdc-deprecated-list-item__meta ::slotted(*){width:var(--mdc-list-item-meta-size, 24px);line-height:var(--mdc-list-item-meta-size, 24px)}.mdc-deprecated-list-item__meta ::slotted(.material-icons),.mdc-deprecated-list-item__meta ::slotted(mwc-icon){line-height:var(--mdc-list-item-meta-size, 24px) !important}.mdc-deprecated-list-item__meta ::slotted(:not(.material-icons):not(mwc-icon)){-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-caption-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.75rem;font-size:var(--mdc-typography-caption-font-size, 0.75rem);line-height:1.25rem;line-height:var(--mdc-typography-caption-line-height, 1.25rem);font-weight:400;font-weight:var(--mdc-typography-caption-font-weight, 400);letter-spacing:0.0333333333em;letter-spacing:var(--mdc-typography-caption-letter-spacing, 0.0333333333em);text-decoration:inherit;text-decoration:var(--mdc-typography-caption-text-decoration, inherit);text-transform:inherit;text-transform:var(--mdc-typography-caption-text-transform, inherit)}[dir=rtl] .mdc-deprecated-list-item__meta,.mdc-deprecated-list-item__meta[dir=rtl]{margin-left:0;margin-right:auto}.mdc-deprecated-list-item__meta ::slotted(*){width:100%;height:100%}.mdc-deprecated-list-item__text{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.mdc-deprecated-list-item__text ::slotted([for]),.mdc-deprecated-list-item__text[for]{pointer-events:none}.mdc-deprecated-list-item__primary-text{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;display:block;margin-top:0;line-height:normal;margin-bottom:-20px;display:block}.mdc-deprecated-list-item__primary-text::before{display:inline-block;width:0;height:32px;content:"";vertical-align:0}.mdc-deprecated-list-item__primary-text::after{display:inline-block;width:0;height:20px;content:"";vertical-align:-20px}.mdc-deprecated-list-item__secondary-text{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-body2-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.875rem;font-size:var(--mdc-typography-body2-font-size, 0.875rem);line-height:1.25rem;line-height:var(--mdc-typography-body2-line-height, 1.25rem);font-weight:400;font-weight:var(--mdc-typography-body2-font-weight, 400);letter-spacing:0.0178571429em;letter-spacing:var(--mdc-typography-body2-letter-spacing, 0.0178571429em);text-decoration:inherit;text-decoration:var(--mdc-typography-body2-text-decoration, inherit);text-transform:inherit;text-transform:var(--mdc-typography-body2-text-transform, inherit);text-overflow:ellipsis;white-space:nowrap;overflow:hidden;display:block;margin-top:0;line-height:normal;display:block}.mdc-deprecated-list-item__secondary-text::before{display:inline-block;width:0;height:20px;content:"";vertical-align:0}.mdc-deprecated-list--dense .mdc-deprecated-list-item__secondary-text{font-size:inherit}* ::slotted(a),a{color:inherit;text-decoration:none}:host([twoline]){height:72px}:host([twoline]) .mdc-deprecated-list-item__text{align-self:flex-start}:host([disabled]),:host([noninteractive]){cursor:default;pointer-events:none}:host([disabled]) .mdc-deprecated-list-item__text ::slotted(*){opacity:.38}:host([disabled]) .mdc-deprecated-list-item__text ::slotted(*),:host([disabled]) .mdc-deprecated-list-item__primary-text ::slotted(*),:host([disabled]) .mdc-deprecated-list-item__secondary-text ::slotted(*){color:#000;color:var(--mdc-theme-on-surface, #000)}.mdc-deprecated-list-item__secondary-text ::slotted(*){color:rgba(0, 0, 0, 0.54);color:var(--mdc-theme-text-secondary-on-background, rgba(0, 0, 0, 0.54))}.mdc-deprecated-list-item__graphic ::slotted(*){background-color:transparent;color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-icon-on-background, rgba(0, 0, 0, 0.38))}.mdc-deprecated-list-group__subheader ::slotted(*){color:rgba(0, 0, 0, 0.87);color:var(--mdc-theme-text-primary-on-background, rgba(0, 0, 0, 0.87))}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic{width:var(--mdc-list-item-graphic-size, 40px);height:var(--mdc-list-item-graphic-size, 40px)}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic.multi{width:auto}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(*){width:var(--mdc-list-item-graphic-size, 40px);line-height:var(--mdc-list-item-graphic-size, 40px)}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon){line-height:var(--mdc-list-item-graphic-size, 40px) !important}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic ::slotted(*){border-radius:50%}:host([graphic=avatar]) .mdc-deprecated-list-item__graphic,:host([graphic=medium]) .mdc-deprecated-list-item__graphic,:host([graphic=large]) .mdc-deprecated-list-item__graphic,:host([graphic=control]) .mdc-deprecated-list-item__graphic{margin-left:0;margin-right:var(--mdc-list-item-graphic-margin, 16px)}[dir=rtl] :host([graphic=avatar]) .mdc-deprecated-list-item__graphic,[dir=rtl] :host([graphic=medium]) .mdc-deprecated-list-item__graphic,[dir=rtl] :host([graphic=large]) .mdc-deprecated-list-item__graphic,[dir=rtl] :host([graphic=control]) .mdc-deprecated-list-item__graphic,:host([graphic=avatar]) .mdc-deprecated-list-item__graphic[dir=rtl],:host([graphic=medium]) .mdc-deprecated-list-item__graphic[dir=rtl],:host([graphic=large]) .mdc-deprecated-list-item__graphic[dir=rtl],:host([graphic=control]) .mdc-deprecated-list-item__graphic[dir=rtl]{margin-left:var(--mdc-list-item-graphic-margin, 16px);margin-right:0}:host([graphic=icon]) .mdc-deprecated-list-item__graphic{width:var(--mdc-list-item-graphic-size, 24px);height:var(--mdc-list-item-graphic-size, 24px);margin-left:0;margin-right:var(--mdc-list-item-graphic-margin, 32px)}:host([graphic=icon]) .mdc-deprecated-list-item__graphic.multi{width:auto}:host([graphic=icon]) .mdc-deprecated-list-item__graphic ::slotted(*){width:var(--mdc-list-item-graphic-size, 24px);line-height:var(--mdc-list-item-graphic-size, 24px)}:host([graphic=icon]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=icon]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon){line-height:var(--mdc-list-item-graphic-size, 24px) !important}[dir=rtl] :host([graphic=icon]) .mdc-deprecated-list-item__graphic,:host([graphic=icon]) .mdc-deprecated-list-item__graphic[dir=rtl]{margin-left:var(--mdc-list-item-graphic-margin, 32px);margin-right:0}:host([graphic=avatar]:not([twoLine])),:host([graphic=icon]:not([twoLine])){height:56px}:host([graphic=medium]:not([twoLine])),:host([graphic=large]:not([twoLine])){height:72px}:host([graphic=medium]) .mdc-deprecated-list-item__graphic,:host([graphic=large]) .mdc-deprecated-list-item__graphic{width:var(--mdc-list-item-graphic-size, 56px);height:var(--mdc-list-item-graphic-size, 56px)}:host([graphic=medium]) .mdc-deprecated-list-item__graphic.multi,:host([graphic=large]) .mdc-deprecated-list-item__graphic.multi{width:auto}:host([graphic=medium]) .mdc-deprecated-list-item__graphic ::slotted(*),:host([graphic=large]) .mdc-deprecated-list-item__graphic ::slotted(*){width:var(--mdc-list-item-graphic-size, 56px);line-height:var(--mdc-list-item-graphic-size, 56px)}:host([graphic=medium]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=medium]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon),:host([graphic=large]) .mdc-deprecated-list-item__graphic ::slotted(.material-icons),:host([graphic=large]) .mdc-deprecated-list-item__graphic ::slotted(mwc-icon){line-height:var(--mdc-list-item-graphic-size, 56px) !important}:host([graphic=large]){padding-left:0px}`;
 
 /**
  * @license
@@ -2961,7 +3100,7 @@ const styles$c = i$5 `:host{cursor:pointer;user-select:none;-webkit-tap-highligh
  */
 let ListItem = class ListItem extends ListItemBase {
 };
-ListItem.styles = [styles$c];
+ListItem.styles = [styles$b];
 ListItem = __decorate([
     e$7('mwc-list-item')
 ], ListItem);
@@ -6099,145 +6238,6 @@ function identity(e) {
         return tags[tag].identity(e);
     return NaN;
 }
-
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/** @soyCompatible */
-class IconButtonBase extends s$2 {
-    constructor() {
-        super(...arguments);
-        this.disabled = false;
-        this.icon = '';
-        this.shouldRenderRipple = false;
-        this.rippleHandlers = new RippleHandlers(() => {
-            this.shouldRenderRipple = true;
-            return this.ripple;
-        });
-    }
-    /** @soyTemplate */
-    renderRipple() {
-        return this.shouldRenderRipple ? x `
-            <mwc-ripple
-                .disabled="${this.disabled}"
-                unbounded>
-            </mwc-ripple>` :
-            '';
-    }
-    focus() {
-        const buttonElement = this.buttonElement;
-        if (buttonElement) {
-            this.rippleHandlers.startFocus();
-            buttonElement.focus();
-        }
-    }
-    blur() {
-        const buttonElement = this.buttonElement;
-        if (buttonElement) {
-            this.rippleHandlers.endFocus();
-            buttonElement.blur();
-        }
-    }
-    /** @soyTemplate */
-    render() {
-        return x `<button
-        class="mdc-icon-button mdc-icon-button--display-flex"
-        aria-label="${this.ariaLabel || this.icon}"
-        aria-haspopup="${l$2(this.ariaHasPopup)}"
-        ?disabled="${this.disabled}"
-        @focus="${this.handleRippleFocus}"
-        @blur="${this.handleRippleBlur}"
-        @mousedown="${this.handleRippleMouseDown}"
-        @mouseenter="${this.handleRippleMouseEnter}"
-        @mouseleave="${this.handleRippleMouseLeave}"
-        @touchstart="${this.handleRippleTouchStart}"
-        @touchend="${this.handleRippleDeactivate}"
-        @touchcancel="${this.handleRippleDeactivate}"
-    >${this.renderRipple()}
-    ${this.icon ? x `<i class="material-icons">${this.icon}</i>` : ''}
-    <span
-      ><slot></slot
-    ></span>
-  </button>`;
-    }
-    handleRippleMouseDown(event) {
-        const onUp = () => {
-            window.removeEventListener('mouseup', onUp);
-            this.handleRippleDeactivate();
-        };
-        window.addEventListener('mouseup', onUp);
-        this.rippleHandlers.startPress(event);
-    }
-    handleRippleTouchStart(event) {
-        this.rippleHandlers.startPress(event);
-    }
-    handleRippleDeactivate() {
-        this.rippleHandlers.endPress();
-    }
-    handleRippleMouseEnter() {
-        this.rippleHandlers.startHover();
-    }
-    handleRippleMouseLeave() {
-        this.rippleHandlers.endHover();
-    }
-    handleRippleFocus() {
-        this.rippleHandlers.startFocus();
-    }
-    handleRippleBlur() {
-        this.rippleHandlers.endFocus();
-    }
-}
-__decorate([
-    n$4({ type: Boolean, reflect: true })
-], IconButtonBase.prototype, "disabled", void 0);
-__decorate([
-    n$4({ type: String })
-], IconButtonBase.prototype, "icon", void 0);
-__decorate([
-    ariaProperty,
-    n$4({ type: String, attribute: 'aria-label' })
-], IconButtonBase.prototype, "ariaLabel", void 0);
-__decorate([
-    ariaProperty,
-    n$4({ type: String, attribute: 'aria-haspopup' })
-], IconButtonBase.prototype, "ariaHasPopup", void 0);
-__decorate([
-    i$2('button')
-], IconButtonBase.prototype, "buttonElement", void 0);
-__decorate([
-    e$3('mwc-ripple')
-], IconButtonBase.prototype, "ripple", void 0);
-__decorate([
-    t$1()
-], IconButtonBase.prototype, "shouldRenderRipple", void 0);
-__decorate([
-    e$5({ passive: true })
-], IconButtonBase.prototype, "handleRippleMouseDown", null);
-__decorate([
-    e$5({ passive: true })
-], IconButtonBase.prototype, "handleRippleTouchStart", null);
-
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-LIcense-Identifier: Apache-2.0
- */
-const styles$b = i$5 `.material-icons{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}.mdc-icon-button{font-size:24px;width:48px;height:48px;padding:12px}.mdc-icon-button .mdc-icon-button__focus-ring{display:none}.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{display:block;max-height:48px;max-width:48px}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:100%;width:100%}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{border-color:CanvasText}}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{border-color:CanvasText}}.mdc-icon-button.mdc-icon-button--reduced-size .mdc-icon-button__ripple{width:40px;height:40px;margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}.mdc-icon-button.mdc-icon-button--reduced-size.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button.mdc-icon-button--reduced-size:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{max-height:40px;max-width:40px}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-disabled-on-light, rgba(0, 0, 0, 0.38))}.mdc-icon-button svg,.mdc-icon-button img{width:24px;height:24px}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}:host{display:inline-block;outline:none}:host([disabled]){pointer-events:none}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block}:host{--mdc-ripple-color: currentcolor;-webkit-tap-highlight-color:transparent}:host,.mdc-icon-button{vertical-align:top}.mdc-icon-button{width:var(--mdc-icon-button-size, 48px);height:var(--mdc-icon-button-size, 48px);padding:calc( (var(--mdc-icon-button-size, 48px) - var(--mdc-icon-size, 24px)) / 2 )}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block;width:var(--mdc-icon-size, 24px);height:var(--mdc-icon-size, 24px)}`;
-
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/** @soyCompatible */
-let IconButton = class IconButton extends IconButtonBase {
-};
-IconButton.styles = [styles$b];
-IconButton = __decorate([
-    e$7('mwc-icon-button')
-], IconButton);
 
 /**
  * @license
@@ -14781,7 +14781,7 @@ const styles$2 = i$5 `:host(:not([twoline])){height:56px}:host(:not([left])) .md
  */
 let CheckListItem = class CheckListItem extends CheckListItemBase {
 };
-CheckListItem.styles = [styles$c, styles$2];
+CheckListItem.styles = [styles$b, styles$2];
 CheckListItem = __decorate([
     e$7('mwc-check-list-item')
 ], CheckListItem);
@@ -14794,14 +14794,14 @@ function actionItems(actionList) {
     var _a, _b;
     return ((_b = (_a = actionList.querySelector('slot')) === null || _a === void 0 ? void 0 : _a.assignedElements()) !== null && _b !== void 0 ? _b : []).filter(item => item.tagName !== 'LI');
 }
-function slotItem$1(item) {
+function slotItem(item) {
     if (!item.closest('action-filtered-list') || !item.parentElement)
         return item;
     if (item.parentElement instanceof ActionFilteredList)
         return item;
-    return slotItem$1(item.parentElement);
+    return slotItem(item.parentElement);
 }
-function hideFiltered$1(infoItem, searchText, siblingActionItems) {
+function hideFiltered(infoItem, searchText, siblingActionItems) {
     const itemInnerText = `${infoItem.innerText}\n`;
     const childInnerText = Array.from(infoItem.children)
         .map(child => child.innerText)
@@ -14821,12 +14821,12 @@ function hideFiltered$1(infoItem, searchText, siblingActionItems) {
         return reTerm.test(filterTarget);
     });
     if (isEmptyFilter || meetsFilter) {
-        siblingActionItems.forEach(actionItem => slotItem$1(actionItem).classList.remove('hidden'));
-        slotItem$1(infoItem).classList.remove('hidden');
+        siblingActionItems.forEach(actionItem => slotItem(actionItem).classList.remove('hidden'));
+        slotItem(infoItem).classList.remove('hidden');
     }
     else {
-        siblingActionItems.forEach(actionItem => slotItem$1(actionItem).classList.add('hidden'));
-        slotItem$1(infoItem).classList.add('hidden');
+        siblingActionItems.forEach(actionItem => slotItem(actionItem).classList.add('hidden'));
+        slotItem(infoItem).classList.add('hidden');
     }
 }
 function redispatchEvent(element, event) {
@@ -14884,10 +14884,13 @@ let ActionFilteredList = class ActionFilteredList extends s$2 {
             const secondaryItem = (_b = actionItems(this.listSecondary)[index]) !== null && _b !== void 0 ? _b : undefined;
             if (secondaryItem)
                 siblingActionItems.push(secondaryItem);
-            hideFiltered$1(item, this.searchField.value, siblingActionItems);
+            hideFiltered(item, this.searchField.value, siblingActionItems);
         });
     }
     firstUpdated() {
+        this.items = this.infoList.items;
+    }
+    updated() {
         this.items = this.infoList.items;
     }
     constructor() {
@@ -15474,7 +15477,9 @@ let DataSetElementEditor = class DataSetElementEditor extends s$2 {
         });
     }
     renderFCDAList() {
-        return x ` <action-filtered-list style="position:relative"
+        return x ` <action-filtered-list
+      class="list fcda"
+      style="position:relative"
       >${Array.from(this.element.querySelectorAll('FCDA')).map(fcda => {
             const [ldInst, prefix, lnClass, lnInst, doName, daName, fc] = [
                 'ldInst',
@@ -15740,6 +15745,12 @@ __decorate([
 __decorate([
     e$4('scl-textfield')
 ], DataSetElementEditor.prototype, "inputs", void 0);
+__decorate([
+    i$2('mwc-button.save')
+], DataSetElementEditor.prototype, "saveButton", void 0);
+__decorate([
+    i$2('.list.fcda')
+], DataSetElementEditor.prototype, "fcdaList", void 0);
 __decorate([
     i$2('#dapickerbutton')
 ], DataSetElementEditor.prototype, "daPickerButton", void 0);
@@ -17792,16 +17803,11 @@ let ReportControlElementEditor = class ReportControlElementEditor extends s$2 {
         this.reportControlDiff = false;
     }
     onOptFieldsInputChange() {
-        var _a, _b, _c;
         const optFields = this.element.querySelector(':scope > OptFields');
-        if (Array.from((_a = this.optFieldsInputs) !== null && _a !== void 0 ? _a : []).some(input => !input.checkValidity())) {
-            this.optFieldsDiff = false;
-            return;
-        }
         const optFieldsAttrs = {};
-        for (const input of (_b = this.optFieldsInputs) !== null && _b !== void 0 ? _b : [])
+        for (const input of this.optFieldsInputs)
             optFieldsAttrs[input.label] = input.maybeValue;
-        this.optFieldsDiff = Array.from((_c = this.optFieldsInputs) !== null && _c !== void 0 ? _c : []).some(input => (optFields === null || optFields === void 0 ? void 0 : optFields.getAttribute(input.label)) !== input.maybeValue);
+        this.optFieldsDiff = Array.from(this.optFieldsInputs).some(input => (optFields === null || optFields === void 0 ? void 0 : optFields.getAttribute(input.label)) !== input.maybeValue);
     }
     saveOptFieldChanges() {
         var _a;
@@ -17817,16 +17823,11 @@ let ReportControlElementEditor = class ReportControlElementEditor extends s$2 {
         this.onOptFieldsInputChange();
     }
     onTrgOpsInputChange() {
-        var _a, _b, _c;
         const trgOps = this.element.querySelector(':scope > TrgOps');
-        if (Array.from((_a = this.trgOpsInputs) !== null && _a !== void 0 ? _a : []).some(input => !input.checkValidity())) {
-            this.trgOpsDiff = false;
-            return;
-        }
         const trgOpsAttrs = {};
-        for (const input of (_b = this.trgOpsInputs) !== null && _b !== void 0 ? _b : [])
+        for (const input of this.trgOpsInputs)
             trgOpsAttrs[input.label] = input.maybeValue;
-        this.trgOpsDiff = Array.from((_c = this.trgOpsInputs) !== null && _c !== void 0 ? _c : []).some(input => (trgOps === null || trgOps === void 0 ? void 0 : trgOps.getAttribute(input.label)) !== input.maybeValue);
+        this.trgOpsDiff = Array.from(this.trgOpsInputs).some(input => (trgOps === null || trgOps === void 0 ? void 0 : trgOps.getAttribute(input.label)) !== input.maybeValue);
     }
     saveTrgOpsChanges() {
         var _a;
@@ -17842,20 +17843,20 @@ let ReportControlElementEditor = class ReportControlElementEditor extends s$2 {
         this.onTrgOpsInputChange();
     }
     onReportControlInputChange() {
-        var _a, _b, _c, _d;
+        var _a;
         const reportControl = this.element;
         const rptEnabled = reportControl.querySelector(':scope > RptEnabled');
-        const someInvalidAttrs = Array.from((_a = this.reportControlInputs) !== null && _a !== void 0 ? _a : []).some(input => !input.checkValidity());
+        const someInvalidAttrs = Array.from(this.reportControlInputs).some(input => !input.checkValidity());
         if (someInvalidAttrs ||
             !checkRptEnabledValidity(rptEnabled, this.rptEnabledInput)) {
             this.reportControlDiff = false;
             return;
         }
         const reportControlAttrs = {};
-        for (const input of (_b = this.reportControlInputs) !== null && _b !== void 0 ? _b : [])
+        for (const input of this.reportControlInputs)
             reportControlAttrs[input.label] = input.maybeValue;
-        const someAttrDiff = Array.from((_c = this.reportControlInputs) !== null && _c !== void 0 ? _c : []).some(input => (reportControl === null || reportControl === void 0 ? void 0 : reportControl.getAttribute(input.label)) !== input.maybeValue);
-        const rptEnabledDiff = ((_d = rptEnabled === null || rptEnabled === void 0 ? void 0 : rptEnabled.getAttribute('max')) !== null && _d !== void 0 ? _d : null) !==
+        const someAttrDiff = Array.from(this.reportControlInputs).some(input => (reportControl === null || reportControl === void 0 ? void 0 : reportControl.getAttribute(input.label)) !== input.maybeValue);
+        const rptEnabledDiff = ((_a = rptEnabled === null || rptEnabled === void 0 ? void 0 : rptEnabled.getAttribute('max')) !== null && _a !== void 0 ? _a : null) !==
             this.rptEnabledInput.maybeValue;
         this.reportControlDiff = someAttrDiff || rptEnabledDiff;
     }
@@ -17909,7 +17910,7 @@ let ReportControlElementEditor = class ReportControlElementEditor extends s$2 {
             ></scl-checkbox>`)}
       </div>
       <mwc-button
-        class="save"
+        class="save optfields"
         label="save"
         icon="save"
         ?disabled=${!this.optFieldsDiff}
@@ -17935,7 +17936,7 @@ let ReportControlElementEditor = class ReportControlElementEditor extends s$2 {
             ></scl-checkbox>`)}
       </div>
       <mwc-button
-        class="save"
+        class="save trgops"
         label="save"
         icon="save"
         ?disabled=${!this.trgOpsDiff}
@@ -17973,10 +17974,10 @@ let ReportControlElementEditor = class ReportControlElementEditor extends s$2 {
       ></scl-textfield
       ><scl-textfield
         class="report attributes"
-        label="ReportControl Description"
+        label="desc"
         .maybeValue=${desc}
         nullable
-        helper="scl.desc"
+        helper="ReportControl Description"
         @input=${this.onReportControlInputChange}
       ></scl-textfield
       ><scl-checkbox
@@ -18058,7 +18059,7 @@ let ReportControlElementEditor = class ReportControlElementEditor extends s$2 {
           ${this.renderReportControlContent()}${this.renderChildElements()}
         </div>`;
         return x `<div class="parentcontent">
-      <h2>'publisher.nodataset'</h2>
+      <h2>No ReportControl loaded</h2>
     </div>`;
     }
 };
@@ -18134,175 +18135,26 @@ __decorate([
     e$4('.content.optfields > scl-checkbox')
 ], ReportControlElementEditor.prototype, "optFieldsInputs", void 0);
 __decorate([
+    i$2('.save.optfields')
+], ReportControlElementEditor.prototype, "optFieldsSave", void 0);
+__decorate([
     e$4('.content.trgops > scl-checkbox')
 ], ReportControlElementEditor.prototype, "trgOpsInputs", void 0);
 __decorate([
+    i$2('.save.trgops')
+], ReportControlElementEditor.prototype, "trgOpsSave", void 0);
+__decorate([
     e$4('.report.attributes')
 ], ReportControlElementEditor.prototype, "reportControlInputs", void 0);
+__decorate([
+    i$2('.content.reportcontrol > .save')
+], ReportControlElementEditor.prototype, "reportControlSave", void 0);
 __decorate([
     i$2('.rptenabled.attributes')
 ], ReportControlElementEditor.prototype, "rptEnabledInput", void 0);
 ReportControlElementEditor = __decorate([
     e$7('report-control-element-editor')
 ], ReportControlElementEditor);
-
-function slotItem(item) {
-    if (!item.closest('scl-filtered-list') || !item.parentElement)
-        return item;
-    if (item.parentElement instanceof SclFilteredList)
-        return item;
-    return slotItem(item.parentElement);
-}
-function hideFiltered(item, searchText) {
-    const itemInnerText = `${item.innerText}\n`;
-    const childInnerText = Array.from(item.children)
-        .map(child => child.innerText)
-        .join('\n');
-    const { value } = item;
-    const filterTarget = (itemInnerText +
-        childInnerText +
-        value).toUpperCase();
-    const terms = searchText
-        .toUpperCase()
-        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-        .trim()
-        .split(/\s+/g);
-    // eslint-disable-next-line no-unused-expressions
-    (terms.length === 1 && terms[0] === '') ||
-        terms.every(term => {
-            // regexp escape
-            const reTerm = new RegExp(`*${term}*`.replace(/\*/g, '.*').replace(/\?/g, '.{1}'), 'i');
-            return reTerm.test(filterTarget);
-        })
-        ? slotItem(item).classList.remove('hidden')
-        : slotItem(item).classList.add('hidden');
-}
-/**
- * A mwc-list with mwc-textfield that filters the list items for given or separated terms
- */
-let SclFilteredList = class SclFilteredList extends ListBase {
-    get existCheckListItem() {
-        return this.items.some(item => item instanceof CheckListItem);
-    }
-    get isAllSelected() {
-        return this.items
-            .filter(item => !item.disabled)
-            .filter(item => item instanceof CheckListItem)
-            .every(checkItem => checkItem.selected);
-    }
-    get isSomeSelected() {
-        return this.items
-            .filter(item => !item.disabled)
-            .filter(item => item instanceof CheckListItem)
-            .some(checkItem => checkItem.selected);
-    }
-    onCheckAll() {
-        const select = !this.isAllSelected;
-        this.items
-            .filter(item => !item.disabled && !item.classList.contains('hidden'))
-            .forEach(item => {
-            // eslint-disable-next-line no-param-reassign
-            item.selected = select;
-        });
-    }
-    onFilterInput() {
-        Array.from(this.querySelectorAll('mwc-list-item, mwc-check-list-item, mwc-radio-list-item')).forEach(item => hideFiltered(item, this.searchField.value));
-    }
-    onListItemConnected(e) {
-        super.onListItemConnected(e);
-        this.requestUpdate();
-    }
-    constructor() {
-        super();
-        /** Whether the check all option (checkbox next to search text field) is activated */
-        this.disableCheckAll = false;
-        this.addEventListener('selected', () => {
-            this.requestUpdate();
-        });
-    }
-    renderCheckAll() {
-        return this.existCheckListItem && !this.disableCheckAll
-            ? x `<mwc-formfield class="checkall"
-          ><mwc-checkbox
-            ?indeterminate=${!this.isAllSelected && this.isSomeSelected}
-            ?checked=${this.isAllSelected}
-            @change=${() => {
-                this.onCheckAll();
-            }}
-          ></mwc-checkbox
-        ></mwc-formfield>`
-            : x ``;
-    }
-    render() {
-        var _a, _b;
-        return x `<div id="tfcontainer">
-        <abbr title="${(_a = this.searchFieldLabel) !== null && _a !== void 0 ? _a : 'filter'}"
-          ><mwc-textfield
-            label="${(_b = this.searchFieldLabel) !== null && _b !== void 0 ? _b : ''}"
-            iconTrailing="search"
-            outlined
-            @input=${() => this.onFilterInput()}
-          ></mwc-textfield
-        ></abbr>
-        ${this.renderCheckAll()}
-      </div>
-      ${super.render()}`;
-    }
-};
-SclFilteredList.styles = i$5 `
-    ${r$3(List.styles)}
-
-    #tfcontainer {
-      display: flex;
-      flex: auto;
-    }
-
-    ::slotted(.hidden) {
-      display: none;
-    }
-
-    abbr {
-      display: flex;
-      flex: auto;
-      margin: 8px;
-      text-decoration: none;
-      border-bottom: none;
-    }
-
-    mwc-textfield {
-      width: 100%;
-      --mdc-shape-small: 28px;
-    }
-
-    mwc-formfield.checkall {
-      padding-right: 8px;
-    }
-
-    .mdc-list {
-      padding-inline-start: 0px;
-    }
-  `;
-__decorate([
-    n$4({ type: String })
-], SclFilteredList.prototype, "searchFieldLabel", void 0);
-__decorate([
-    n$4({ type: Boolean })
-], SclFilteredList.prototype, "disableCheckAll", void 0);
-__decorate([
-    t$1()
-], SclFilteredList.prototype, "existCheckListItem", null);
-__decorate([
-    t$1()
-], SclFilteredList.prototype, "isAllSelected", null);
-__decorate([
-    t$1()
-], SclFilteredList.prototype, "isSomeSelected", null);
-__decorate([
-    i$2('mwc-textfield')
-], SclFilteredList.prototype, "searchField", void 0);
-SclFilteredList = __decorate([
-    e$7('scl-filtered-list')
-], SclFilteredList);
 
 function updateElementReference(newDoc, oldElement) {
     if (!oldElement || !oldElement.closest('SCL'))
@@ -18337,6 +18189,10 @@ const styles = i$5 `
   }
 
   mwc-list-item.hidden[noninteractive] + li[divider] {
+    display: none;
+  }
+
+  mwc-list-item.hidden[slot] + li[divider] {
     display: none;
   }
 
@@ -18430,7 +18286,7 @@ let ReportControlEditor = class ReportControlEditor extends s$2 {
     }
     selectDataSet() {
         var _a, _b;
-        const dataSetElement = this.selectDataSetDialog.querySelector('scl-filtered-list').selected;
+        const dataSetElement = this.selectDataSetDialog.querySelector('action-filtered-list').selected;
         if (!dataSetElement)
             return;
         const dataSetName = dataSetElement.value;
@@ -18462,7 +18318,9 @@ let ReportControlEditor = class ReportControlEditor extends s$2 {
         var _a, _b, _c;
         return x `
       <mwc-dialog heading="Select Data Set">
-        <scl-filtered-list activatable @selected=${() => this.selectDataSet()}
+        <action-filtered-list
+          activatable
+          @selected=${() => this.selectDataSet()}
           >${Array.from((_c = (_b = (_a = this.selectedReportControl) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelectorAll('DataSet')) !== null && _c !== void 0 ? _c : []).map(dataSet => {
             var _a, _b, _c, _d, _e;
             return x `<mwc-list-item
@@ -18474,7 +18332,7 @@ let ReportControlEditor = class ReportControlEditor extends s$2 {
                 <span slot="secondary">${identity(dataSet)}</span>
               </mwc-list-item>`;
         })}
-        </scl-filtered-list>
+        </action-filtered-list>
       </mwc-dialog>
     `;
     }
@@ -18489,12 +18347,14 @@ let ReportControlEditor = class ReportControlEditor extends s$2 {
             editCount="${this.editCount}"
           >
             <mwc-icon-button
+              class="change dataset"
               slot="change"
               icon="swap_vert"
               ?disabled=${!!findControlBlockSubscription(this.selectedReportControl).length}
               @click=${() => this.selectDataSetDialog.show()}
             ></mwc-icon-button>
             <mwc-icon-button
+              class="new dataset"
               slot="new"
               icon="playlist_add"
               ?disabled=${!!this.selectedReportControl.getAttribute('datSet')}
@@ -18513,14 +18373,13 @@ let ReportControlEditor = class ReportControlEditor extends s$2 {
         return x ``;
     }
     renderSelectionList() {
-        return x `<scl-filtered-list
+        return x `<action-filtered-list
       activatable
       class="selectionlist"
       @action=${this.selectReportControl}
       >${Array.from(this.doc.querySelectorAll('IED')).flatMap(ied => {
             const ieditem = x `<mwc-list-item
             class="listitem header"
-            hasMeta
             noninteractive
             graphic="icon"
             value="${Array.from(ied.querySelectorAll('ReportControl'))
@@ -18532,38 +18391,40 @@ let ReportControlEditor = class ReportControlEditor extends s$2 {
           >
             <span>${ied.getAttribute('name')}</span>
             <mwc-icon slot="graphic">developer_board</mwc-icon>
-            <mwc-icon-button
-              slot="meta"
-              icon="playlist_add"
-              @click=${() => {
-                const insert = createReportControl(ied);
-                if (insert)
-                    this.dispatchEvent(newEditEvent(insert));
-                this.requestUpdate();
-            }}
-            ></mwc-icon-button>
           </mwc-list-item>
-          <li divider role="separator"></li>`;
+          <li divider role="separator"></li>
+          <mwc-list-item
+            slot="primaryAction"
+            style="height:56px;"
+            @request-selected="${(evt) => {
+                evt.stopPropagation();
+                const insertDataSet = createReportControl(ied);
+                if (insertDataSet)
+                    this.dispatchEvent(newEditEvent(insertDataSet));
+            }}"
+            ><mwc-icon>playlist_add</mwc-icon></mwc-list-item
+          >
+          <li slot="primaryAction" divider role="separator"></li> `;
             const reports = Array.from(ied.querySelectorAll('ReportControl')).map(reportCb => x `<mwc-list-item
-              hasMeta
-              twoline
-              value="${identity(reportCb)}"
-              graphic="icon"
-              ><span>${reportCb.getAttribute('name')}</span
-              ><span slot="secondary">${identity(reportCb)}</span>
-              <span slot="meta"
-                ><mwc-icon-button
-                  icon="delete"
-                  @click=${() => {
+                twoline
+                value="${identity(reportCb)}"
+                graphic="icon"
+                ><span>${reportCb.getAttribute('name')}</span
+                ><span slot="secondary">${identity(reportCb)}</span>
+                <mwc-icon slot="graphic">${reportIcon}</mwc-icon>
+              </mwc-list-item>
+              <mwc-list-item
+                style="height:72px;"
+                slot="primaryAction"
+                @request-selected="${(evt) => {
+                evt.stopPropagation();
                 this.dispatchEvent(newEditEvent(removeControlBlock({ node: reportCb })));
-                this.requestUpdate();
-            }}
-                ></mwc-icon-button>
-              </span>
-              <mwc-icon slot="graphic">${reportIcon}</mwc-icon>
-            </mwc-list-item>`);
+            }}"
+              >
+                <mwc-icon>delete</mwc-icon>
+              </mwc-list-item>`);
             return [ieditem, ...reports];
-        })}</scl-filtered-list
+        })}</action-filtered-list
     >`;
     }
     renderToggleButton() {
@@ -18578,6 +18439,8 @@ let ReportControlEditor = class ReportControlEditor extends s$2 {
     ></mwc-button>`;
     }
     render() {
+        if (!this.doc)
+            return x `No SCL loaded`;
         return x `${this.renderToggleButton()}
       <div class="section">
         ${this.renderSelectionList()}${this.renderElementEditorContainer()}
@@ -18645,6 +18508,12 @@ __decorate([
 __decorate([
     i$2('mwc-dialog')
 ], ReportControlEditor.prototype, "selectDataSetDialog", void 0);
+__decorate([
+    i$2('.new.dataset')
+], ReportControlEditor.prototype, "newDataSet", void 0);
+__decorate([
+    i$2('.change.dataset')
+], ReportControlEditor.prototype, "changeDataSet", void 0);
 ReportControlEditor = __decorate([
     e$7('report-control-editor')
 ], ReportControlEditor);
@@ -18673,11 +18542,24 @@ function checkGSEDiff(gSE, attrs, instType) {
     });
 }
 
+function pElementContent$2(gse, type) {
+    var _a, _b, _c;
+    return ((_c = (_b = (_a = Array.from(gse.querySelectorAll(':scope > Address > P'))
+        .find(p => p.getAttribute('type') === type)) === null || _a === void 0 ? void 0 : _a.textContent) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : null);
+}
+const gseHelpers = {
+    'MAC-Address': 'MAC address (01-0C-CD-04-xx-xx)',
+    APPID: 'APP ID (4xxx in hex)',
+    'VLAN-ID': 'VLAN ID (XXX in hex)',
+    'VLAN-PRIORITY': 'VLAN Priority (0-7)',
+};
 let GseControlElementEditor = class GseControlElementEditor extends s$2 {
     constructor() {
         super(...arguments);
+        /** The element being edited as provided to plugins by [[`OpenSCD`]]. */
+        this.element = null;
         /** SCL change indicator */
-        this.editCount = 0;
+        this.editCount = -1;
         this.gSEdiff = false;
         this.gSEControlDiff = false;
     }
@@ -18768,14 +18650,12 @@ let GseControlElementEditor = class GseControlElementEditor extends s$2 {
         const hasInstType = Array.from(gSE.querySelectorAll('Address > P')).some(pType => pType.getAttribute('xsi:type'));
         const attributes = {};
         ['MAC-Address', 'APPID', 'VLAN-ID', 'VLAN-PRIORITY'].forEach(key => {
-            var _a, _b;
             if (!attributes[key])
-                attributes[key] =
-                    (_b = (_a = gSE.querySelector(`Address > P[type="${key}"]`)) === null || _a === void 0 ? void 0 : _a.innerHTML.trim()) !== null && _b !== void 0 ? _b : null;
+                attributes[key] = pElementContent$2(gSE, key);
         });
         return x `<div class="content gse">
       <h3>Communication Settings (GSE)</h3>
-      <mwc-formfield label="connectedap.wizard.addschemainsttype"
+      <mwc-formfield label="Add XMLSchema-instance type"
         ><mwc-checkbox
           id="instType"
           ?checked="${hasInstType}"
@@ -18783,15 +18663,17 @@ let GseControlElementEditor = class GseControlElementEditor extends s$2 {
         ></mwc-checkbox></mwc-formfield
       >${Object.entries(attributes).map(([key, value]) => x `<scl-textfield
             label="${key}"
+            ?nullable=${typeNullable[key]}
             .maybeValue=${value}
             pattern="${typePattern[key]}"
             required
+            helper="${gseHelpers[key]}"
             @input=${this.onGSEInputChange}
-            ?nullable=${typeNullable[key]}
           ></scl-textfield>`)}<scl-textfield
         label="MinTime"
         .maybeValue=${minTime}
         nullable
+        helper="Min repetition interval"
         suffix="ms"
         type="number"
         @input=${this.onGSEInputChange}
@@ -18800,6 +18682,7 @@ let GseControlElementEditor = class GseControlElementEditor extends s$2 {
         label="MaxTime"
         .maybeValue=${maxTime}
         nullable
+        helper="Max repetition interval"
         suffix="ms"
         type="number"
         @input=${this.onGSEInputChange}
@@ -18822,15 +18705,16 @@ let GseControlElementEditor = class GseControlElementEditor extends s$2 {
             'appID',
             'fixedOffs',
             'securityEnabled',
-        ].map(attr => { var _a; return (_a = this.element) === null || _a === void 0 ? void 0 : _a.getAttribute(attr); });
+        ].map(attr => this.element.getAttribute(attr));
         const reservedGseControlNames = Array.from((_b = (_a = this.element.parentElement) === null || _a === void 0 ? void 0 : _a.querySelectorAll('GSEControl')) !== null && _b !== void 0 ? _b : [])
             .map(gseControl => gseControl.getAttribute('name'))
             .filter(gseControlName => gseControlName !== this.element.getAttribute('name'));
         return x `<div class="content gsecontrol">
       <scl-textfield
+        class="input gsecontrol"
         label="name"
         .maybeValue=${name}
-        helper="scl.name"
+        helper="GSEControl Name"
         required
         validationMessage="textfield.required"
         pattern="${patterns.asciName}"
@@ -18840,16 +18724,18 @@ let GseControlElementEditor = class GseControlElementEditor extends s$2 {
         @input=${this.onGSEControlInputChange}
       ></scl-textfield>
       <scl-textfield
+        class="input gsecontrol"
         label="desc"
         .maybeValue=${desc}
         nullable
-        helper="scl.desc"
+        helper="GSEControl Description"
         @input=${this.onGSEControlInputChange}
       ></scl-textfield>
       <scl-select
+        class="input gsecontrol"
         label="type"
         .maybeValue=${type}
-        helper="scl.type"
+        helper="GOOSE or GSSE"
         nullable
         required
         @selected=${this.onGSEControlInputChange}
@@ -18858,26 +18744,29 @@ let GseControlElementEditor = class GseControlElementEditor extends s$2 {
             >`)}</scl-select
       >
       <scl-textfield
+        class="input gsecontrol"
         label="appID"
         .maybeValue=${appID}
-        helper="scl.id"
+        helper="GSEControl ID"
         required
         validationMessage="textfield.nonempty"
         @input=${this.onGSEControlInputChange}
       ></scl-textfield>
       <scl-checkbox
+        class="input gsecontrol"
         label="fixedOffs"
         .maybeValue=${fixedOffs}
         nullable
-        helper="scl.fixedOffs"
+        helper="Whether ASN.1 coding is done with fixed offsets"
         @input=${this.onGSEControlInputChange}
       ></scl-checkbox>
       <scl-select
+        class="input gsecontrol"
         label="securityEnabled"
         .maybeValue=${securityEnabled}
         nullable
         required
-        helper="scl.securityEnable"
+        helper="GSEControl Security Settings"
         @selected=${this.onGSEControlInputChange}
         >${['None', 'Signature', 'SignatureAndEncryption'].map(securityType => x `<mwc-list-item value="${securityType}"
               >${securityType}</mwc-list-item
@@ -18893,6 +18782,8 @@ let GseControlElementEditor = class GseControlElementEditor extends s$2 {
     </div>`;
     }
     render() {
+        if (!this.element)
+            return x `<h2 style="display: flex;">No GSEControl selected</h2>`;
         return x `<h2 style="display: flex;">
         <div style="flex:auto">
           <div>GSEControl</div>
@@ -18956,9 +18847,6 @@ GseControlElementEditor.styles = i$5 `
   `;
 __decorate([
     n$4({ attribute: false })
-], GseControlElementEditor.prototype, "doc", void 0);
-__decorate([
-    n$4({ attribute: false })
 ], GseControlElementEditor.prototype, "element", void 0);
 __decorate([
     n$4({ type: Number })
@@ -18976,8 +18864,14 @@ __decorate([
     e$4('.content.gse > scl-textfield')
 ], GseControlElementEditor.prototype, "gSEInputs", void 0);
 __decorate([
-    e$4('.content.gsecontrol > scl-textfield, .content.gsecontrol > scl-select, .content.gsecontrol > scl-checkbox')
+    i$2('.content.gse > .save')
+], GseControlElementEditor.prototype, "gseSave", void 0);
+__decorate([
+    e$4('.input.gsecontrol')
 ], GseControlElementEditor.prototype, "gSEControlInputs", void 0);
+__decorate([
+    i$2('.content.gsecontrol > .save')
+], GseControlElementEditor.prototype, "gseControlSave", void 0);
 __decorate([
     i$2('#instType')
 ], GseControlElementEditor.prototype, "instType", void 0);
@@ -18989,7 +18883,7 @@ let GseControlEditor = class GseControlEditor extends s$2 {
     constructor() {
         super(...arguments);
         /** SCL change indicator */
-        this.editCount = 0;
+        this.editCount = -1;
     }
     /** Resets selected GOOSE and its DataSet, if not existing in new doc */
     update(props) {
@@ -19005,6 +18899,7 @@ let GseControlEditor = class GseControlEditor extends s$2 {
         }
     }
     addNewDataSet(control) {
+        var _a, _b;
         const parent = control.parentElement;
         if (!parent)
             return;
@@ -19016,10 +18911,12 @@ let GseControlEditor = class GseControlEditor extends s$2 {
             return;
         const update = { element: control, attributes: { datSet: newName } };
         this.dispatchEvent(newEditEvent([insert, update]));
+        this.selectedDataSet =
+            (_b = (_a = this.selectedGseControl) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelector(`DataSet[name="${this.selectedGseControl.getAttribute('datSet')}"]`);
     }
     selectDataSet() {
         var _a, _b;
-        const dataSetElement = this.selectDataSetDialog.querySelector('scl-filtered-list').selected;
+        const dataSetElement = this.selectDataSetDialog.querySelector('action-filtered-list').selected;
         if (!dataSetElement)
             return;
         const dataSetName = dataSetElement.value;
@@ -19050,7 +18947,7 @@ let GseControlEditor = class GseControlEditor extends s$2 {
         var _a, _b, _c;
         return x `
       <mwc-dialog heading="Select Data Set">
-        <scl-filtered-list activatable @action=${() => this.selectDataSet()}
+        <action-filtered-list activatable @action=${() => this.selectDataSet()}
           >${Array.from((_c = (_b = (_a = this.selectedGseControl) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelectorAll('DataSet')) !== null && _c !== void 0 ? _c : []).map(dataSet => {
             var _a, _b, _c, _d, _e;
             return x `<mwc-list-item
@@ -19062,7 +18959,7 @@ let GseControlEditor = class GseControlEditor extends s$2 {
                 <span slot="secondary">${identity(dataSet)}</span>
               </mwc-list-item>`;
         })}
-        </scl-filtered-list>
+        </action-filtered-list>
       </mwc-dialog>
     `;
     }
@@ -19077,12 +18974,14 @@ let GseControlEditor = class GseControlEditor extends s$2 {
             editCount="${this.editCount}"
           >
             <mwc-icon-button
+              class="change dataset"
               slot="change"
               icon="swap_vert"
               ?disabled=${!!findControlBlockSubscription(this.selectedGseControl).length}
               @click=${() => this.selectDataSetDialog.show()}
             ></mwc-icon-button>
             <mwc-icon-button
+              class="new dataset"
               slot="new"
               icon="playlist_add"
               ?disabled=${!!this.selectedGseControl.getAttribute('datSet')}
@@ -19101,14 +19000,13 @@ let GseControlEditor = class GseControlEditor extends s$2 {
         return x ``;
     }
     renderSelectionList() {
-        return x `<scl-filtered-list
+        return x `<action-filtered-list
       activatable
       @action=${this.selectGSEControl}
       class="selectionlist"
       >${Array.from(this.doc.querySelectorAll('IED')).flatMap(ied => {
             const ieditem = x `<mwc-list-item
             class="listitem header"
-            hasMeta
             noninteractive
             graphic="icon"
             value="${Array.from(ied.querySelectorAll('GSEControl'))
@@ -19120,45 +19018,47 @@ let GseControlEditor = class GseControlEditor extends s$2 {
           >
             <span>${ied.getAttribute('name')}</span>
             <mwc-icon slot="graphic">developer_board</mwc-icon>
-            <mwc-icon-button
-              slot="meta"
-              icon="playlist_add"
-              @click=${() => {
-                const insert = createGSEControl(ied);
-                if (insert)
-                    this.dispatchEvent(newEditEvent(insert));
-                this.requestUpdate();
-            }}
-            ></mwc-icon-button>
           </mwc-list-item>
-          <li divider role="separator"></li>`;
+          <li divider role="separator"></li>
+          <mwc-list-item
+            slot="primaryAction"
+            style="height:56px;"
+            @request-selected="${(evt) => {
+                evt.stopPropagation();
+                const insertDataSet = createGSEControl(ied);
+                if (insertDataSet)
+                    this.dispatchEvent(newEditEvent(insertDataSet));
+            }}"
+            ><mwc-icon>playlist_add</mwc-icon></mwc-list-item
+          >
+          <li slot="primaryAction" divider role="separator"></li>`;
             const gseControls = Array.from(ied.querySelectorAll('GSEControl')).map(gseControl => x `<mwc-list-item
-              hasMeta
-              twoline
-              value="${identity(gseControl)}"
-              graphic="icon"
-              ><span>${gseControl.getAttribute('name')}</span
-              ><span slot="secondary">${identity(gseControl)}</span>
-              <span slot="meta"
-                ><mwc-icon-button
-                  icon="delete"
-                  @click=${() => {
+                twoline
+                value="${identity(gseControl)}"
+                graphic="icon"
+                ><span>${gseControl.getAttribute('name')}</span
+                ><span slot="secondary">${identity(gseControl)}</span>
+                <mwc-icon slot="graphic">${gooseIcon}</mwc-icon>
+              </mwc-list-item>
+              <mwc-list-item
+                style="height:72px;"
+                slot="primaryAction"
+                @request-selected="${(evt) => {
+                evt.stopPropagation();
                 this.dispatchEvent(newEditEvent(removeControlBlock({ node: gseControl })));
-                this.requestUpdate();
-            }}
-                ></mwc-icon-button>
-              </span>
-              <mwc-icon slot="graphic">${gooseIcon}</mwc-icon>
-            </mwc-list-item>`);
+            }}"
+              >
+                <mwc-icon>delete</mwc-icon>
+              </mwc-list-item>`);
             return [ieditem, ...gseControls];
-        })}</scl-filtered-list
+        })}</action-filtered-list
     >`;
     }
     renderToggleButton() {
         return x `<mwc-button
       class="change scl element"
       outlined
-      label="publisher.selectbutton GOOSE"
+      label="Selected GOOSE"
       @click=${() => {
             this.selectionList.classList.remove('hidden');
             this.selectGSEControlButton.classList.add('hidden');
@@ -19166,6 +19066,8 @@ let GseControlEditor = class GseControlEditor extends s$2 {
     ></mwc-button>`;
     }
     render() {
+        if (!this.doc)
+            return x `No SCL loaded`;
         return x `${this.renderToggleButton()}
       <div class="section">
         ${this.renderSelectionList()}${this.renderElementEditorContainer()}
@@ -19233,6 +19135,12 @@ __decorate([
 __decorate([
     i$2('mwc-dialog')
 ], GseControlEditor.prototype, "selectDataSetDialog", void 0);
+__decorate([
+    i$2('.new.dataset')
+], GseControlEditor.prototype, "newDataSet", void 0);
+__decorate([
+    i$2('.change.dataset')
+], GseControlEditor.prototype, "changeDataSet", void 0);
 GseControlEditor = __decorate([
     e$7('gse-control-editor')
 ], GseControlEditor);
@@ -19251,11 +19159,7 @@ let DataSetEditor = class DataSetEditor extends s$2 {
         /** SCL change indicator */
         this.editCount = 0;
     }
-    get childCount() {
-        var _a, _b;
-        return (_b = (_a = this.selectedDataSet) === null || _a === void 0 ? void 0 : _a.querySelectorAll(':scope > FCDA').length) !== null && _b !== void 0 ? _b : 0;
-    }
-    /** Resets selected GOOSE, if not existing in new doc */
+    /** Resets selected DataSet, if not existing in new doc */
     update(props) {
         if (props.has('doc') && this.selectedDataSet) {
             const newDataSet = updateElementReference(this.doc, this.selectedDataSet);
@@ -19351,6 +19255,8 @@ let DataSetEditor = class DataSetEditor extends s$2 {
     ></mwc-button>`;
     }
     render() {
+        if (!this.doc)
+            return x `<div>No SCL loaded</div>`;
         return x `${this.renderToggleButton()}
       <div class="section">
         ${this.renderSelectionList()}${this.renderElementEditorContainer()}
@@ -19381,9 +19287,6 @@ __decorate([
 __decorate([
     t$1()
 ], DataSetEditor.prototype, "selectedDataSet", void 0);
-__decorate([
-    t$1()
-], DataSetEditor.prototype, "childCount", null);
 __decorate([
     i$2('.selectionlist')
 ], DataSetEditor.prototype, "selectionList", void 0);
@@ -19460,23 +19363,22 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
       > SMV[ldInst="${ldInst}"][cbName="${cbName}"]`);
     }
     onSampledValueControlInputChange() {
-        var _a, _b, _c;
-        if (Array.from((_a = this.sampledValueControlInputs) !== null && _a !== void 0 ? _a : []).some(input => !input.checkValidity())) {
+        if (Array.from(this.sampledValueControlInputs).some(input => !input.checkValidity())) {
             this.sampledValueControlDiff = false;
             return;
         }
         const sampledValueControlAttrs = {};
-        for (const input of (_b = this.sampledValueControlInputs) !== null && _b !== void 0 ? _b : [])
+        for (const input of this.sampledValueControlInputs)
             sampledValueControlAttrs[input.label] = input.maybeValue;
-        this.sampledValueControlDiff = Array.from((_c = this.sampledValueControlInputs) !== null && _c !== void 0 ? _c : []).some(input => { var _a; return ((_a = this.element) === null || _a === void 0 ? void 0 : _a.getAttribute(input.label)) !== input.maybeValue; });
+        this.sampledValueControlDiff = Array.from(this.sampledValueControlInputs).some(input => { var _a; return ((_a = this.element) === null || _a === void 0 ? void 0 : _a.getAttribute(input.label)) !== input.maybeValue; });
     }
     saveSampledValueControlChanges() {
-        var _a, _b;
+        var _a;
         if (!this.element)
             return;
         const sampledValueControlAttrs = {};
-        for (const input of (_a = this.sampledValueControlInputs) !== null && _a !== void 0 ? _a : [])
-            if (((_b = this.element) === null || _b === void 0 ? void 0 : _b.getAttribute(input.label)) !== input.maybeValue)
+        for (const input of this.sampledValueControlInputs)
+            if (((_a = this.element) === null || _a === void 0 ? void 0 : _a.getAttribute(input.label)) !== input.maybeValue)
                 sampledValueControlAttrs[input.label] = input.maybeValue;
         this.dispatchEvent(newEditEvent(updateSampledValueControl({
             element: this.element,
@@ -19485,25 +19387,25 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         this.onSampledValueControlInputChange();
     }
     onSMVInputChange() {
-        var _a, _b, _c;
-        if (Array.from((_a = this.sMVInputs) !== null && _a !== void 0 ? _a : []).some(input => !input.checkValidity())) {
+        var _a;
+        if (Array.from(this.sMVInputs).some(input => !input.checkValidity())) {
             this.sMVdiff = false;
             return;
         }
         const pTypes = {};
-        for (const input of (_b = this.sMVInputs) !== null && _b !== void 0 ? _b : [])
+        for (const input of this.sMVInputs)
             pTypes[input.label] = input.maybeValue;
         this.sMVdiff = checkSMVDiff(this.sMV, {
             pTypes,
-            instType: (_c = this.instType) === null || _c === void 0 ? void 0 : _c.checked,
+            instType: (_a = this.instType) === null || _a === void 0 ? void 0 : _a.checked,
         });
     }
     saveSMVChanges() {
-        var _a, _b, _c;
+        var _a, _b;
         if (!this.sMV)
             return;
         const options = {};
-        for (const input of (_a = this.sMVInputs) !== null && _a !== void 0 ? _a : []) {
+        for (const input of this.sMVInputs) {
             if (input.label === 'MAC-Address' && input.maybeValue)
                 options.mac = input.maybeValue;
             if (input.label === 'APPID' && input.maybeValue)
@@ -19513,32 +19415,26 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
             if (input.label === 'VLAN-PRIORITY' && input.maybeValue)
                 options.vlanPriority = input.maybeValue;
         }
-        if (((_b = this.instType) === null || _b === void 0 ? void 0 : _b.checked) === true)
+        if (((_a = this.instType) === null || _a === void 0 ? void 0 : _a.checked) === true)
             options.instType = true;
-        else if (((_c = this.instType) === null || _c === void 0 ? void 0 : _c.checked) === false)
+        else if (((_b = this.instType) === null || _b === void 0 ? void 0 : _b.checked) === false)
             options.instType = false;
         this.dispatchEvent(newEditEvent(changeSMVContent(this.sMV, options)));
         this.onSMVInputChange();
     }
     onSmvOptsInputChange() {
-        var _a, _b, _c;
         const smvOpts = this.element.querySelector(':scope > SmvOpts');
-        if (Array.from((_a = this.smvOptsInputs) !== null && _a !== void 0 ? _a : []).some(input => !input.checkValidity())) {
-            this.smvOptsDiff = false;
-            return;
-        }
         const smvOptsAttrs = {};
-        for (const input of (_b = this.smvOptsInputs) !== null && _b !== void 0 ? _b : [])
+        for (const input of this.smvOptsInputs)
             smvOptsAttrs[input.label] = input.maybeValue;
-        this.smvOptsDiff = Array.from((_c = this.smvOptsInputs) !== null && _c !== void 0 ? _c : []).some(input => (smvOpts === null || smvOpts === void 0 ? void 0 : smvOpts.getAttribute(input.label)) !== input.maybeValue);
+        this.smvOptsDiff = Array.from(this.smvOptsInputs).some(input => (smvOpts === null || smvOpts === void 0 ? void 0 : smvOpts.getAttribute(input.label)) !== input.maybeValue);
     }
     saveSmvOptsChanges() {
-        var _a;
         const smvOpts = this.element.querySelector(':scope > SmvOpts');
         if (!smvOpts)
             return;
         const smvOptsAttrs = {};
-        for (const input of (_a = this.smvOptsInputs) !== null && _a !== void 0 ? _a : [])
+        for (const input of this.smvOptsInputs)
             if (smvOpts.getAttribute(input.label) !== input.maybeValue)
                 smvOptsAttrs[input.label] = input.maybeValue;
         const updateEdit = { element: smvOpts, attributes: smvOptsAttrs };
@@ -19549,7 +19445,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         const { sMV } = this;
         if (!sMV)
             return x ` <h3>
-        <div>'Communication Settings (SMV)</div>
+        <div>Communication Settings (SMV)</div>
         <div class="headersubtitle">No connection available</div>
       </h3>`;
         const hasInstType = Array.from(sMV.querySelectorAll(':scope > Address > P')).some(pType => pType.getAttribute('xsi:type'));
@@ -19562,11 +19458,12 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         <h3>Communication Settings (SMV)</h3>
         <mwc-formfield label="Add XMLSchema-instance type"
           ><mwc-checkbox
-            id="instType"
+            class="smv.insttype"
             ?checked="${hasInstType}"
             @change=${this.onSMVInputChange}
           ></mwc-checkbox></mwc-formfield
         >${Object.entries(attributes).map(([key, value]) => x `<scl-textfield
+              class="smv attribute"
               label="${key}"
               ?nullable=${typeNullable[key]}
               .maybeValue=${value}
@@ -19577,7 +19474,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
             ></scl-textfield>`)}
       </div>
       <mwc-button
-        class="save"
+        class="smv save"
         label="save"
         icon="save"
         ?disabled=${!this.sMVdiff}
@@ -19605,6 +19502,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
             timestamp,
             synchSourceId,
         }).map(([key, value]) => x `<scl-checkbox
+              class="smvopts attribute"
               label="${key}"
               .maybeValue=${value}
               nullable
@@ -19613,7 +19511,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
             ></scl-checkbox>`)}
       </div>
       <mwc-button
-        class="save"
+        class="smvopts save"
         label="save"
         icon="save"
         ?disabled=${!this.smvOptsDiff}
@@ -19638,6 +19536,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         ].map(attr => { var _a; return (_a = this.element) === null || _a === void 0 ? void 0 : _a.getAttribute(attr); });
         return x `<div class="content smvcontrol">
       <scl-textfield
+        class="smvcontrol attribute"
         label="name"
         .maybeValue=${name}
         helper="Sampled Value Name"
@@ -19648,6 +19547,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         @input="${this.onSampledValueControlInputChange}"
       ></scl-textfield>
       <scl-textfield
+        class="smvcontrol attribute"
         label="desc"
         .maybeValue=${desc}
         nullable
@@ -19657,12 +19557,14 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
       ${multicast === null || multicast === 'true'
             ? x ``
             : x `<scl-checkbox
+            class="smvcontrol attribute"
             label="multicast"
             .maybeValue=${multicast}
             helper="Whether Sample Value Stream is multicast"
             @input="${this.onSampledValueControlInputChange}"
           ></scl-checkbox>`}
       <scl-textfield
+        class="smvcontrol attribute"
         label="smvID"
         .maybeValue=${smvID}
         helper="Sampled Value ID"
@@ -19670,6 +19572,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         @input="${this.onSampledValueControlInputChange}"
       ></scl-textfield>
       <scl-select
+        class="smvcontrol attribute"
         label="smpMod"
         .maybeValue=${smpMod}
         nullable
@@ -19679,6 +19582,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         >${['SmpPerPeriod', 'SmpPerSec', 'SecPerSmp'].map(option => x `<mwc-list-item value="${option}">${option}</mwc-list-item>`)}</scl-select
       >
       <scl-textfield
+        class="smvcontrol attribute"
         label="smpRate"
         .maybeValue=${smpRate}
         helper="Sample Rate (Based on Sample Mode)"
@@ -19689,6 +19593,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         @input="${this.onSampledValueControlInputChange}"
       ></scl-textfield>
       <scl-textfield
+        class="smvcontrol attribute"
         label="nofASDU"
         .maybeValue=${nofASDU}
         helper="Number of Samples per Ethernet packet"
@@ -19698,6 +19603,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         @input="${this.onSampledValueControlInputChange}"
       ></scl-textfield>
       <scl-select
+        class="smvcontrol attribute"
         label="securityEnabled"
         .maybeValue=${securityEnabled}
         nullable
@@ -19706,7 +19612,7 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
         @selected="${this.onSampledValueControlInputChange}"
         >${['None', 'Signature', 'SignatureAndEncryption'].map(type => x `<mwc-list-item value="${type}">${type}</mwc-list-item>`)}</scl-select
       ><mwc-button
-        class="save"
+        class="smvcontrol save"
         label="save"
         icon="save"
         ?disabled=${!this.sampledValueControlDiff}
@@ -19715,6 +19621,10 @@ let SampledValueControlElementEditor = class SampledValueControlElementEditor ex
     </div>`;
     }
     render() {
+        if (!this.element)
+            return x `<h2 style="display: flex;">
+        No SampledValueControl selected
+      </h2>`;
         return x `<h2 style="display: flex;">
         <div style="flex:auto">
           <div>SampledValueControl</div>
@@ -19798,16 +19708,25 @@ __decorate([
     t$1()
 ], SampledValueControlElementEditor.prototype, "sampledValueControlDiff", void 0);
 __decorate([
-    e$4('.content.smvcontrol > scl-textfield, .content.smvcontrol > scl-select, .content.smvcontrol > scl-checkbox')
+    e$4('.smvcontrol.attribute')
 ], SampledValueControlElementEditor.prototype, "sampledValueControlInputs", void 0);
 __decorate([
-    e$4('.content.smv > scl-textfield')
+    i$2('.smvcontrol.save')
+], SampledValueControlElementEditor.prototype, "smvControlSave", void 0);
+__decorate([
+    e$4('.smv.attribute')
 ], SampledValueControlElementEditor.prototype, "sMVInputs", void 0);
 __decorate([
-    e$4('.content.smvopts > scl-checkbox')
+    i$2('.smv.save')
+], SampledValueControlElementEditor.prototype, "smvSave", void 0);
+__decorate([
+    e$4('.smvopts.attribute')
 ], SampledValueControlElementEditor.prototype, "smvOptsInputs", void 0);
 __decorate([
-    i$2('#instType')
+    i$2('.smvopts.save')
+], SampledValueControlElementEditor.prototype, "smvOptsSave", void 0);
+__decorate([
+    i$2('.smv.insttype')
 ], SampledValueControlElementEditor.prototype, "instType", void 0);
 SampledValueControlElementEditor = __decorate([
     e$7('sampled-value-control-element-editor')
@@ -19817,7 +19736,7 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
     constructor() {
         super(...arguments);
         /** SCL change indicator */
-        this.editCount = 0;
+        this.editCount = -1;
     }
     /** Resets selected SMV and its DataSet, if not existing in new doc */
     update(props) {
@@ -19835,6 +19754,7 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
         }
     }
     addNewDataSet(control) {
+        var _a, _b;
         const parent = control.parentElement;
         if (!parent)
             return;
@@ -19846,10 +19766,12 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
             return;
         const update = { element: control, attributes: { datSet: newName } };
         this.dispatchEvent(newEditEvent([insert, update]));
+        this.selectedDataSet =
+            (_b = (_a = this.selectedSampledValueControl) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelector(`DataSet[name="${this.selectedSampledValueControl.getAttribute('datSet')}"]`);
     }
     selectDataSet() {
         var _a, _b;
-        const dataSetElement = this.selectDataSetDialog.querySelector('scl-filtered-list').selected;
+        const dataSetElement = this.selectDataSetDialog.querySelector('action-filtered-list').selected;
         if (!dataSetElement)
             return;
         const dataSetName = dataSetElement.value;
@@ -19881,7 +19803,7 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
         var _a, _b, _c;
         return x `
       <mwc-dialog heading="Select Data Set">
-        <scl-filtered-list activatable @selected=${() => this.selectDataSet()}
+        <action-filtered-list activatable @action=${() => this.selectDataSet()}
           >${Array.from((_c = (_b = (_a = this.selectedSampledValueControl) === null || _a === void 0 ? void 0 : _a.parentElement) === null || _b === void 0 ? void 0 : _b.querySelectorAll('DataSet')) !== null && _c !== void 0 ? _c : []).map(dataSet => {
             var _a, _b, _c, _d, _e;
             return x `<mwc-list-item
@@ -19893,7 +19815,7 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
                 <span slot="secondary">${identity(dataSet)}</span>
               </mwc-list-item>`;
         })}
-        </scl-filtered-list>
+        </action-filtered-list>
       </mwc-dialog>
     `;
     }
@@ -19908,12 +19830,14 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
             editCount="${this.editCount}"
           >
             <mwc-icon-button
+              class="change dataset"
               slot="change"
               icon="swap_vert"
               ?disabled=${!!findControlBlockSubscription(this.selectedSampledValueControl).length}
               @click=${() => this.selectDataSetDialog.show()}
             ></mwc-icon-button
             ><mwc-icon-button
+              class="new dataset"
               slot="new"
               icon="playlist_add"
               ?disabled=${!!this.selectedSampledValueControl.getAttribute('datSet')}
@@ -19932,7 +19856,7 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
         return x ``;
     }
     renderSelectionList() {
-        return x `<scl-filtered-list
+        return x `<action-filtered-list
       activatable
       @action=${this.selectSMVControl}
       class="selectionlist"
@@ -19951,27 +19875,34 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
             <span>${ied.getAttribute('name')}</span>
             <mwc-icon slot="graphic">developer_board</mwc-icon>
           </mwc-list-item>
-          <li divider role="separator"></li>`;
+          <li divider role="separator"></li>
+          <mwc-list-item
+            noninteractive
+            style="height:56px;"
+            slot="primaryAction"
+          >
+          </mwc-list-item>
+          <li slot="primaryAction" divider role="separator"></li>`;
             const sampledValueControls = Array.from(ied.querySelectorAll('SampledValueControl')).map(smvControl => x `<mwc-list-item
-              hasMeta
-              twoline
-              value="${identity(smvControl)}"
-              graphic="icon"
-              ><span>${smvControl.getAttribute('name')}</span
-              ><span slot="secondary">${identity(smvControl)}</span>
-              <span slot="meta"
-                ><mwc-icon-button
-                  icon="delete"
-                  @click=${() => {
+                twoline
+                value="${identity(smvControl)}"
+                graphic="icon"
+                ><span>${smvControl.getAttribute('name')}</span
+                ><span slot="secondary">${identity(smvControl)}</span>
+                <mwc-icon slot="graphic">${smvIcon}</mwc-icon>
+              </mwc-list-item>
+              <mwc-list-item
+                style="height:72px;"
+                slot="primaryAction"
+                @request-selected="${(evt) => {
+                evt.stopPropagation();
                 this.dispatchEvent(newEditEvent(removeControlBlock({ node: smvControl })));
-                this.requestUpdate();
-            }}
-                ></mwc-icon-button>
-              </span>
-              <mwc-icon slot="graphic">${smvIcon}</mwc-icon>
-            </mwc-list-item>`);
+            }}"
+              >
+                <mwc-icon>delete</mwc-icon>
+              </mwc-list-item>`);
             return [ieditem, ...sampledValueControls];
-        })}</scl-filtered-list
+        })}</action-filtered-list
     >`;
     }
     renderToggleButton() {
@@ -19986,6 +19917,8 @@ let SampledValueControlEditor = class SampledValueControlEditor extends s$2 {
     ></mwc-button>`;
     }
     render() {
+        if (!this.doc)
+            return x `No SCL loaded`;
         return x `${this.renderToggleButton()}
       <div class="section">
         ${this.renderSelectionList()}${this.renderElementEditorContainer()}
@@ -20049,6 +19982,12 @@ __decorate([
 __decorate([
     i$2('mwc-dialog')
 ], SampledValueControlEditor.prototype, "selectDataSetDialog", void 0);
+__decorate([
+    i$2('.new.dataset')
+], SampledValueControlEditor.prototype, "newDataSet", void 0);
+__decorate([
+    i$2('.change.dataset')
+], SampledValueControlEditor.prototype, "changeDataSet", void 0);
 SampledValueControlEditor = __decorate([
     e$7('sampled-value-control-editor')
 ], SampledValueControlEditor);

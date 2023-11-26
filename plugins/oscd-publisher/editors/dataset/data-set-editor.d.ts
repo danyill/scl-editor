@@ -12,10 +12,9 @@ export declare class DataSetEditor extends LitElement {
     /** SCL change indicator */
     editCount: number;
     selectedDataSet?: Element;
-    get childCount(): number;
     selectionList: ActionFilteredList;
     selectDataSetButton: Button;
-    /** Resets selected GOOSE, if not existing in new doc */
+    /** Resets selected DataSet, if not existing in new doc */
     update(props: Map<string | number | symbol, unknown>): void;
     private selectDataSet;
     private renderElementEditorContainer;

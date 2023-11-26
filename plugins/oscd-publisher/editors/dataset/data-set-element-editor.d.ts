@@ -10,6 +10,7 @@ import type { TreeGrid } from '@openscd/oscd-tree-grid';
 import '../../foundation/components/scl-textfield.js';
 import '../../foundation/components/action-filtered-list.js';
 import type { SclTextfield } from '../../foundation/components/scl-textfield.js';
+import type { ActionFilteredList } from '../../foundation/components/action-filtered-list.js';
 export declare class DataSetElementEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
@@ -21,7 +22,9 @@ export declare class DataSetElementEditor extends LitElement {
     private get desc();
     private get fcdaCount();
     private someDiffOnInputs;
-    inputs?: SclTextfield[];
+    inputs: SclTextfield[];
+    saveButton: Button;
+    fcdaList: ActionFilteredList;
     daPickerButton: Button;
     daPickerDialog: Dialog;
     daPicker: TreeGrid;

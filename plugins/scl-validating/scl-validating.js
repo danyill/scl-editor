@@ -16694,27 +16694,50 @@ function getSchema(version, revision, release) {
 /* eslint-disable import/no-extraneous-dependencies */
 async function validateSchema(doc, docName) {
     var _a, _b, _c;
-    let version = '2007';
-    let revision = 'B';
-    let release = '1';
-    if (doc.documentElement)
-        [version, revision, release] = [
-            (_a = doc.documentElement.getAttribute('version')) !== null && _a !== void 0 ? _a : '',
-            (_b = doc.documentElement.getAttribute('revision')) !== null && _b !== void 0 ? _b : '',
-            (_c = doc.documentElement.getAttribute('release')) !== null && _c !== void 0 ? _c : '',
-        ];
-    return validate({
-        content: new XMLSerializer().serializeToString(doc),
-        name: docName,
-    }, {
-        content: getSchema(version, revision, release),
-        name: `SCL${version}${revision}${release}.xsd`,
-    });
+    const [version, revision, release] = [
+        (_a = doc.documentElement.getAttribute('version')) !== null && _a !== void 0 ? _a : '',
+        (_b = doc.documentElement.getAttribute('revision')) !== null && _b !== void 0 ? _b : '',
+        (_c = doc.documentElement.getAttribute('release')) !== null && _c !== void 0 ? _c : '',
+    ];
+    const docContent = new XMLSerializer().serializeToString(doc);
+    const schema = getSchema(version, revision, release);
+    const schemaName = `SCL${version}${revision}${release}.xsd`;
+    return validate({ content: docContent, name: docName }, { content: schema, name: schemaName });
 }
 
-// import { validateTemplates } from './template/validateTemplates.js';
 /** An editor [[`plugin`]] to configure validators and display their issue centrally */
 class SclValidatingPlugin extends s$1 {
+    constructor() {
+        super(...arguments);
+        /** The name of the document being edited */
+        this._docName = '';
+        /** Issues return by the schema validator */
+        this.schemaIssues = [];
+        /** Issues returned by the template validator */
+        this.templateIssues = [];
+        /** Whether schema validator has had the initial run */
+        this.waitForSchemaRun = true;
+        /** Whether template validator has had the initial run */
+        this.waitForTemplateRun = true;
+        /** Whether schema validator shall run after each change to the doc */
+        this.autoValidateSchema = true;
+        /** Whether template validator shall run after each change to the doc */
+        this.autoValidateTemplate = false;
+    }
+    set docName(docName) {
+        if (docName === '')
+            return;
+        this.resetValidation();
+        this.autoValidate();
+    }
+    get docName() {
+        return this._docName;
+    }
+    /** SCL change indicator */
+    set editCount(count) {
+        if (this.doc)
+            this.autoValidate();
+    }
     async run() {
         this.dialog.show();
     }
@@ -16746,8 +16769,6 @@ class SclValidatingPlugin extends s$1 {
         this.requestUpdate('templateIssues');
     }
     async autoValidate() {
-        if (!this.doc)
-            await this.requestUpdate();
         if (this.autoValidateTemplate)
             this.validateTemplates();
         if (this.autoValidateSchema)
@@ -16758,31 +16779,6 @@ class SclValidatingPlugin extends s$1 {
         this.templateIssues.length = 0;
         this.waitForSchemaRun = true;
         this.waitForTemplateRun = true;
-    }
-    async performUpdate() {
-        // eslint-disable-next-line no-promise-executor-return
-        await new Promise(resolve => requestAnimationFrame(() => resolve()));
-        super.performUpdate();
-    }
-    constructor() {
-        super();
-        /** SCL change indicator */
-        this.editCount = 0;
-        /** Issues return by the schema validator */
-        this.schemaIssues = [];
-        /** Issues returned by the template validator */
-        this.templateIssues = [];
-        /** Whether schema validator has had the initial run */
-        this.waitForSchemaRun = true;
-        /** Whether template validator has had the initial run */
-        this.waitForTemplateRun = true;
-        /** Whether schema validator shall run after each change to the doc */
-        this.autoValidateSchema = true;
-        /** Whether template validator shall run after each change to the doc */
-        this.autoValidateTemplate = false;
-        window.addEventListener('oscd-edit', this.autoValidate.bind(this));
-        window.addEventListener('oscd-open', this.autoValidate.bind(this));
-        window.addEventListener('oscd-open', this.resetValidation.bind(this));
     }
     // eslint-disable-next-line class-methods-use-this
     renderValidatorsIssues(issues) {
@@ -16817,6 +16813,7 @@ class SclValidatingPlugin extends s$1 {
           <div style="display: flex; flex-direction: row">
             <div style="display:flex; align-items:center; flex:auto">
               <mwc-button
+                class="run template"
                 style="float: right"
                 label="${`${this.waitForTemplateRun ? '' : 'Re-'}Run manual validation`}"
                 @click="${this.validateTemplates}"
@@ -16825,6 +16822,7 @@ class SclValidatingPlugin extends s$1 {
             <div style="display: flex">
               <mwc-formfield label="Auto validate on change" alignEnd>
                 <mwc-switch
+                  class="auto template"
                   @click="${() => {
             this.autoValidateTemplate = !this.autoValidateTemplate;
         }}"
@@ -16861,6 +16859,7 @@ class SclValidatingPlugin extends s$1 {
           <div style="display: flex; flex-direction: row">
             <div style="display:flex; align-items:center; flex:auto">
               <mwc-button
+                class="run schema"
                 style="float: right"
                 label="${`${this.waitForSchemaRun ? '' : 'Re-'}Run manual validation`}"
                 @click="${this.validateSchema}"
@@ -16869,6 +16868,7 @@ class SclValidatingPlugin extends s$1 {
             <div style="display: flex">
               <mwc-formfield label="Auto validate on change" alignEnd>
                 <mwc-switch
+                  class="auto schema"
                   selected
                   @click="${() => {
             this.autoValidateSchema = !this.autoValidateSchema;
@@ -16889,7 +16889,7 @@ class SclValidatingPlugin extends s$1 {
     }
     render() {
         if (!this.doc)
-            return x `<mwc-dialog
+            return x `<mwc-dialog class="content dialog"
         ><div>No SCL file loaded, yet!</div>
         <mwc-button
           label="Cancel"
@@ -16897,7 +16897,7 @@ class SclValidatingPlugin extends s$1 {
           dialogAction="close"
         ></mwc-button>
       </mwc-dialog>`;
-        return x `<mwc-dialog>
+        return x `<mwc-dialog class="content dialog">
         ${this.renderSchemaValidator()}${this.renderTemplateValidator()}
         <mwc-button
           label="Cancel"
@@ -16905,11 +16905,11 @@ class SclValidatingPlugin extends s$1 {
           dialogAction="close"
         ></mwc-button>
       </mwc-dialog>
-      <mwc-snackbar id="alertSchemaIssue" .timeoutMs=${5000}>
+      <mwc-snackbar class="alert schema" .timeoutMs=${5000}>
         <mwc-button slot="action" @click=${() => this.dialog.show()}
           >DETAIL</mwc-button
         > </mwc-snackbar
-      ><mwc-snackbar id="alertTemplateIssue" .timeoutMs=${4000}>
+      ><mwc-snackbar class="alert template" .timeoutMs=${4000}>
         <mwc-button slot="action" @click=${() => this.dialog.show()}
           >DETAIL</mwc-button
         >
@@ -16921,16 +16921,21 @@ SclValidatingPlugin.styles = i$5 `
       --mdc-dialog-max-width: 90vw;
       --mdc-dialog-min-width: 50vw;
     }
+
+    abbr {
+      text-decoration: none;
+      border-bottom: none;
+    }
   `;
 __decorate([
     n$3({ attribute: false })
 ], SclValidatingPlugin.prototype, "doc", void 0);
 __decorate([
     n$3()
-], SclValidatingPlugin.prototype, "docName", void 0);
+], SclValidatingPlugin.prototype, "docName", null);
 __decorate([
     n$3({ type: Number })
-], SclValidatingPlugin.prototype, "editCount", void 0);
+], SclValidatingPlugin.prototype, "editCount", null);
 __decorate([
     t$1()
 ], SclValidatingPlugin.prototype, "schemaIssues", void 0);
@@ -16950,7 +16955,7 @@ __decorate([
     t$1()
 ], SclValidatingPlugin.prototype, "autoValidateTemplate", void 0);
 __decorate([
-    i$2('mwc-dialog')
+    i$2('.content.dialog')
 ], SclValidatingPlugin.prototype, "dialog", void 0);
 __decorate([
     i$2('.expand.template')
@@ -16959,11 +16964,23 @@ __decorate([
     i$2('.expand.schema')
 ], SclValidatingPlugin.prototype, "expandSchema", void 0);
 __decorate([
-    i$2('#alertSchemaIssue')
+    i$2('.run.template')
+], SclValidatingPlugin.prototype, "manualTriggerTemplateValidator", void 0);
+__decorate([
+    i$2('.run.schema')
+], SclValidatingPlugin.prototype, "manualTriggerSchemaValidator", void 0);
+__decorate([
+    i$2('.alert.schema')
 ], SclValidatingPlugin.prototype, "alertSchemaIssue", void 0);
 __decorate([
-    i$2('#alertTemplateIssue')
+    i$2('.alert.template')
 ], SclValidatingPlugin.prototype, "alertTemplateIssue", void 0);
+__decorate([
+    i$2('.auto.schema')
+], SclValidatingPlugin.prototype, "toggleAutoValidateSchema", void 0);
+__decorate([
+    i$2('.auto.template')
+], SclValidatingPlugin.prototype, "toggleAutoValidateTemplate", void 0);
 
 export { SclValidatingPlugin as default };
 //# sourceMappingURL=scl-validating.js.map

@@ -25936,6 +25936,7 @@ let SclWizardDialog = class SclWizardDialog extends s$1 {
       heading=${page.title}
       @closed=${this.onClosed}
     >
+      <nav><slot name="nav"></slot></nav>
       <div id="wizard-content">${(_a = page.content) === null || _a === void 0 ? void 0 : _a.map(renderWizardInput)}</div>
       ${index > 0
             ? x `<mwc-button
@@ -26064,11 +26065,17 @@ let CodeDialog = class CodeDialog extends s$1 {
         if (!edits.length)
             return;
         this.dispatchEvent(newEditEvent(edits));
+        this.dispatchEvent(new CustomEvent('closed'));
     }
     onClosed(ae) {
         if (ae.detail.action === 'save')
             this.save(this.element);
-        this.dispatchEvent(new CustomEvent('closed'));
+        if (ae.detail.action === 'close')
+            this.dispatchEvent(new CustomEvent('closed'));
+    }
+    updated() {
+        this.editor.basePath = '';
+        this.editor.mode = 'ace/mode/xml';
     }
     render() {
         if (!this.element)
@@ -26076,12 +26083,13 @@ let CodeDialog = class CodeDialog extends s$1 {
         return x `<mwc-dialog
       heading="Edit ${this.element.tagName}"
       open
+      defaultAction=""
       @closed=${this.onClosed}
     >
+      <nav><slot name="nav"></slot></nav>
       <ace-editor
         wrap
         soft-tabs
-        mode="ace/mode/xml"
         theme="ace/theme/solarized_light"
         value="${formatXml(new XMLSerializer().serializeToString(this.element))}"
       ></ace-editor>
@@ -26098,6 +26106,13 @@ CodeDialog.styles = i$5 `
     mwc-dialog {
       --mdc-dialog-min-width: 85vw;
       --mdc-dialog-max-height: calc(100vh - 200px);
+    }
+
+    mwc-dialog > nav {
+      position: absolute;
+      top: 8px;
+      right: 14px;
+      color: var(--base00);
     }
   `;
 __decorate$1([
@@ -44681,7 +44696,7 @@ function createLNodeWizard(parent) {
             }
           </style>
           <mwc-icon-button-toggle
-            style="position:absolute;top:8px;right:0px;"
+            style="position:absolute;top:8px;right:60px;"
             onicon="layers"
             officon="layers_clear"
             @click="${(evt) => showLogicalNodeTypes(evt, parent)}"
@@ -44690,7 +44705,7 @@ function createLNodeWizard(parent) {
             <div id="instanceFilter">
               <mwc-icon-button-toggle
                 ?on=${!selectedIEDs.length}
-                style="position:absolute;top:8px;right:60px;"
+                style="position:absolute;top:8px;right:110px;"
                 onicon="filter_list"
                 officon="filter_list_off"
                 @click="${showIEdFilterList}"
@@ -46422,6 +46437,7 @@ let WizardCodeForm = class WizardCodeForm extends s$1 {
     constructor() {
         super(...arguments);
         this.wizardRequest = null;
+        this.showCode = false;
     }
     wizard() {
         var _a, _b;
@@ -46442,14 +46458,30 @@ let WizardCodeForm = class WizardCodeForm extends s$1 {
             ? this.wizardRequest.parent
             : this.wizardRequest.element;
         const wizard = this.wizard();
-        if (!wizard)
-            return x `<code-dialog
-        .element=${element}
-        @closed="${this.onClosed}"
-      ></code-dialog>`;
-        return x `<scl-wizard-dialog
-      .wizard=${wizard}
-      .element=${element}
+        if (!wizard || this.showCode)
+            return x `<code-dialog .element=${element} @closed="${this.onClosed}">
+        ${wizard
+                ? x `<mwc-icon-button-toggle
+              slot="nav"
+              ?on=${this.showCode}
+              onIcon="code_off"
+              offIcon="code"
+              @click="${() => {
+                    this.showCode = !this.showCode;
+                }}"
+            ></mwc-icon-button-toggle>`
+                : x ``}
+      </code-dialog>`;
+        return x `<scl-wizard-dialog .wizard=${wizard} .element=${element}
+      ><mwc-icon-button-toggle
+        slot="nav"
+        ?on=${this.showCode}
+        onIcon="code_off"
+        offIcon="code"
+        @click="${() => {
+            this.showCode = !this.showCode;
+        }}"
+      ></mwc-icon-button-toggle
     ></scl-wizard-dialog> `;
     }
 };
@@ -46462,6 +46494,9 @@ WizardCodeForm.styles = i$5 `
 __decorate$1([
     e$6({ attribute: false })
 ], WizardCodeForm.prototype, "wizardRequest", void 0);
+__decorate$1([
+    t$1()
+], WizardCodeForm.prototype, "showCode", void 0);
 __decorate$1([
     i$2('ace-editor')
 ], WizardCodeForm.prototype, "editor", void 0);

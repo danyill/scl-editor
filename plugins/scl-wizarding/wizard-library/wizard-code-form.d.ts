@@ -15,6 +15,7 @@ import { Wizard } from './foundation.js';
 export declare function formatXml(xml: string, tab?: string): string;
 export default class WizardCodeForm extends LitElement {
     wizardRequest: EditWizardRequest | CreateWizardRequest | null;
+    showCode: boolean;
     editor: AceEditor;
     wizard(): Wizard | undefined;
     onClosed(): void;

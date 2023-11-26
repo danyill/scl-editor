@@ -25,6 +25,7 @@ export declare class ActionFilteredList extends LitElement {
     private onCheckAll;
     onFilterInput(): void;
     firstUpdated(): void;
+    updated(): void;
     constructor();
     private renderCheckAll;
     render(): TemplateResult;

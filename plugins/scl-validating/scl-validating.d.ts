@@ -7,6 +7,7 @@ import '@material/mwc-icon-button-toggle';
 import '@material/mwc-list';
 import '@material/mwc-snackbar';
 import '@material/mwc-switch';
+import type { Button } from '@material/mwc-button';
 import type { Dialog } from '@material/mwc-dialog';
 import type { IconButtonToggle } from '@material/mwc-icon-button-toggle';
 import type { Snackbar } from '@material/mwc-snackbar';
@@ -14,11 +15,13 @@ import { Issue } from '@openenergytools/xml-schema-validator';
 /** An editor [[`plugin`]] to configure validators and display their issue centrally */
 export default class SclValidatingPlugin extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
-    doc: XMLDocument;
+    doc?: XMLDocument;
     /** The name of the document being edited */
-    docName: string;
+    _docName: string;
+    set docName(docName: string);
+    get docName(): string;
     /** SCL change indicator */
-    editCount: number;
+    set editCount(count: number);
     /** Issues return by the schema validator */
     schemaIssues: Issue[];
     /** Issues returned by the template validator */
@@ -34,15 +37,17 @@ export default class SclValidatingPlugin extends LitElement {
     dialog: Dialog;
     expandTemplate: IconButtonToggle;
     expandSchema: IconButtonToggle;
+    manualTriggerTemplateValidator: Button;
+    manualTriggerSchemaValidator: Button;
     alertSchemaIssue: Snackbar;
     alertTemplateIssue: Snackbar;
+    toggleAutoValidateSchema: Snackbar;
+    toggleAutoValidateTemplate: Snackbar;
     run(): Promise<void>;
     private validateSchema;
     private validateTemplates;
     private autoValidate;
     private resetValidation;
-    performUpdate(): Promise<void>;
-    constructor();
     private renderValidatorsIssues;
     private renderTemplateValidator;
     private renderSchemaValidator;
