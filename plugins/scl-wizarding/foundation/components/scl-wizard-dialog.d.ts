@@ -11,7 +11,6 @@ export declare class SclWizardDialog extends LitElement {
     /** The [[`Wizard`]] implemented by this dialog. */
     wizard: Wizard;
     wizardRequest: EditWizardRequest | CreateWizardRequest | null;
-    element?: Element;
     /** Index of the currently active [[`WizardPage`]] */
     pageIndex: number;
     dialogs: NodeListOf<Dialog>;

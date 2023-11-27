@@ -26015,9 +26015,6 @@ __decorate$1([
     e$6({ attribute: false })
 ], SclWizardDialog.prototype, "wizardRequest", void 0);
 __decorate$1([
-    e$6({ attribute: false })
-], SclWizardDialog.prototype, "element", void 0);
-__decorate$1([
     t$1()
 ], SclWizardDialog.prototype, "pageIndex", void 0);
 __decorate$1([
@@ -46472,7 +46469,7 @@ let WizardCodeForm = class WizardCodeForm extends s$1 {
             ></mwc-icon-button-toggle>`
                 : x ``}
       </code-dialog>`;
-        return x `<scl-wizard-dialog .wizard=${wizard} .element=${element}
+        return x `<scl-wizard-dialog .wizard=${wizard}
       ><mwc-icon-button-toggle
         slot="nav"
         ?on=${this.showCode}
