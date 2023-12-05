@@ -1,5 +1,6 @@
 import { LitElement, TemplateResult } from 'lit';
 import '@material/mwc-icon-button';
+import type { IconButton } from '@material/mwc-icon-button';
 import '@openscd/oscd-action-pane';
 import './connectedap-editor.js';
 import './gse-editor.js';
@@ -18,6 +19,9 @@ export declare class SubNetworkEditor extends LitElement {
     get type(): string | null;
     /** SubNetwork child elements BitRate label */
     get bitrate(): string | null;
+    add: IconButton;
+    edit: IconButton;
+    delete: IconButton;
     private openCreateConnectedAPwizard;
     openEditWizard(): void;
     removeElement(): void;

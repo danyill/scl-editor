@@ -1,8 +1,21 @@
 import { html, nothing, svg } from 'lit';
-import { eqTypes, isEqType, ringedEqTypes } from './util.js';
+import { eqTypes, isEqType, ringedEqTypes, singleTerminal, } from './util.js';
 export const resizePath = svg `<path
   d="M120 616v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm160 0v-80h80v80h-80Zm160 640v-80h80v80h-80Zm0-640v-80h80v80h-80Zm160 640v-80h80v80h-80Zm160 0v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160V296H600v-80h240v240h-80ZM120 936V696h80v160h160v80H120Z"
 />`;
+export const resizeTLPath = svg `<path
+  d="m 120,616 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 320,0 H 600 V 216 H 840 Z M 120,936 V 696 h 80 v 160 z" /> `;
+export const resizeBRPath = svg `<path
+  d="m 440,936 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 V 296 l 80,-80 v 240 z m -640,480 80,-80 h 160 v 80 z" />`;
+// TODO: remove alt icons if unneeded
+export const resizeTLPathAlt = svg `<path
+  d="m 120,616 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z M 760,936 V 296 H 600 v -80 h 240 v 720 z m -640,0 V 696 h 80 v 160 h 560 v 80 z" /> `;
+export const resizeBRPathAlt = svg `<path
+  d="m 440,936 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 V 296 H 200 V 216 H 840 V 456 Z M 120,936 V 216 h 80 v 640 h 160 v 80 z" />`;
+export const resizeTLPathAlt2 = svg `<path
+  d="m 120,616 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z M 760,456 V 296 H 600 V 216 H 840 V 456 Z M 120,936 V 696 h 80 v 160 h 160 v 80 z" /> `;
+export const resizeBRPathAlt2 = svg `<path
+  d="m 440,936 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 V 296 H 600 V 216 H 840 V 456 Z M 120,936 V 696 h 80 v 160 h 160 v 80 z" />`;
 export const movePath = svg `<path d="M480 976 310 806l57-57 73 73V616l-205-1 73 73-58 58L80 576l169-169 57 57-72 72h206V330l-73 73-57-57 170-170 170 170-57 57-73-73v206l205 1-73-73 58-58 170 170-170 170-57-57 73-73H520l-1 205 73-73 58 58-170 170Z"/>`;
 const voltageLevelPath = svg `<path
     d="M 4 4 L 12.5 21 L 21 4"
@@ -76,88 +89,83 @@ const bayPath = svg `<path
     stroke-linejoin="round"
     stroke-linecap="round"
   />`;
-const oneWindingAutoPTRPath = svg `
-<line x1="20" y1="0" x2="20" y2="10" stroke-width="1.5" stroke="currentColor" />
-<line x1="20" y1="30" x2="20" y2="40" stroke-width="1.5" stroke="currentColor" />
-<circle cx="20" cy="20" r="10" fill="none"
-    stroke="currentColor" stroke-width="1.5" />`;
-const oneWindingEarthingPTRPath = svg `
-<line x1="20" y1="0" x2="20" y2="10" stroke-width="1.5" stroke="currentColor" />
-<circle cx="20" cy="20" r="10" fill="none"
+const oneWindingPTRPath = svg `
+<circle cx="15" cy="15" r="9" fill="none"
     stroke="currentColor" stroke-width="1.5" />`;
 const twoWindingPTRPath = svg `
-<line x1="20" y1="0" x2="20" y2="5" stroke-width="1.5" stroke="currentColor" />
-<line x1="20" y1="35" x2="20" y2="40" stroke-width="1.5" stroke="currentColor" />
-<circle cx="20" cy="15" r="10" fill="none"
+<circle cx="15" cy="10" r="9" fill="none"
     stroke="currentColor" stroke-width="1.5" />
-  <circle cx="20" cy="25" r="10" fill="none"
+  <circle cx="15" cy="20" r="9" fill="none"
     stroke="currentColor" stroke-width="1.5" />`;
-const twoWindingAutoPTRPath = svg `
-<line x1="20" y1="0" x2="20" y2="5" stroke-width="1.5" stroke="currentColor" />
-<line x1="0" y1="25" x2="10" y2="25" stroke-width="1.5" stroke="currentColor" />
-<line x1="30" y1="25" x2="40" y2="25" stroke-width="1.5" stroke="currentColor" />
-<circle cx="20" cy="15" r="10" fill="none"
+const threeWindingPTRPath = svg `<circle cx="15" cy="10" r="9" fill="none"
     stroke="currentColor" stroke-width="1.5" />
-  <circle cx="20" cy="25" r="10" fill="none"
+  <circle cx="10" cy="20" r="9" fill="none"
+    stroke="currentColor" stroke-width="1.5" />
+  <circle cx="20" cy="20" r="9" fill="none"
     stroke="currentColor" stroke-width="1.5" />`;
-const twoWindingEarthingPTRPath = svg `
-<line x1="20" y1="0" x2="20" y2="5" stroke-width="1.5" stroke="currentColor" />
-<line x1="0" y1="25" x2="10" y2="25" stroke-width="1.5" stroke="currentColor" />
-<circle cx="20" cy="15" r="10" fill="none"
-    stroke="currentColor" stroke-width="1.5" />
-  <circle cx="20" cy="25" r="10" fill="none"
-    stroke="currentColor" stroke-width="1.5" />`;
-const threeWindingPTRPath = svg `<circle cx="20" cy="15" r="10" fill="none"
-    stroke="currentColor" stroke-width="1.5" />
-  <circle cx="15" cy="25" r="10" fill="none"
-    stroke="currentColor" stroke-width="1.5" />
-  <circle cx="25" cy="25" r="10" fill="none"
-    stroke="currentColor" stroke-width="1.5" />`;
-export const oneWindingEarthingPTRIcon = html `<svg
-  viewBox="0 0 40 40"
+export const oneWindingPTRIcon = html `<svg
+  viewBox="0 0 30 30"
   width="24"
   height="24"
   slot="icon"
 >
-  ${oneWindingEarthingPTRPath}
-</svg>`;
-export const oneWindingAutoPTRIcon = html `<svg
-  viewBox="0 0 40 40"
-  width="24"
-  height="24"
-  slot="icon"
->
-  ${oneWindingAutoPTRPath}
+  ${oneWindingPTRPath}
 </svg>`;
 export const twoWindingPTRIcon = html `<svg
-  viewBox="0 0 40 40"
+  viewBox="0 0 30 30"
   width="24"
   height="24"
   slot="icon"
 >
   ${twoWindingPTRPath}
 </svg>`;
-export const twoWindingAutoPTRIcon = html `<svg
-  viewBox="0 0 40 40"
+export const twoWindingPTRIconHorizontal = html `<svg
+  viewBox="0 0 30 30"
   width="24"
   height="24"
+  transform="rotate(-90)"
   slot="icon"
 >
-  ${twoWindingAutoPTRPath}
-</svg>`;
-export const twoWindingEarthingPTRIcon = html `<svg
-  viewBox="0 0 40 40"
-  width="24"
-  height="24"
-  slot="icon"
->
-  ${twoWindingEarthingPTRPath}
+  ${twoWindingPTRPath}
 </svg>`;
 export const threeWindingPTRIcon = html `<svg
-  viewBox="0 0 40 40"
+  viewBox="0 0 30 30"
   width="24"
   height="24"
   slot="icon"
+>
+  ${threeWindingPTRPath}
+</svg>`;
+export const oneWindingPTRGraphic = html `<svg
+  viewBox="0 0 30 30"
+  width="24"
+  height="24"
+  slot="graphic"
+>
+  ${oneWindingPTRPath}
+</svg>`;
+export const twoWindingPTRGraphic = html `<svg
+  viewBox="0 0 30 30"
+  width="24"
+  height="24"
+  slot="graphic"
+>
+  ${twoWindingPTRPath}
+</svg>`;
+export const twoWindingPTRGraphicHorizontal = html `<svg
+  viewBox="0 0 30 30"
+  width="24"
+  height="24"
+  transform="rotate(-90)"
+  slot="graphic"
+>
+  ${twoWindingPTRPath}
+</svg>`;
+export const threeWindingPTRGraphic = html `<svg
+  viewBox="-2 -1 34 34"
+  width="24"
+  height="24"
+  slot="graphic"
 >
   ${threeWindingPTRPath}
 </svg>`;
@@ -196,13 +204,6 @@ export const bayGraphic = html `<svg
 const equipmentPaths = {
     CAB: svg `
   <path
-    d="M 12.5,0 V 4"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    />
-  <path
     d="M 9.4,4.2 H 15.6 L 12.5,8.3 Z"
     fill="currentColor"
     stroke="currentColor"
@@ -223,13 +224,6 @@ const equipmentPaths = {
     stroke-width="1.5"
     stroke-linecap="round"
     />
-  <path
-    d="m 12.5,21.3 v 4"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    />
   `,
     CAP: svg `
   <path
@@ -240,7 +234,7 @@ const equipmentPaths = {
     stroke-linecap="round"
     />
   <path
-    d="M 12.5,0 V 10.1"
+    d="M 12.5,4 V 10.1"
     fill="none"
     stroke="currentColor"
     stroke-width="1.5"
@@ -254,7 +248,7 @@ const equipmentPaths = {
     stroke-linecap="round"
     />
   <path
-    d="M 12.5,14.9 V 25"
+    d="M 12.5,14.9 V 21"
     fill="none"
     stroke="currentColor"
     stroke-width="1.5"
@@ -262,24 +256,6 @@ const equipmentPaths = {
     />
   `,
     CBR: svg `
-  <line
-    x1="12.5"
-    y1="0"
-    x2="12.5"
-    y2="4"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
-  <line
-    x1="12.5"
-    y1="25"
-    x2="12.5"
-    y2="21"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
   <line
     x1="12.5"
     y1="21"
@@ -311,9 +287,9 @@ const equipmentPaths = {
     CTR: svg `
   <line
     x1="12.5"
-    y1="0"
+    y1="4"
     x2="12.5"
-    y2="25"
+    y2="21"
     stroke="currentColor"
     stroke-width="1.5"
     stroke-linecap="round"
@@ -329,20 +305,6 @@ const equipmentPaths = {
   />
   `,
     DIS: svg `
-  <path
-    d="M 12.5 0 L 12.5 4"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
-  <path
-    d=" M 12.5 25 L 12.5 21"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
   <path
     d="M 12.5 21 L 4 4"
     fill="none"
@@ -368,20 +330,6 @@ const equipmentPaths = {
   />
   `,
     IFL: svg `
-  <path
-    d="M 12.5 0 L 12.5 4"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
-  <path
-    d="M 12.5 25 L 12.5 21"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
   <polygon
     points="4,4 12.5,21 21,4"
     fill="none"
@@ -393,7 +341,7 @@ const equipmentPaths = {
   `,
     LIN: svg `
   <path
-    d="M 12.5,0 V 25"
+    d="M 12.5,4 V 21"
     fill="none"
     stroke="currentColor"
     stroke-width="1.5"
@@ -425,7 +373,7 @@ const equipmentPaths = {
   `,
     REA: svg `
   <path
-    d="m 4.5,12.5 h 8 V 0"
+    d="m 4.5,12.5 h 8 V 4"
     stroke="currentColor"
     fill="none"
     stroke-width="1.5"
@@ -439,7 +387,7 @@ const equipmentPaths = {
     stroke-linecap="round"
   />
   <path
-    d="M 12.5,20.5 V 25"
+    d="M 12.5,20.5 V 21"
     stroke="currentColor"
     fill="none"
     stroke-width="1.5"
@@ -447,20 +395,6 @@ const equipmentPaths = {
   />
   `,
     RES: svg `
-  <path
-    d="M 12.5,0 V 4"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
-  <path
-    d="m 12.5 25 v -4"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
   <rect
     y="4"
     x="8.5"
@@ -474,7 +408,7 @@ const equipmentPaths = {
   `,
     SAR: svg `
   <path
-    d="M 12.5,0 V 8"
+    d="M 12.5,4 V 8"
     fill="none"
     stroke="currentColor"
     stroke-width="1.5"
@@ -524,19 +458,10 @@ const equipmentPaths = {
   />
   `,
     VTR: svg `
-  <line
-    x1="12.5"
-    y1="0"
-    x2="12.5"
-    y2="5"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-  />
   <circle
     cx="12.5"
-    cy="10"
-    r="5"
+    cy="9.5"
+    r="5.25"
     stroke="currentColor"
     fill="none"
     stroke-width="1.5"
@@ -544,8 +469,8 @@ const equipmentPaths = {
   />
   <circle
     cx="12.5"
-    cy="15"
-    r="5"
+    cy="15.5"
+    r="5.25"
     stroke="currentColor"
     fill="none"
     stroke-width="1.5"
@@ -554,13 +479,6 @@ const equipmentPaths = {
 `,
 };
 export const eqRingPath = svg `
-  <path
-    d="M 12.5,0 V 4"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="round"
-    />
   <circle
     cx="12.5"
     cy="12.5"
@@ -628,12 +546,52 @@ export function equipmentPath(equipmentType) {
 }
 export function equipmentGraphic(equipmentType) {
     return html `<svg viewBox="0 0 25 25" width="24" height="24" slot="graphic">
+    <line
+      x1="12.5"
+      y1="0"
+      x2="12.5"
+      y2="4"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
+    ${!equipmentType || !singleTerminal.has(equipmentType)
+        ? svg `<line
+      x1="12.5"
+      y1="21"
+      x2="12.5"
+      y2="25"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />`
+        : nothing}
     ${equipmentPath(equipmentType)}
     ${equipmentType && ringedEqTypes.has(equipmentType) ? eqRingPath : nothing}
   </svg>`;
 }
 export function equipmentIcon(equipmentType) {
     return html `<svg viewBox="0 0 25 25" width="24" height="24" slot="icon">
+    <line
+      x1="12.5"
+      y1="0"
+      x2="12.5"
+      y2="4"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
+    ${!singleTerminal.has(equipmentType)
+        ? svg `<line
+      x1="12.5"
+      y1="21"
+      x2="12.5"
+      y2="25"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />`
+        : nothing}
     ${equipmentPath(equipmentType)}
     ${ringedEqTypes.has(equipmentType) ? eqRingPath : nothing}
   </svg>`;
@@ -647,7 +605,7 @@ function equipmentSymbol(equipmentType) {
     ${equipmentPath(equipmentType)}
   </symbol>`;
 }
-export const groundedMarker = svg `<marker
+const groundedMarker = svg `<marker
   markerWidth="20" markerHeight="20"
   refX="12.5" refY="12.5"
   viewBox="0 0 25 25"
@@ -682,6 +640,18 @@ export const groundedMarker = svg `<marker
     stroke-width="1.5"
   />
 </marker>`;
+const arrowMarker = svg `
+<marker
+  id="arrow"
+  viewBox="0 0 10 10"
+  refX="5"
+  refY="5"
+  markerWidth="6"
+  markerHeight="6"
+  orient="auto-start-reverse">
+  <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+</marker>
+`;
 export const symbols = svg `
   <defs>
   <pattern id="halfgrid" patternUnits="userSpaceOnUse" width="1" height="1" viewBox="0 0 1 1">
@@ -699,6 +669,7 @@ export const symbols = svg `
   ${eqTypes.map(eqType => equipmentSymbol(eqType))}
   ${equipmentSymbol('ConductingEquipment')}
   ${groundedMarker}
+  ${arrowMarker}
   </defs>
 `;
 //# sourceMappingURL=icons.js.map

@@ -142,892 +142,6 @@ function e$1(e){return o$2({descriptor:r=>({async get(){var r;return await this.
  * SPDX-License-Identifier: BSD-3-Clause
  */var n$1;null!=(null===(n$1=window.HTMLSlotElement)||void 0===n$1?void 0:n$1.prototype.assignedElements)?(o,n)=>o.assignedElements(n):(o,n)=>o.assignedNodes(n).filter((o=>o.nodeType===Node.ELEMENT_NODE));
 
-function newEditEvent(edit) {
-    return new CustomEvent('oscd-edit', {
-        composed: true,
-        bubbles: true,
-        detail: edit,
-    });
-}
-
-const tAbstractConductingEquipment = [
-    "TransformerWinding",
-    "ConductingEquipment",
-];
-const tEquipment = [
-    "GeneralEquipment",
-    "PowerTransformer",
-    ...tAbstractConductingEquipment,
-];
-const tEquipmentContainer = ["Substation", "VoltageLevel", "Bay"];
-const tGeneralEquipmentContainer = ["Process", "Line"];
-const tAbstractEqFuncSubFunc = ["EqSubFunction", "EqFunction"];
-const tPowerSystemResource = [
-    "SubFunction",
-    "Function",
-    "TapChanger",
-    "SubEquipment",
-    ...tEquipment,
-    ...tEquipmentContainer,
-    ...tGeneralEquipmentContainer,
-    ...tAbstractEqFuncSubFunc,
-];
-const tLNodeContainer = ["ConnectivityNode", ...tPowerSystemResource];
-const tCertificate = ["GOOSESecurity", "SMVSecurity"];
-const tNaming = ["SubNetwork", ...tCertificate, ...tLNodeContainer];
-const tAbstractDataAttribute = ["BDA", "DA"];
-const tControlWithIEDName = ["SampledValueControl", "GSEControl"];
-const tControlWithTriggerOpt = ["LogControl", "ReportControl"];
-const tControl = [...tControlWithIEDName, ...tControlWithTriggerOpt];
-const tControlBlock = ["GSE", "SMV"];
-const tUnNaming = [
-    "ConnectedAP",
-    "PhysConn",
-    "SDO",
-    "DO",
-    "DAI",
-    "SDI",
-    "DOI",
-    "Inputs",
-    "RptEnabled",
-    "Server",
-    "ServerAt",
-    "SettingControl",
-    "Communication",
-    "Log",
-    "LDevice",
-    "DataSet",
-    "AccessPoint",
-    "IED",
-    "NeutralPoint",
-    ...tControl,
-    ...tControlBlock,
-    ...tAbstractDataAttribute,
-];
-const tAnyLN = ["LN0", "LN"];
-const tAnyContentFromOtherNamespace = [
-    "Text",
-    "Private",
-    "Hitem",
-    "AccessControl",
-];
-const tCert = ["Subject", "IssuerName"];
-const tDurationInMilliSec = ["MinTime", "MaxTime"];
-const tIDNaming = ["LNodeType", "DOType", "DAType", "EnumType"];
-const tServiceYesNo = [
-    "FileHandling",
-    "TimeSyncProt",
-    "CommProt",
-    "SGEdit",
-    "ConfSG",
-    "GetDirectory",
-    "GetDataObjectDefinition",
-    "DataObjectDirectory",
-    "GetDataSetValue",
-    "SetDataSetValue",
-    "DataSetDirectory",
-    "ReadWrite",
-    "TimerActivatedControl",
-    "GetCBValues",
-    "GSEDir",
-    "ConfLdName",
-];
-const tServiceWithMaxAndMaxAttributes = ["DynDataSet", "ConfDataSet"];
-const tServiceWithMax = [
-    "GSSE",
-    "GOOSE",
-    "ConfReportControl",
-    "SMVsc",
-    ...tServiceWithMaxAndMaxAttributes,
-];
-const tServiceWithMaxNonZero = ["ConfLogControl", "ConfSigRef"];
-const tServiceSettings = [
-    "ReportSettings",
-    "LogSettings",
-    "GSESettings",
-    "SMVSettings",
-];
-const tBaseElement = ["SCL", ...tNaming, ...tUnNaming, ...tIDNaming];
-const sCLTags = [
-    ...tBaseElement,
-    ...tAnyContentFromOtherNamespace,
-    "Header",
-    "LNode",
-    "Val",
-    "Voltage",
-    "Services",
-    ...tCert,
-    ...tDurationInMilliSec,
-    "Association",
-    "FCDA",
-    "ClientLN",
-    "IEDName",
-    "ExtRef",
-    "Protocol",
-    ...tAnyLN,
-    ...tServiceYesNo,
-    "DynAssociation",
-    "SettingGroups",
-    ...tServiceWithMax,
-    ...tServiceWithMaxNonZero,
-    ...tServiceSettings,
-    "ConfLNs",
-    "ClientServices",
-    "SupSubscription",
-    "ValueHandling",
-    "RedProt",
-    "McSecurity",
-    "KDC",
-    "Address",
-    "P",
-    "ProtNs",
-    "EnumVal",
-    "Terminal",
-    "BitRate",
-    "Authentication",
-    "DataTypeTemplates",
-    "History",
-    "OptFields",
-    "SmvOpts",
-    "TrgOps",
-    "SamplesPerSec",
-    "SmpRate",
-    "SecPerSamples",
-];
-const tBaseNameSequence = ["Text", "Private"];
-const tNamingSequence = [...tBaseNameSequence];
-const tUnNamingSequence = [...tBaseNameSequence];
-const tIDNamingSequence = [...tBaseNameSequence];
-const tAbstractDataAttributeSequence = [...tUnNamingSequence, "Val"];
-const tLNodeContainerSequence = [...tNamingSequence, "LNode"];
-const tPowerSystemResourceSequence = [...tLNodeContainerSequence];
-const tEquipmentSequence = [...tPowerSystemResourceSequence];
-const tEquipmentContainerSequence = [
-    ...tPowerSystemResourceSequence,
-    "PowerTransformer",
-    "GeneralEquipment",
-];
-const tAbstractConductingEquipmentSequence = [
-    ...tEquipmentSequence,
-    "Terminal",
-];
-const tControlBlockSequence = [...tUnNamingSequence, "Address"];
-const tControlSequence = [...tNamingSequence];
-const tControlWithIEDNameSequence = [...tControlSequence, "IEDName"];
-const tAnyLNSequence = [
-    ...tUnNamingSequence,
-    "DataSet",
-    "ReportControl",
-    "LogControl",
-    "DOI",
-    "Inputs",
-    "Log",
-];
-const tGeneralEquipmentContainerSequence = [
-    ...tPowerSystemResourceSequence,
-    "GeneralEquipment",
-    "Function",
-];
-const tControlWithTriggerOptSequence = [...tControlSequence, "TrgOps"];
-const tAbstractEqFuncSubFuncSequence = [
-    ...tPowerSystemResourceSequence,
-    "GeneralEquipment",
-    "EqSubFunction",
-];
-const tags = {
-    AccessControl: {
-        parents: ["LDevice"],
-        children: [],
-    },
-    AccessPoint: {
-        parents: ["IED"],
-        children: [
-            ...tNamingSequence,
-            "Server",
-            "LN",
-            "ServerAt",
-            "Services",
-            "GOOSESecurity",
-            "SMVSecurity",
-        ],
-    },
-    Address: {
-        parents: ["ConnectedAP", "GSE", "SMV"],
-        children: ["P"],
-    },
-    Association: {
-        parents: ["Server"],
-        children: [],
-    },
-    Authentication: {
-        parents: ["Server"],
-        children: [],
-    },
-    BDA: {
-        parents: ["DAType"],
-        children: [...tAbstractDataAttributeSequence],
-    },
-    BitRate: {
-        parents: ["SubNetwork"],
-        children: [],
-    },
-    Bay: {
-        parents: ["VoltageLevel"],
-        children: [
-            ...tEquipmentContainerSequence,
-            "ConductingEquipment",
-            "ConnectivityNode",
-            "Function",
-        ],
-    },
-    ClientLN: {
-        parents: ["RptEnabled"],
-        children: [],
-    },
-    ClientServices: {
-        parents: ["Services"],
-        children: ["TimeSyncProt", "McSecurity"],
-    },
-    CommProt: {
-        parents: ["Services"],
-        children: [],
-    },
-    Communication: {
-        parents: ["SCL"],
-        children: [...tUnNamingSequence, "SubNetwork"],
-    },
-    ConductingEquipment: {
-        parents: ["Process", "Line", "SubFunction", "Function", "Bay"],
-        children: [
-            ...tAbstractConductingEquipmentSequence,
-            "EqFunction",
-            "SubEquipment",
-        ],
-    },
-    ConfDataSet: {
-        parents: ["Services"],
-        children: [],
-    },
-    ConfLdName: {
-        parents: ["Services"],
-        children: [],
-    },
-    ConfLNs: {
-        parents: ["Services"],
-        children: [],
-    },
-    ConfLogControl: {
-        parents: ["Services"],
-        children: [],
-    },
-    ConfReportControl: {
-        parents: ["Services"],
-        children: [],
-    },
-    ConfSG: {
-        parents: ["SettingGroups"],
-        children: [],
-    },
-    ConfSigRef: {
-        parents: ["Services"],
-        children: [],
-    },
-    ConnectedAP: {
-        parents: ["SubNetwork"],
-        children: [...tUnNamingSequence, "Address", "GSE", "SMV", "PhysConn"],
-    },
-    ConnectivityNode: {
-        parents: ["Bay", "Line"],
-        children: [...tLNodeContainerSequence],
-    },
-    DA: {
-        parents: ["DOType"],
-        children: [...tAbstractDataAttributeSequence],
-    },
-    DAI: {
-        parents: ["DOI", "SDI"],
-        children: [...tUnNamingSequence, "Val"],
-    },
-    DAType: {
-        parents: ["DataTypeTemplates"],
-        children: [...tIDNamingSequence, "BDA", "ProtNs"],
-    },
-    DO: {
-        parents: ["LNodeType"],
-        children: [...tUnNamingSequence],
-    },
-    DOI: {
-        parents: [...tAnyLN],
-        children: [...tUnNamingSequence, "SDI", "DAI"],
-    },
-    DOType: {
-        parents: ["DataTypeTemplates"],
-        children: [...tIDNamingSequence, "SDO", "DA"],
-    },
-    DataObjectDirectory: {
-        parents: ["Services"],
-        children: [],
-    },
-    DataSet: {
-        parents: [...tAnyLN],
-        children: [...tNamingSequence, "FCDA"],
-    },
-    DataSetDirectory: {
-        parents: ["Services"],
-        children: [],
-    },
-    DataTypeTemplates: {
-        parents: ["SCL"],
-        children: ["LNodeType", "DOType", "DAType", "EnumType"],
-    },
-    DynAssociation: {
-        parents: ["Services"],
-        children: [],
-    },
-    DynDataSet: {
-        parents: ["Services"],
-        children: [],
-    },
-    EnumType: {
-        parents: ["DataTypeTemplates"],
-        children: [...tIDNamingSequence, "EnumVal"],
-    },
-    EnumVal: {
-        parents: ["EnumType"],
-        children: [],
-    },
-    EqFunction: {
-        parents: [
-            "GeneralEquipment",
-            "TapChanger",
-            "TransformerWinding",
-            "PowerTransformer",
-            "SubEquipment",
-            "ConductingEquipment",
-        ],
-        children: [...tAbstractEqFuncSubFuncSequence],
-    },
-    EqSubFunction: {
-        parents: ["EqSubFunction", "EqFunction"],
-        children: [...tAbstractEqFuncSubFuncSequence],
-    },
-    ExtRef: {
-        parents: ["Inputs"],
-        children: [],
-    },
-    FCDA: {
-        parents: ["DataSet"],
-        children: [],
-    },
-    FileHandling: {
-        parents: ["Services"],
-        children: [],
-    },
-    Function: {
-        parents: ["Bay", "VoltageLevel", "Substation", "Process", "Line"],
-        children: [
-            ...tPowerSystemResourceSequence,
-            "SubFunction",
-            "GeneralEquipment",
-            "ConductingEquipment",
-        ],
-    },
-    GeneralEquipment: {
-        parents: [
-            "SubFunction",
-            "Function",
-            ...tGeneralEquipmentContainer,
-            ...tAbstractEqFuncSubFunc,
-            ...tEquipmentContainer,
-        ],
-        children: [...tEquipmentSequence, "EqFunction"],
-    },
-    GetCBValues: {
-        parents: ["Services"],
-        children: [],
-    },
-    GetDataObjectDefinition: {
-        parents: ["Services"],
-        children: [],
-    },
-    GetDataSetValue: {
-        parents: ["Services"],
-        children: [],
-    },
-    GetDirectory: {
-        parents: ["Services"],
-        children: [],
-    },
-    GOOSE: {
-        parents: ["Services"],
-        children: [],
-    },
-    GOOSESecurity: {
-        parents: ["AccessPoint"],
-        children: [...tNamingSequence, "Subject", "IssuerName"],
-    },
-    GSE: {
-        parents: ["ConnectedAP"],
-        children: [...tControlBlockSequence, "MinTime", "MaxTime"],
-    },
-    GSEDir: {
-        parents: ["Services"],
-        children: [],
-    },
-    GSEControl: {
-        parents: ["LN0"],
-        children: [...tControlWithIEDNameSequence, "Protocol"],
-    },
-    GSESettings: {
-        parents: ["Services"],
-        children: [],
-    },
-    GSSE: {
-        parents: ["Services"],
-        children: [],
-    },
-    Header: {
-        parents: ["SCL"],
-        children: ["Text", "History"],
-    },
-    History: {
-        parents: ["Header"],
-        children: ["Hitem"],
-    },
-    Hitem: {
-        parents: ["History"],
-        children: [],
-    },
-    IED: {
-        parents: ["SCL"],
-        children: [...tUnNamingSequence, "Services", "AccessPoint", "KDC"],
-    },
-    IEDName: {
-        parents: ["GSEControl", "SampledValueControl"],
-        children: [],
-    },
-    Inputs: {
-        parents: [...tAnyLN],
-        children: [...tUnNamingSequence, "ExtRef"],
-    },
-    IssuerName: {
-        parents: ["GOOSESecurity", "SMVSecurity"],
-        children: [],
-    },
-    KDC: {
-        parents: ["IED"],
-        children: [],
-    },
-    LDevice: {
-        parents: ["Server"],
-        children: [...tUnNamingSequence, "LN0", "LN", "AccessControl"],
-    },
-    LN: {
-        parents: ["AccessPoint", "LDevice"],
-        children: [...tAnyLNSequence],
-    },
-    LN0: {
-        parents: ["LDevice"],
-        children: [
-            ...tAnyLNSequence,
-            "GSEControl",
-            "SampledValueControl",
-            "SettingControl",
-        ],
-    },
-    LNode: {
-        parents: [...tLNodeContainer],
-        children: [...tUnNamingSequence],
-    },
-    LNodeType: {
-        parents: ["DataTypeTemplates"],
-        children: [...tIDNamingSequence, "DO"],
-    },
-    Line: {
-        parents: ["Process", "SCL"],
-        children: [
-            ...tGeneralEquipmentContainerSequence,
-            "Voltage",
-            "ConductingEquipment",
-        ],
-    },
-    Log: {
-        parents: [...tAnyLN],
-        children: [...tUnNamingSequence],
-    },
-    LogControl: {
-        parents: [...tAnyLN],
-        children: [...tControlWithTriggerOptSequence],
-    },
-    LogSettings: {
-        parents: ["Services"],
-        children: [],
-    },
-    MaxTime: {
-        parents: ["GSE"],
-        children: [],
-    },
-    McSecurity: {
-        parents: ["GSESettings", "SMVSettings", "ClientServices"],
-        children: [],
-    },
-    MinTime: {
-        parents: ["GSE"],
-        children: [],
-    },
-    NeutralPoint: {
-        parents: ["TransformerWinding"],
-        children: [...tUnNamingSequence],
-    },
-    OptFields: {
-        parents: ["ReportControl"],
-        children: [],
-    },
-    P: {
-        parents: ["Address", "PhysConn"],
-        children: [],
-    },
-    PhysConn: {
-        parents: ["ConnectedAP"],
-        children: [...tUnNamingSequence, "P"],
-    },
-    PowerTransformer: {
-        parents: [...tEquipmentContainer],
-        children: [
-            ...tEquipmentSequence,
-            "TransformerWinding",
-            "SubEquipment",
-            "EqFunction",
-        ],
-    },
-    Private: {
-        parents: [],
-        children: [],
-    },
-    Process: {
-        parents: ["Process", "SCL"],
-        children: [
-            ...tGeneralEquipmentContainerSequence,
-            "ConductingEquipment",
-            "Substation",
-            "Line",
-            "Process",
-        ],
-    },
-    ProtNs: {
-        parents: ["DAType", "DA"],
-        children: [],
-    },
-    Protocol: {
-        parents: ["GSEControl", "SampledValueControl"],
-        children: [],
-    },
-    ReadWrite: {
-        parents: ["Services"],
-        children: [],
-    },
-    RedProt: {
-        parents: ["Services"],
-        children: [],
-    },
-    ReportControl: {
-        parents: [...tAnyLN],
-        children: [...tControlWithTriggerOptSequence, "OptFields", "RptEnabled"],
-    },
-    ReportSettings: {
-        parents: ["Services"],
-        children: [],
-    },
-    RptEnabled: {
-        parents: ["ReportControl"],
-        children: [...tUnNamingSequence, "ClientLN"],
-    },
-    SamplesPerSec: {
-        parents: ["SMVSettings"],
-        children: [],
-    },
-    SampledValueControl: {
-        parents: ["LN0"],
-        children: [...tControlWithIEDNameSequence, "SmvOpts"],
-    },
-    SecPerSamples: {
-        parents: ["SMVSettings"],
-        children: [],
-    },
-    SCL: {
-        parents: [],
-        children: [
-            ...tBaseNameSequence,
-            "Header",
-            "Substation",
-            "Communication",
-            "IED",
-            "DataTypeTemplates",
-            "Line",
-            "Process",
-        ],
-    },
-    SDI: {
-        parents: ["DOI", "SDI"],
-        children: [...tUnNamingSequence, "SDI", "DAI"],
-    },
-    SDO: {
-        parents: ["DOType"],
-        children: [...tNamingSequence],
-    },
-    Server: {
-        parents: ["AccessPoint"],
-        children: [
-            ...tUnNamingSequence,
-            "Authentication",
-            "LDevice",
-            "Association",
-        ],
-    },
-    ServerAt: {
-        parents: ["AccessPoint"],
-        children: [...tUnNamingSequence],
-    },
-    Services: {
-        parents: ["IED", "AccessPoint"],
-        children: [
-            "DynAssociation",
-            "SettingGroups",
-            "GetDirectory",
-            "GetDataObjectDefinition",
-            "DataObjectDirectory",
-            "GetDataSetValue",
-            "SetDataSetValue",
-            "DataSetDirectory",
-            "ConfDataSet",
-            "DynDataSet",
-            "ReadWrite",
-            "TimerActivatedControl",
-            "ConfReportControl",
-            "GetCBValues",
-            "ConfLogControl",
-            "ReportSettings",
-            "LogSettings",
-            "GSESettings",
-            "SMVSettings",
-            "GSEDir",
-            "GOOSE",
-            "GSSE",
-            "SMVsc",
-            "FileHandling",
-            "ConfLNs",
-            "ClientServices",
-            "ConfLdName",
-            "SupSubscription",
-            "ConfSigRef",
-            "ValueHandling",
-            "RedProt",
-            "TimeSyncProt",
-            "CommProt",
-        ],
-    },
-    SetDataSetValue: {
-        parents: ["Services"],
-        children: [],
-    },
-    SettingControl: {
-        parents: ["LN0"],
-        children: [...tUnNamingSequence],
-    },
-    SettingGroups: {
-        parents: ["Services"],
-        children: ["SGEdit", "ConfSG"],
-    },
-    SGEdit: {
-        parents: ["SettingGroups"],
-        children: [],
-    },
-    SmpRate: {
-        parents: ["SMVSettings"],
-        children: [],
-    },
-    SMV: {
-        parents: ["ConnectedAP"],
-        children: [...tControlBlockSequence],
-    },
-    SmvOpts: {
-        parents: ["SampledValueControl"],
-        children: [],
-    },
-    SMVsc: {
-        parents: ["Services"],
-        children: [],
-    },
-    SMVSecurity: {
-        parents: ["AccessPoint"],
-        children: [...tNamingSequence, "Subject", "IssuerName"],
-    },
-    SMVSettings: {
-        parents: ["Services"],
-        children: ["SmpRate", "SamplesPerSec", "SecPerSamples", "McSecurity"],
-    },
-    SubEquipment: {
-        parents: [
-            "TapChanger",
-            "PowerTransformer",
-            "ConductingEquipment",
-            "TransformerWinding",
-            ...tAbstractConductingEquipment,
-        ],
-        children: [...tPowerSystemResourceSequence, "EqFunction"],
-    },
-    SubFunction: {
-        parents: ["SubFunction", "Function"],
-        children: [
-            ...tPowerSystemResourceSequence,
-            "GeneralEquipment",
-            "ConductingEquipment",
-            "SubFunction",
-        ],
-    },
-    SubNetwork: {
-        parents: ["Communication"],
-        children: [...tNamingSequence, "BitRate", "ConnectedAP"],
-    },
-    Subject: {
-        parents: ["GOOSESecurity", "SMVSecurity"],
-        children: [],
-    },
-    Substation: {
-        parents: ["SCL"],
-        children: [...tEquipmentContainerSequence, "VoltageLevel", "Function"],
-    },
-    SupSubscription: {
-        parents: ["Services"],
-        children: [],
-    },
-    TapChanger: {
-        parents: ["TransformerWinding"],
-        children: [...tPowerSystemResourceSequence, "SubEquipment", "EqFunction"],
-    },
-    Terminal: {
-        parents: [...tEquipment],
-        children: [...tUnNamingSequence],
-    },
-    Text: {
-        parents: sCLTags.filter((tag) => tag !== "Text" && tag !== "Private"),
-        children: [],
-    },
-    TimerActivatedControl: {
-        parents: ["Services"],
-        children: [],
-    },
-    TimeSyncProt: {
-        parents: ["Services", "ClientServices"],
-        children: [],
-    },
-    TransformerWinding: {
-        parents: ["PowerTransformer"],
-        children: [
-            ...tAbstractConductingEquipmentSequence,
-            "TapChanger",
-            "NeutralPoint",
-            "EqFunction",
-            "SubEquipment",
-        ],
-    },
-    TrgOps: {
-        parents: ["ReportControl"],
-        children: [],
-    },
-    Val: {
-        parents: ["DAI", "DA", "BDA"],
-        children: [],
-    },
-    ValueHandling: {
-        parents: ["Services"],
-        children: [],
-    },
-    Voltage: {
-        parents: ["VoltageLevel"],
-        children: [],
-    },
-    VoltageLevel: {
-        parents: ["Substation"],
-        children: [...tEquipmentContainerSequence, "Voltage", "Bay", "Function"],
-    },
-};
-const tagSet = new Set(sCLTags);
-function isSCLTag(tag) {
-    return tagSet.has(tag);
-}
-
-/**
- * Helper function for to determine schema valid `reference` for OpenSCD
- * core Insert event.
- * !! only valid with Edition 2.1 projects (2007B4)
- * @param parent - The parent element the new child shall be added to
- * @param tag - The `tagName` of the new child
- * @returns Reference for new [[`tag`]] child within [[`parent`]]  or `null`
- */
-function getReference(parent, tag) {
-    if (!isSCLTag(tag))
-        return null;
-    const parentTag = parent.tagName;
-    const children = Array.from(parent.children);
-    if (parentTag === "Services" ||
-        parentTag === "SettingGroups" ||
-        !isSCLTag(parentTag))
-        return children.find((child) => child.tagName === tag) ?? null;
-    const sequence = tags[parentTag].children;
-    let index = sequence.findIndex((element) => element === tag);
-    if (index < 0)
-        return null;
-    let nextSibling;
-    while (index < sequence.length && !nextSibling) {
-        // eslint-disable-next-line no-loop-func
-        nextSibling = children.find((child) => child.tagName === sequence[index]);
-        index += 1;
-    }
-    return nextSibling ?? null;
-}
-
-const maxGseMacAddress = 0x010ccd0101ff;
-const minGseMacAddress = 0x010ccd010000;
-const maxSmvMacAddress = 0x010ccd0401ff;
-const minSmvMacAddress = 0x010ccd040000;
-function convertToMac(mac) {
-    const str = 0 + mac.toString(16).toUpperCase();
-    const arr = str.match(/.{1,2}/g);
-    return arr.join("-");
-}
-Array(maxGseMacAddress - minGseMacAddress)
-    .fill(1)
-    .map((_, i) => convertToMac(minGseMacAddress + i));
-Array(maxSmvMacAddress - minSmvMacAddress)
-    .fill(1)
-    .map((_, i) => convertToMac(minSmvMacAddress + i));
-
-const maxGseAppId = 0x3fff;
-const minGseAppId = 0x0000;
-// APPID range for Type1A(Trip) GOOSE acc. IEC 61850-8-1
-const maxGseTripAppId = 0xbfff;
-const minGseTripAppId = 0x8000;
-const maxSmvAppId = 0x7fff;
-const minSmvAppId = 0x4000;
-Array(maxGseAppId - minGseAppId)
-    .fill(1)
-    .map((_, i) => (minGseAppId + i).toString(16).toUpperCase().padStart(4, "0"));
-Array(maxGseTripAppId - minGseTripAppId)
-    .fill(1)
-    .map((_, i) => (minGseTripAppId + i).toString(16).toUpperCase().padStart(4, "0"));
-Array(maxSmvAppId - minSmvAppId)
-    .fill(1)
-    .map((_, i) => (minSmvAppId + i).toString(16).toUpperCase().padStart(4, "0"));
-
-/** maximum value for `lnInst` attribute */
-const maxLnInst = 99;
-Array(maxLnInst)
-    .fill(1)
-    .map((_, i) => `${i + 1}`);
-
-await fetch(new URL(new URL('assets/nsd-0a370a57.json', import.meta.url).href, import.meta.url)).then((res) => res.json());
-
 /**
  * @license
  * Copyright 2018 Google Inc.
@@ -2043,6 +1157,1137 @@ Ripple = __decorate([
 
 /**
  * @license
+ * Copyright 2020 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/**
+ * Class that encapsulates the events handlers for `mwc-ripple`
+ *
+ *
+ * Example:
+ * ```
+ * class XFoo extends LitElement {
+ *   async getRipple() {
+ *     this.renderRipple = true;
+ *     await this.updateComplete;
+ *     return this.renderRoot.querySelector('mwc-ripple');
+ *   }
+ *   rippleHandlers = new RippleHandlers(() => this.getRipple());
+ *
+ *   render() {
+ *     return html`
+ *       <div @mousedown=${this.rippleHandlers.startPress}></div>
+ *       ${this.renderRipple ? html`<mwc-ripple></mwc-ripple>` : ''}
+ *     `;
+ *   }
+ * }
+ * ```
+ */
+class RippleHandlers {
+    constructor(
+    /** Function that returns a `mwc-ripple` */
+    rippleFn) {
+        this.startPress = (ev) => {
+            rippleFn().then((r) => {
+                r && r.startPress(ev);
+            });
+        };
+        this.endPress = () => {
+            rippleFn().then((r) => {
+                r && r.endPress();
+            });
+        };
+        this.startFocus = () => {
+            rippleFn().then((r) => {
+                r && r.startFocus();
+            });
+        };
+        this.endFocus = () => {
+            rippleFn().then((r) => {
+                r && r.endFocus();
+            });
+        };
+        this.startHover = () => {
+            rippleFn().then((r) => {
+                r && r.startHover();
+            });
+        };
+        this.endHover = () => {
+            rippleFn().then((r) => {
+                r && r.endHover();
+            });
+        };
+    }
+}
+
+/**
+ * @license
+ * Copyright 2018 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/**
+ * Fab Base class logic and template definition
+ * @soyCompatible
+ */
+class FabBase extends s {
+    constructor() {
+        super(...arguments);
+        this.mini = false;
+        this.exited = false;
+        this.disabled = false;
+        this.extended = false;
+        this.showIconAtEnd = false;
+        this.reducedTouchTarget = false;
+        this.icon = '';
+        this.label = '';
+        this.shouldRenderRipple = false;
+        this.useStateLayerCustomProperties = false;
+        this.rippleHandlers = new RippleHandlers(() => {
+            this.shouldRenderRipple = true;
+            return this.ripple;
+        });
+    }
+    /**
+     * @soyTemplate
+     * @soyClasses fabClasses: .mdc-fab
+     */
+    render() {
+        const hasTouchTarget = this.mini && !this.reducedTouchTarget;
+        /** @classMap */
+        const classes = {
+            'mdc-fab--mini': this.mini,
+            'mdc-fab--touch': hasTouchTarget,
+            'mdc-fab--exited': this.exited,
+            'mdc-fab--extended': this.extended,
+            'icon-end': this.showIconAtEnd,
+        };
+        const ariaLabel = this.label ? this.label : this.icon;
+        /*
+         * Some internal styling is sensitive to whitespace in this template, take
+         * care when modifying it.
+         */
+        return x `<button
+          class="mdc-fab ${o$1(classes)}"
+          ?disabled="${this.disabled}"
+          aria-label="${ariaLabel}"
+          @mouseenter=${this.handleRippleMouseEnter}
+          @mouseleave=${this.handleRippleMouseLeave}
+          @focus=${this.handleRippleFocus}
+          @blur=${this.handleRippleBlur}
+          @mousedown=${this.handleRippleActivate}
+          @touchstart=${this.handleRippleStartPress}
+          @touchend=${this.handleRippleDeactivate}
+          @touchcancel=${this.handleRippleDeactivate}><!--
+        -->${this.renderBeforeRipple()}<!--
+        -->${this.renderRipple()}<!--
+        -->${this.showIconAtEnd ? this.renderLabel() : ''}<!--
+        --><span class="material-icons mdc-fab__icon"><!--
+          --><slot name="icon">${this.icon}</slot><!--
+       --></span><!--
+        -->${!this.showIconAtEnd ? this.renderLabel() : ''}<!--
+        -->${this.renderTouchTarget()}<!--
+      --></button>`;
+    }
+    /** @soyTemplate */
+    renderIcon() {
+        // TODO(b/191914389): reimplement once Wit issue is resolved
+        return x ``;
+    }
+    /** @soyTemplate */
+    renderTouchTarget() {
+        const hasTouchTarget = this.mini && !this.reducedTouchTarget;
+        return x `${hasTouchTarget ? x `<div class="mdc-fab__touch"></div>` : ''}`;
+    }
+    /** @soyTemplate */
+    renderLabel() {
+        const showLabel = this.label !== '' && this.extended;
+        return x `${showLabel ? x `<span class="mdc-fab__label">${this.label}</span>` :
+            ''}`;
+    }
+    /** @soyTemplate */
+    renderBeforeRipple() {
+        return x ``;
+    }
+    /** @soyTemplate */
+    renderRipple() {
+        return this.shouldRenderRipple ? x `<mwc-ripple class="ripple"
+        .internalUseStateLayerCustomProperties="${this.useStateLayerCustomProperties}"
+         ></mwc-ripple>` :
+            '';
+    }
+    handleRippleActivate(event) {
+        const onUp = () => {
+            window.removeEventListener('mouseup', onUp);
+            this.handleRippleDeactivate();
+        };
+        window.addEventListener('mouseup', onUp);
+        this.handleRippleStartPress(event);
+    }
+    handleRippleStartPress(event) {
+        this.rippleHandlers.startPress(event);
+    }
+    handleRippleDeactivate() {
+        this.rippleHandlers.endPress();
+    }
+    handleRippleMouseEnter() {
+        this.rippleHandlers.startHover();
+    }
+    handleRippleMouseLeave() {
+        this.rippleHandlers.endHover();
+    }
+    handleRippleFocus() {
+        this.rippleHandlers.startFocus();
+    }
+    handleRippleBlur() {
+        this.rippleHandlers.endFocus();
+    }
+}
+FabBase.shadowRootOptions = { mode: 'open', delegatesFocus: true };
+__decorate([
+    e$1('mwc-ripple')
+], FabBase.prototype, "ripple", void 0);
+__decorate([
+    n$2({ type: Boolean })
+], FabBase.prototype, "mini", void 0);
+__decorate([
+    n$2({ type: Boolean })
+], FabBase.prototype, "exited", void 0);
+__decorate([
+    n$2({ type: Boolean })
+], FabBase.prototype, "disabled", void 0);
+__decorate([
+    n$2({ type: Boolean })
+], FabBase.prototype, "extended", void 0);
+__decorate([
+    n$2({ type: Boolean })
+], FabBase.prototype, "showIconAtEnd", void 0);
+__decorate([
+    n$2({ type: Boolean })
+], FabBase.prototype, "reducedTouchTarget", void 0);
+__decorate([
+    n$2()
+], FabBase.prototype, "icon", void 0);
+__decorate([
+    n$2()
+], FabBase.prototype, "label", void 0);
+__decorate([
+    t$1()
+], FabBase.prototype, "shouldRenderRipple", void 0);
+__decorate([
+    t$1()
+], FabBase.prototype, "useStateLayerCustomProperties", void 0);
+__decorate([
+    e$2({ passive: true })
+], FabBase.prototype, "handleRippleStartPress", null);
+
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-LIcense-Identifier: Apache-2.0
+ */
+const styles$2 = i$5 `:host .mdc-fab .material-icons{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}:host{outline:none;--mdc-ripple-color: currentcolor;user-select:none;-webkit-tap-highlight-color:transparent;display:inline-flex;-webkit-tap-highlight-color:transparent;display:inline-flex;outline:none;user-select:none}:host .mdc-touch-target-wrapper{display:inline}:host .mdc-elevation-overlay{position:absolute;border-radius:inherit;pointer-events:none;opacity:0;opacity:var(--mdc-elevation-overlay-opacity, 0);transition:opacity 280ms cubic-bezier(0.4, 0, 0.2, 1);background-color:#fff;background-color:var(--mdc-elevation-overlay-color, #fff)}:host .mdc-fab{position:relative;display:inline-flex;position:relative;align-items:center;justify-content:center;box-sizing:border-box;width:56px;height:56px;padding:0;border:none;fill:currentColor;text-decoration:none;cursor:pointer;user-select:none;-moz-appearance:none;-webkit-appearance:none;overflow:visible;transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1),opacity 15ms linear 30ms,transform 270ms 0ms cubic-bezier(0, 0, 0.2, 1)}:host .mdc-fab .mdc-elevation-overlay{width:100%;height:100%;top:0;left:0}:host .mdc-fab::-moz-focus-inner{padding:0;border:0}:host .mdc-fab:hover{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab.mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(.mdc-ripple-upgraded):focus{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab .mdc-fab__focus-ring{position:absolute}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc( 100% + 4px );width:calc( 100% + 4px )}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{border-color:CanvasText}}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{border-color:CanvasText}}:host .mdc-fab:active,:host .mdc-fab:focus:active{box-shadow:0px 7px 8px -4px rgba(0, 0, 0, 0.2),0px 12px 17px 2px rgba(0, 0, 0, 0.14),0px 5px 22px 4px rgba(0,0,0,.12)}:host .mdc-fab:active,:host .mdc-fab:focus{outline:none}:host .mdc-fab:hover{cursor:pointer}:host .mdc-fab>svg{width:100%}:host .mdc-fab--mini{width:40px;height:40px}:host .mdc-fab--extended{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-button-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.875rem;font-size:var(--mdc-typography-button-font-size, 0.875rem);line-height:2.25rem;line-height:var(--mdc-typography-button-line-height, 2.25rem);font-weight:500;font-weight:var(--mdc-typography-button-font-weight, 500);letter-spacing:0.0892857143em;letter-spacing:var(--mdc-typography-button-letter-spacing, 0.0892857143em);text-decoration:none;text-decoration:var(--mdc-typography-button-text-decoration, none);text-transform:uppercase;text-transform:var(--mdc-typography-button-text-transform, uppercase);border-radius:24px;padding-left:20px;padding-right:20px;width:auto;max-width:100%;height:48px;line-height:normal}:host .mdc-fab--extended .mdc-fab__ripple{border-radius:24px}:host .mdc-fab--extended .mdc-fab__icon{margin-left:calc(12px - 20px);margin-right:12px}[dir=rtl] :host .mdc-fab--extended .mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__icon[dir=rtl]{margin-left:12px;margin-right:calc(12px - 20px)}:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon{margin-left:12px;margin-right:calc(12px - 20px)}[dir=rtl] :host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon[dir=rtl]{margin-left:calc(12px - 20px);margin-right:12px}:host .mdc-fab--touch{margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}:host .mdc-fab--touch .mdc-fab__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}:host .mdc-fab::before{position:absolute;box-sizing:border-box;width:100%;height:100%;top:0;left:0;border:1px solid transparent;border-radius:inherit;content:"";pointer-events:none}@media screen and (forced-colors: active){:host .mdc-fab::before{border-color:CanvasText}}:host .mdc-fab__label{justify-content:flex-start;text-overflow:ellipsis;white-space:nowrap;overflow-x:hidden;overflow-y:visible}:host .mdc-fab__icon{transition:transform 180ms 90ms cubic-bezier(0, 0, 0.2, 1);fill:currentColor;will-change:transform}:host .mdc-fab .mdc-fab__icon{display:inline-flex;align-items:center;justify-content:center}:host .mdc-fab--exited{transform:scale(0);opacity:0;transition:opacity 15ms linear 150ms,transform 180ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab--exited .mdc-fab__icon{transform:scale(0);transition:transform 135ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab{background-color:#018786;background-color:var(--mdc-theme-secondary, #018786);box-shadow:0px 3px 5px -1px rgba(0, 0, 0, 0.2),0px 6px 10px 0px rgba(0, 0, 0, 0.14),0px 1px 18px 0px rgba(0,0,0,.12)}:host .mdc-fab .mdc-fab__icon{width:24px;height:24px;font-size:24px}:host .mdc-fab,:host .mdc-fab:not(:disabled) .mdc-fab__icon,:host .mdc-fab:not(:disabled) .mdc-fab__label,:host .mdc-fab:disabled .mdc-fab__icon,:host .mdc-fab:disabled .mdc-fab__label{color:#fff;color:var(--mdc-theme-on-secondary, #fff)}:host .mdc-fab:not(.mdc-fab--extended){border-radius:50%}:host .mdc-fab:not(.mdc-fab--extended) .mdc-fab__ripple{border-radius:50%}:host .mdc-fab{position:relative;display:inline-flex;position:relative;align-items:center;justify-content:center;box-sizing:border-box;width:56px;height:56px;padding:0;border:none;fill:currentColor;text-decoration:none;cursor:pointer;user-select:none;-moz-appearance:none;-webkit-appearance:none;overflow:visible;transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1),opacity 15ms linear 30ms,transform 270ms 0ms cubic-bezier(0, 0, 0.2, 1)}:host .mdc-fab .mdc-elevation-overlay{width:100%;height:100%;top:0;left:0}:host .mdc-fab::-moz-focus-inner{padding:0;border:0}:host .mdc-fab:hover{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab.mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(.mdc-ripple-upgraded):focus{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab .mdc-fab__focus-ring{position:absolute}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc( 100% + 4px );width:calc( 100% + 4px )}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{border-color:CanvasText}}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{border-color:CanvasText}}:host .mdc-fab:active,:host .mdc-fab:focus:active{box-shadow:0px 7px 8px -4px rgba(0, 0, 0, 0.2),0px 12px 17px 2px rgba(0, 0, 0, 0.14),0px 5px 22px 4px rgba(0,0,0,.12)}:host .mdc-fab:active,:host .mdc-fab:focus{outline:none}:host .mdc-fab:hover{cursor:pointer}:host .mdc-fab>svg{width:100%}:host .mdc-fab--mini{width:40px;height:40px}:host .mdc-fab--extended{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-button-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.875rem;font-size:var(--mdc-typography-button-font-size, 0.875rem);line-height:2.25rem;line-height:var(--mdc-typography-button-line-height, 2.25rem);font-weight:500;font-weight:var(--mdc-typography-button-font-weight, 500);letter-spacing:0.0892857143em;letter-spacing:var(--mdc-typography-button-letter-spacing, 0.0892857143em);text-decoration:none;text-decoration:var(--mdc-typography-button-text-decoration, none);text-transform:uppercase;text-transform:var(--mdc-typography-button-text-transform, uppercase);border-radius:24px;padding-left:20px;padding-right:20px;width:auto;max-width:100%;height:48px;line-height:normal}:host .mdc-fab--extended .mdc-fab__ripple{border-radius:24px}:host .mdc-fab--extended .mdc-fab__icon{margin-left:calc(12px - 20px);margin-right:12px}[dir=rtl] :host .mdc-fab--extended .mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__icon[dir=rtl]{margin-left:12px;margin-right:calc(12px - 20px)}:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon{margin-left:12px;margin-right:calc(12px - 20px)}[dir=rtl] :host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon[dir=rtl]{margin-left:calc(12px - 20px);margin-right:12px}:host .mdc-fab--touch{margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}:host .mdc-fab--touch .mdc-fab__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}:host .mdc-fab::before{position:absolute;box-sizing:border-box;width:100%;height:100%;top:0;left:0;border:1px solid transparent;border-radius:inherit;content:"";pointer-events:none}@media screen and (forced-colors: active){:host .mdc-fab::before{border-color:CanvasText}}:host .mdc-fab__label{justify-content:flex-start;text-overflow:ellipsis;white-space:nowrap;overflow-x:hidden;overflow-y:visible}:host .mdc-fab__icon{transition:transform 180ms 90ms cubic-bezier(0, 0, 0.2, 1);fill:currentColor;will-change:transform}:host .mdc-fab .mdc-fab__icon{display:inline-flex;align-items:center;justify-content:center}:host .mdc-fab--exited{transform:scale(0);opacity:0;transition:opacity 15ms linear 150ms,transform 180ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab--exited .mdc-fab__icon{transform:scale(0);transition:transform 135ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab .ripple{overflow:hidden}:host .mdc-fab:not(.mdc-fab--extended) .ripple{border-radius:50%}:host .mdc-fab.mdc-fab--extended .ripple{border-radius:24px}:host .mdc-fab .mdc-fab__label{z-index:0}:host .mdc-fab .mdc-fab__icon ::slotted(*){width:inherit;height:inherit;font-size:inherit}:host .mdc-fab--extended.mdc-fab--exited .mdc-fab__icon ::slotted(*){transform:scale(0);transition:transform 135ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab{padding-top:0px;padding-top:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-right:0px;padding-right:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-bottom:0px;padding-bottom:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-left:0px;padding-left:max(0px, var(--mdc-fab-focus-outline-width, 0px));box-shadow:0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 0px 1px 18px 0px rgba(0, 0, 0, 0.12);box-shadow:var(--mdc-fab-box-shadow, 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 0px 1px 18px 0px rgba(0, 0, 0, 0.12))}:host .mdc-fab:not(:disabled).mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(:disabled):not(.mdc-ripple-upgraded):focus{border-color:initial;border-color:var(--mdc-fab-focus-outline-color, initial)}:host .mdc-fab:not(:disabled).mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(:disabled):not(.mdc-ripple-upgraded):focus{border-style:solid;border-width:var(--mdc-fab-focus-outline-width, 0px);padding-top:0px;padding-top:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-right:0px;padding-right:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-bottom:0px;padding-bottom:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-left:0px;padding-left:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1))}:host .mdc-fab:hover,:host .mdc-fab:focus{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12);box-shadow:var(--mdc-fab-box-shadow, 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12))}:host .mdc-fab:active{box-shadow:0px 7px 8px -4px rgba(0, 0, 0, 0.2), 0px 12px 17px 2px rgba(0, 0, 0, 0.14), 0px 5px 22px 4px rgba(0, 0, 0, 0.12);box-shadow:var(--mdc-fab-box-shadow, 0px 7px 8px -4px rgba(0, 0, 0, 0.2), 0px 12px 17px 2px rgba(0, 0, 0, 0.14), 0px 5px 22px 4px rgba(0, 0, 0, 0.12))}:host .mdc-fab .ripple{overflow:hidden}:host .mdc-fab .mdc-fab__label{z-index:0}:host .mdc-fab:not(.mdc-fab--extended) .ripple{border-radius:50%}:host .mdc-fab.mdc-fab--extended .ripple{border-radius:24px}:host .mdc-fab .mdc-fab__icon{width:24px;width:var(--mdc-icon-size, 24px);height:24px;height:var(--mdc-icon-size, 24px);font-size:24px;font-size:var(--mdc-icon-size, 24px);transition:transform 180ms 90ms cubic-bezier(0, 0, 0.2, 1);fill:currentColor;will-change:transform;display:inline-flex;align-items:center;justify-content:center}:host .mdc-fab.mdc-fab--extended{padding-top:0px;padding-top:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-right:20px;padding-right:max(var(--mdc-fab-extended-label-padding, 20px), var(--mdc-fab-focus-outline-width, 0px));padding-bottom:0px;padding-bottom:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-left:20px;padding-left:max(var(--mdc-fab-extended-label-padding, 20px), var(--mdc-fab-focus-outline-width, 0px))}:host .mdc-fab.mdc-fab--extended:not(:disabled).mdc-ripple-upgraded--background-focused,:host .mdc-fab.mdc-fab--extended:not(:disabled):not(.mdc-ripple-upgraded):focus{border-style:solid;border-width:var(--mdc-fab-focus-outline-width, 0px);padding-top:0px;padding-top:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-right:20px;padding-right:max(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-bottom:0px;padding-bottom:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-left:20px;padding-left:max(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)) * -1))}:host .mdc-fab.mdc-fab--extended.icon-end .mdc-fab__icon{margin-left:12px;margin-left:var(--mdc-fab-extended-icon-padding, 12px);margin-right:calc(12px - 20px);margin-right:calc(var(--mdc-fab-extended-icon-padding, 12px) - var(--mdc-fab-extended-label-padding, 20px))}[dir=rtl] :host .mdc-fab.mdc-fab--extended.icon-end .mdc-fab__icon,:host .mdc-fab.mdc-fab--extended.icon-end .mdc-fab__icon[dir=rtl]{margin-left:calc(12px - 20px);margin-left:calc(var(--mdc-fab-extended-icon-padding, 12px) - var(--mdc-fab-extended-label-padding, 20px));margin-right:12px;margin-right:var(--mdc-fab-extended-icon-padding, 12px)}`;
+
+/**
+ * @license
+ * Copyright 2018 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/** @soyCompatible */
+let Fab = class Fab extends FabBase {
+};
+Fab.styles = [styles$2];
+Fab = __decorate([
+    e$4('mwc-fab')
+], Fab);
+
+function newEditEvent(edit) {
+    return new CustomEvent('oscd-edit', {
+        composed: true,
+        bubbles: true,
+        detail: edit,
+    });
+}
+
+const tAbstractConductingEquipment = [
+    "TransformerWinding",
+    "ConductingEquipment",
+];
+const tEquipment = [
+    "GeneralEquipment",
+    "PowerTransformer",
+    ...tAbstractConductingEquipment,
+];
+const tEquipmentContainer = ["Substation", "VoltageLevel", "Bay"];
+const tGeneralEquipmentContainer = ["Process", "Line"];
+const tAbstractEqFuncSubFunc = ["EqSubFunction", "EqFunction"];
+const tPowerSystemResource = [
+    "SubFunction",
+    "Function",
+    "TapChanger",
+    "SubEquipment",
+    ...tEquipment,
+    ...tEquipmentContainer,
+    ...tGeneralEquipmentContainer,
+    ...tAbstractEqFuncSubFunc,
+];
+const tLNodeContainer = ["ConnectivityNode", ...tPowerSystemResource];
+const tCertificate = ["GOOSESecurity", "SMVSecurity"];
+const tNaming = ["SubNetwork", ...tCertificate, ...tLNodeContainer];
+const tAbstractDataAttribute = ["BDA", "DA"];
+const tControlWithIEDName = ["SampledValueControl", "GSEControl"];
+const tControlWithTriggerOpt = ["LogControl", "ReportControl"];
+const tControl = [...tControlWithIEDName, ...tControlWithTriggerOpt];
+const tControlBlock = ["GSE", "SMV"];
+const tUnNaming = [
+    "ConnectedAP",
+    "PhysConn",
+    "SDO",
+    "DO",
+    "DAI",
+    "SDI",
+    "DOI",
+    "Inputs",
+    "RptEnabled",
+    "Server",
+    "ServerAt",
+    "SettingControl",
+    "Communication",
+    "Log",
+    "LDevice",
+    "DataSet",
+    "AccessPoint",
+    "IED",
+    "NeutralPoint",
+    ...tControl,
+    ...tControlBlock,
+    ...tAbstractDataAttribute,
+];
+const tAnyLN = ["LN0", "LN"];
+const tAnyContentFromOtherNamespace = [
+    "Text",
+    "Private",
+    "Hitem",
+    "AccessControl",
+];
+const tCert = ["Subject", "IssuerName"];
+const tDurationInMilliSec = ["MinTime", "MaxTime"];
+const tIDNaming = ["LNodeType", "DOType", "DAType", "EnumType"];
+const tServiceYesNo = [
+    "FileHandling",
+    "TimeSyncProt",
+    "CommProt",
+    "SGEdit",
+    "ConfSG",
+    "GetDirectory",
+    "GetDataObjectDefinition",
+    "DataObjectDirectory",
+    "GetDataSetValue",
+    "SetDataSetValue",
+    "DataSetDirectory",
+    "ReadWrite",
+    "TimerActivatedControl",
+    "GetCBValues",
+    "GSEDir",
+    "ConfLdName",
+];
+const tServiceWithMaxAndMaxAttributes = ["DynDataSet", "ConfDataSet"];
+const tServiceWithMax = [
+    "GSSE",
+    "GOOSE",
+    "ConfReportControl",
+    "SMVsc",
+    ...tServiceWithMaxAndMaxAttributes,
+];
+const tServiceWithMaxNonZero = ["ConfLogControl", "ConfSigRef"];
+const tServiceSettings = [
+    "ReportSettings",
+    "LogSettings",
+    "GSESettings",
+    "SMVSettings",
+];
+const tBaseElement = ["SCL", ...tNaming, ...tUnNaming, ...tIDNaming];
+const sCLTags = [
+    ...tBaseElement,
+    ...tAnyContentFromOtherNamespace,
+    "Header",
+    "LNode",
+    "Val",
+    "Voltage",
+    "Services",
+    ...tCert,
+    ...tDurationInMilliSec,
+    "Association",
+    "FCDA",
+    "ClientLN",
+    "IEDName",
+    "ExtRef",
+    "Protocol",
+    ...tAnyLN,
+    ...tServiceYesNo,
+    "DynAssociation",
+    "SettingGroups",
+    ...tServiceWithMax,
+    ...tServiceWithMaxNonZero,
+    ...tServiceSettings,
+    "ConfLNs",
+    "ClientServices",
+    "SupSubscription",
+    "ValueHandling",
+    "RedProt",
+    "McSecurity",
+    "KDC",
+    "Address",
+    "P",
+    "ProtNs",
+    "EnumVal",
+    "Terminal",
+    "BitRate",
+    "Authentication",
+    "DataTypeTemplates",
+    "History",
+    "OptFields",
+    "SmvOpts",
+    "TrgOps",
+    "SamplesPerSec",
+    "SmpRate",
+    "SecPerSamples",
+];
+const tBaseNameSequence = ["Text", "Private"];
+const tNamingSequence = [...tBaseNameSequence];
+const tUnNamingSequence = [...tBaseNameSequence];
+const tIDNamingSequence = [...tBaseNameSequence];
+const tAbstractDataAttributeSequence = [...tUnNamingSequence, "Val"];
+const tLNodeContainerSequence = [...tNamingSequence, "LNode"];
+const tPowerSystemResourceSequence = [...tLNodeContainerSequence];
+const tEquipmentSequence = [...tPowerSystemResourceSequence];
+const tEquipmentContainerSequence = [
+    ...tPowerSystemResourceSequence,
+    "PowerTransformer",
+    "GeneralEquipment",
+];
+const tAbstractConductingEquipmentSequence = [
+    ...tEquipmentSequence,
+    "Terminal",
+];
+const tControlBlockSequence = [...tUnNamingSequence, "Address"];
+const tControlSequence = [...tNamingSequence];
+const tControlWithIEDNameSequence = [...tControlSequence, "IEDName"];
+const tAnyLNSequence = [
+    ...tUnNamingSequence,
+    "DataSet",
+    "ReportControl",
+    "LogControl",
+    "DOI",
+    "Inputs",
+    "Log",
+];
+const tGeneralEquipmentContainerSequence = [
+    ...tPowerSystemResourceSequence,
+    "GeneralEquipment",
+    "Function",
+];
+const tControlWithTriggerOptSequence = [...tControlSequence, "TrgOps"];
+const tAbstractEqFuncSubFuncSequence = [
+    ...tPowerSystemResourceSequence,
+    "GeneralEquipment",
+    "EqSubFunction",
+];
+const tags = {
+    AccessControl: {
+        parents: ["LDevice"],
+        children: [],
+    },
+    AccessPoint: {
+        parents: ["IED"],
+        children: [
+            ...tNamingSequence,
+            "Server",
+            "LN",
+            "ServerAt",
+            "Services",
+            "GOOSESecurity",
+            "SMVSecurity",
+        ],
+    },
+    Address: {
+        parents: ["ConnectedAP", "GSE", "SMV"],
+        children: ["P"],
+    },
+    Association: {
+        parents: ["Server"],
+        children: [],
+    },
+    Authentication: {
+        parents: ["Server"],
+        children: [],
+    },
+    BDA: {
+        parents: ["DAType"],
+        children: [...tAbstractDataAttributeSequence],
+    },
+    BitRate: {
+        parents: ["SubNetwork"],
+        children: [],
+    },
+    Bay: {
+        parents: ["VoltageLevel"],
+        children: [
+            ...tEquipmentContainerSequence,
+            "ConductingEquipment",
+            "ConnectivityNode",
+            "Function",
+        ],
+    },
+    ClientLN: {
+        parents: ["RptEnabled"],
+        children: [],
+    },
+    ClientServices: {
+        parents: ["Services"],
+        children: ["TimeSyncProt", "McSecurity"],
+    },
+    CommProt: {
+        parents: ["Services"],
+        children: [],
+    },
+    Communication: {
+        parents: ["SCL"],
+        children: [...tUnNamingSequence, "SubNetwork"],
+    },
+    ConductingEquipment: {
+        parents: ["Process", "Line", "SubFunction", "Function", "Bay"],
+        children: [
+            ...tAbstractConductingEquipmentSequence,
+            "EqFunction",
+            "SubEquipment",
+        ],
+    },
+    ConfDataSet: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfLdName: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfLNs: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfLogControl: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfReportControl: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConfSG: {
+        parents: ["SettingGroups"],
+        children: [],
+    },
+    ConfSigRef: {
+        parents: ["Services"],
+        children: [],
+    },
+    ConnectedAP: {
+        parents: ["SubNetwork"],
+        children: [...tUnNamingSequence, "Address", "GSE", "SMV", "PhysConn"],
+    },
+    ConnectivityNode: {
+        parents: ["Bay", "Line"],
+        children: [...tLNodeContainerSequence],
+    },
+    DA: {
+        parents: ["DOType"],
+        children: [...tAbstractDataAttributeSequence],
+    },
+    DAI: {
+        parents: ["DOI", "SDI"],
+        children: [...tUnNamingSequence, "Val"],
+    },
+    DAType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "BDA", "ProtNs"],
+    },
+    DO: {
+        parents: ["LNodeType"],
+        children: [...tUnNamingSequence],
+    },
+    DOI: {
+        parents: [...tAnyLN],
+        children: [...tUnNamingSequence, "SDI", "DAI"],
+    },
+    DOType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "SDO", "DA"],
+    },
+    DataObjectDirectory: {
+        parents: ["Services"],
+        children: [],
+    },
+    DataSet: {
+        parents: [...tAnyLN],
+        children: [...tNamingSequence, "FCDA"],
+    },
+    DataSetDirectory: {
+        parents: ["Services"],
+        children: [],
+    },
+    DataTypeTemplates: {
+        parents: ["SCL"],
+        children: ["LNodeType", "DOType", "DAType", "EnumType"],
+    },
+    DynAssociation: {
+        parents: ["Services"],
+        children: [],
+    },
+    DynDataSet: {
+        parents: ["Services"],
+        children: [],
+    },
+    EnumType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "EnumVal"],
+    },
+    EnumVal: {
+        parents: ["EnumType"],
+        children: [],
+    },
+    EqFunction: {
+        parents: [
+            "GeneralEquipment",
+            "TapChanger",
+            "TransformerWinding",
+            "PowerTransformer",
+            "SubEquipment",
+            "ConductingEquipment",
+        ],
+        children: [...tAbstractEqFuncSubFuncSequence],
+    },
+    EqSubFunction: {
+        parents: ["EqSubFunction", "EqFunction"],
+        children: [...tAbstractEqFuncSubFuncSequence],
+    },
+    ExtRef: {
+        parents: ["Inputs"],
+        children: [],
+    },
+    FCDA: {
+        parents: ["DataSet"],
+        children: [],
+    },
+    FileHandling: {
+        parents: ["Services"],
+        children: [],
+    },
+    Function: {
+        parents: ["Bay", "VoltageLevel", "Substation", "Process", "Line"],
+        children: [
+            ...tPowerSystemResourceSequence,
+            "SubFunction",
+            "GeneralEquipment",
+            "ConductingEquipment",
+        ],
+    },
+    GeneralEquipment: {
+        parents: [
+            "SubFunction",
+            "Function",
+            ...tGeneralEquipmentContainer,
+            ...tAbstractEqFuncSubFunc,
+            ...tEquipmentContainer,
+        ],
+        children: [...tEquipmentSequence, "EqFunction"],
+    },
+    GetCBValues: {
+        parents: ["Services"],
+        children: [],
+    },
+    GetDataObjectDefinition: {
+        parents: ["Services"],
+        children: [],
+    },
+    GetDataSetValue: {
+        parents: ["Services"],
+        children: [],
+    },
+    GetDirectory: {
+        parents: ["Services"],
+        children: [],
+    },
+    GOOSE: {
+        parents: ["Services"],
+        children: [],
+    },
+    GOOSESecurity: {
+        parents: ["AccessPoint"],
+        children: [...tNamingSequence, "Subject", "IssuerName"],
+    },
+    GSE: {
+        parents: ["ConnectedAP"],
+        children: [...tControlBlockSequence, "MinTime", "MaxTime"],
+    },
+    GSEDir: {
+        parents: ["Services"],
+        children: [],
+    },
+    GSEControl: {
+        parents: ["LN0"],
+        children: [...tControlWithIEDNameSequence, "Protocol"],
+    },
+    GSESettings: {
+        parents: ["Services"],
+        children: [],
+    },
+    GSSE: {
+        parents: ["Services"],
+        children: [],
+    },
+    Header: {
+        parents: ["SCL"],
+        children: ["Text", "History"],
+    },
+    History: {
+        parents: ["Header"],
+        children: ["Hitem"],
+    },
+    Hitem: {
+        parents: ["History"],
+        children: [],
+    },
+    IED: {
+        parents: ["SCL"],
+        children: [...tUnNamingSequence, "Services", "AccessPoint", "KDC"],
+    },
+    IEDName: {
+        parents: ["GSEControl", "SampledValueControl"],
+        children: [],
+    },
+    Inputs: {
+        parents: [...tAnyLN],
+        children: [...tUnNamingSequence, "ExtRef"],
+    },
+    IssuerName: {
+        parents: ["GOOSESecurity", "SMVSecurity"],
+        children: [],
+    },
+    KDC: {
+        parents: ["IED"],
+        children: [],
+    },
+    LDevice: {
+        parents: ["Server"],
+        children: [...tUnNamingSequence, "LN0", "LN", "AccessControl"],
+    },
+    LN: {
+        parents: ["AccessPoint", "LDevice"],
+        children: [...tAnyLNSequence],
+    },
+    LN0: {
+        parents: ["LDevice"],
+        children: [
+            ...tAnyLNSequence,
+            "GSEControl",
+            "SampledValueControl",
+            "SettingControl",
+        ],
+    },
+    LNode: {
+        parents: [...tLNodeContainer],
+        children: [...tUnNamingSequence],
+    },
+    LNodeType: {
+        parents: ["DataTypeTemplates"],
+        children: [...tIDNamingSequence, "DO"],
+    },
+    Line: {
+        parents: ["Process", "SCL"],
+        children: [
+            ...tGeneralEquipmentContainerSequence,
+            "Voltage",
+            "ConductingEquipment",
+        ],
+    },
+    Log: {
+        parents: [...tAnyLN],
+        children: [...tUnNamingSequence],
+    },
+    LogControl: {
+        parents: [...tAnyLN],
+        children: [...tControlWithTriggerOptSequence],
+    },
+    LogSettings: {
+        parents: ["Services"],
+        children: [],
+    },
+    MaxTime: {
+        parents: ["GSE"],
+        children: [],
+    },
+    McSecurity: {
+        parents: ["GSESettings", "SMVSettings", "ClientServices"],
+        children: [],
+    },
+    MinTime: {
+        parents: ["GSE"],
+        children: [],
+    },
+    NeutralPoint: {
+        parents: ["TransformerWinding"],
+        children: [...tUnNamingSequence],
+    },
+    OptFields: {
+        parents: ["ReportControl"],
+        children: [],
+    },
+    P: {
+        parents: ["Address", "PhysConn"],
+        children: [],
+    },
+    PhysConn: {
+        parents: ["ConnectedAP"],
+        children: [...tUnNamingSequence, "P"],
+    },
+    PowerTransformer: {
+        parents: [...tEquipmentContainer],
+        children: [
+            ...tEquipmentSequence,
+            "TransformerWinding",
+            "SubEquipment",
+            "EqFunction",
+        ],
+    },
+    Private: {
+        parents: [],
+        children: [],
+    },
+    Process: {
+        parents: ["Process", "SCL"],
+        children: [
+            ...tGeneralEquipmentContainerSequence,
+            "ConductingEquipment",
+            "Substation",
+            "Line",
+            "Process",
+        ],
+    },
+    ProtNs: {
+        parents: ["DAType", "DA"],
+        children: [],
+    },
+    Protocol: {
+        parents: ["GSEControl", "SampledValueControl"],
+        children: [],
+    },
+    ReadWrite: {
+        parents: ["Services"],
+        children: [],
+    },
+    RedProt: {
+        parents: ["Services"],
+        children: [],
+    },
+    ReportControl: {
+        parents: [...tAnyLN],
+        children: [...tControlWithTriggerOptSequence, "OptFields", "RptEnabled"],
+    },
+    ReportSettings: {
+        parents: ["Services"],
+        children: [],
+    },
+    RptEnabled: {
+        parents: ["ReportControl"],
+        children: [...tUnNamingSequence, "ClientLN"],
+    },
+    SamplesPerSec: {
+        parents: ["SMVSettings"],
+        children: [],
+    },
+    SampledValueControl: {
+        parents: ["LN0"],
+        children: [...tControlWithIEDNameSequence, "SmvOpts"],
+    },
+    SecPerSamples: {
+        parents: ["SMVSettings"],
+        children: [],
+    },
+    SCL: {
+        parents: [],
+        children: [
+            ...tBaseNameSequence,
+            "Header",
+            "Substation",
+            "Communication",
+            "IED",
+            "DataTypeTemplates",
+            "Line",
+            "Process",
+        ],
+    },
+    SDI: {
+        parents: ["DOI", "SDI"],
+        children: [...tUnNamingSequence, "SDI", "DAI"],
+    },
+    SDO: {
+        parents: ["DOType"],
+        children: [...tNamingSequence],
+    },
+    Server: {
+        parents: ["AccessPoint"],
+        children: [
+            ...tUnNamingSequence,
+            "Authentication",
+            "LDevice",
+            "Association",
+        ],
+    },
+    ServerAt: {
+        parents: ["AccessPoint"],
+        children: [...tUnNamingSequence],
+    },
+    Services: {
+        parents: ["IED", "AccessPoint"],
+        children: [
+            "DynAssociation",
+            "SettingGroups",
+            "GetDirectory",
+            "GetDataObjectDefinition",
+            "DataObjectDirectory",
+            "GetDataSetValue",
+            "SetDataSetValue",
+            "DataSetDirectory",
+            "ConfDataSet",
+            "DynDataSet",
+            "ReadWrite",
+            "TimerActivatedControl",
+            "ConfReportControl",
+            "GetCBValues",
+            "ConfLogControl",
+            "ReportSettings",
+            "LogSettings",
+            "GSESettings",
+            "SMVSettings",
+            "GSEDir",
+            "GOOSE",
+            "GSSE",
+            "SMVsc",
+            "FileHandling",
+            "ConfLNs",
+            "ClientServices",
+            "ConfLdName",
+            "SupSubscription",
+            "ConfSigRef",
+            "ValueHandling",
+            "RedProt",
+            "TimeSyncProt",
+            "CommProt",
+        ],
+    },
+    SetDataSetValue: {
+        parents: ["Services"],
+        children: [],
+    },
+    SettingControl: {
+        parents: ["LN0"],
+        children: [...tUnNamingSequence],
+    },
+    SettingGroups: {
+        parents: ["Services"],
+        children: ["SGEdit", "ConfSG"],
+    },
+    SGEdit: {
+        parents: ["SettingGroups"],
+        children: [],
+    },
+    SmpRate: {
+        parents: ["SMVSettings"],
+        children: [],
+    },
+    SMV: {
+        parents: ["ConnectedAP"],
+        children: [...tControlBlockSequence],
+    },
+    SmvOpts: {
+        parents: ["SampledValueControl"],
+        children: [],
+    },
+    SMVsc: {
+        parents: ["Services"],
+        children: [],
+    },
+    SMVSecurity: {
+        parents: ["AccessPoint"],
+        children: [...tNamingSequence, "Subject", "IssuerName"],
+    },
+    SMVSettings: {
+        parents: ["Services"],
+        children: ["SmpRate", "SamplesPerSec", "SecPerSamples", "McSecurity"],
+    },
+    SubEquipment: {
+        parents: [
+            "TapChanger",
+            "PowerTransformer",
+            "ConductingEquipment",
+            "TransformerWinding",
+            ...tAbstractConductingEquipment,
+        ],
+        children: [...tPowerSystemResourceSequence, "EqFunction"],
+    },
+    SubFunction: {
+        parents: ["SubFunction", "Function"],
+        children: [
+            ...tPowerSystemResourceSequence,
+            "GeneralEquipment",
+            "ConductingEquipment",
+            "SubFunction",
+        ],
+    },
+    SubNetwork: {
+        parents: ["Communication"],
+        children: [...tNamingSequence, "BitRate", "ConnectedAP"],
+    },
+    Subject: {
+        parents: ["GOOSESecurity", "SMVSecurity"],
+        children: [],
+    },
+    Substation: {
+        parents: ["SCL"],
+        children: [...tEquipmentContainerSequence, "VoltageLevel", "Function"],
+    },
+    SupSubscription: {
+        parents: ["Services"],
+        children: [],
+    },
+    TapChanger: {
+        parents: ["TransformerWinding"],
+        children: [...tPowerSystemResourceSequence, "SubEquipment", "EqFunction"],
+    },
+    Terminal: {
+        parents: [...tEquipment],
+        children: [...tUnNamingSequence],
+    },
+    Text: {
+        parents: sCLTags.filter((tag) => tag !== "Text" && tag !== "Private"),
+        children: [],
+    },
+    TimerActivatedControl: {
+        parents: ["Services"],
+        children: [],
+    },
+    TimeSyncProt: {
+        parents: ["Services", "ClientServices"],
+        children: [],
+    },
+    TransformerWinding: {
+        parents: ["PowerTransformer"],
+        children: [
+            ...tAbstractConductingEquipmentSequence,
+            "TapChanger",
+            "NeutralPoint",
+            "EqFunction",
+            "SubEquipment",
+        ],
+    },
+    TrgOps: {
+        parents: ["ReportControl"],
+        children: [],
+    },
+    Val: {
+        parents: ["DAI", "DA", "BDA"],
+        children: [],
+    },
+    ValueHandling: {
+        parents: ["Services"],
+        children: [],
+    },
+    Voltage: {
+        parents: ["VoltageLevel"],
+        children: [],
+    },
+    VoltageLevel: {
+        parents: ["Substation"],
+        children: [...tEquipmentContainerSequence, "Voltage", "Bay", "Function"],
+    },
+};
+const tagSet = new Set(sCLTags);
+function isSCLTag(tag) {
+    return tagSet.has(tag);
+}
+
+/**
+ * Helper function for to determine schema valid `reference` for OpenSCD
+ * core Insert event.
+ * !! only valid with Edition 2.1 projects (2007B4)
+ * @param parent - The parent element the new child shall be added to
+ * @param tag - The `tagName` of the new child
+ * @returns Reference for new [[`tag`]] child within [[`parent`]]  or `null`
+ */
+function getReference(parent, tag) {
+    if (!isSCLTag(tag))
+        return null;
+    const parentTag = parent.tagName;
+    const children = Array.from(parent.children);
+    if (parentTag === "Services" ||
+        parentTag === "SettingGroups" ||
+        !isSCLTag(parentTag))
+        return children.find((child) => child.tagName === tag) ?? null;
+    const sequence = tags[parentTag].children;
+    let index = sequence.findIndex((element) => element === tag);
+    if (index < 0)
+        return null;
+    let nextSibling;
+    while (index < sequence.length && !nextSibling) {
+        // eslint-disable-next-line no-loop-func
+        nextSibling = children.find((child) => child.tagName === sequence[index]);
+        index += 1;
+    }
+    return nextSibling ?? null;
+}
+
+const maxGseMacAddress = 0x010ccd0101ff;
+const minGseMacAddress = 0x010ccd010000;
+const maxSmvMacAddress = 0x010ccd0401ff;
+const minSmvMacAddress = 0x010ccd040000;
+function convertToMac(mac) {
+    const str = 0 + mac.toString(16).toUpperCase();
+    const arr = str.match(/.{1,2}/g);
+    return arr.join("-");
+}
+Array(maxGseMacAddress - minGseMacAddress)
+    .fill(1)
+    .map((_, i) => convertToMac(minGseMacAddress + i));
+Array(maxSmvMacAddress - minSmvMacAddress)
+    .fill(1)
+    .map((_, i) => convertToMac(minSmvMacAddress + i));
+
+const maxGseAppId = 0x3fff;
+const minGseAppId = 0x0000;
+// APPID range for Type1A(Trip) GOOSE acc. IEC 61850-8-1
+const maxGseTripAppId = 0xbfff;
+const minGseTripAppId = 0x8000;
+const maxSmvAppId = 0x7fff;
+const minSmvAppId = 0x4000;
+Array(maxGseAppId - minGseAppId)
+    .fill(1)
+    .map((_, i) => (minGseAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+Array(maxGseTripAppId - minGseTripAppId)
+    .fill(1)
+    .map((_, i) => (minGseTripAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+Array(maxSmvAppId - minSmvAppId)
+    .fill(1)
+    .map((_, i) => (minSmvAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+
+/** maximum value for `lnInst` attribute */
+const maxLnInst = 99;
+Array(maxLnInst)
+    .fill(1)
+    .map((_, i) => `${i + 1}`);
+
+await fetch(new URL(new URL('assets/nsd-0a370a57.json', import.meta.url).href, import.meta.url)).then((res) => res.json());
+
+/**
+ * @license
  * Copyright 2021 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -2131,71 +2376,6 @@ descriptor) {
     }
     else {
         throw new Error('@ariaProperty only supports TypeScript Decorators');
-    }
-}
-
-/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/**
- * Class that encapsulates the events handlers for `mwc-ripple`
- *
- *
- * Example:
- * ```
- * class XFoo extends LitElement {
- *   async getRipple() {
- *     this.renderRipple = true;
- *     await this.updateComplete;
- *     return this.renderRoot.querySelector('mwc-ripple');
- *   }
- *   rippleHandlers = new RippleHandlers(() => this.getRipple());
- *
- *   render() {
- *     return html`
- *       <div @mousedown=${this.rippleHandlers.startPress}></div>
- *       ${this.renderRipple ? html`<mwc-ripple></mwc-ripple>` : ''}
- *     `;
- *   }
- * }
- * ```
- */
-class RippleHandlers {
-    constructor(
-    /** Function that returns a `mwc-ripple` */
-    rippleFn) {
-        this.startPress = (ev) => {
-            rippleFn().then((r) => {
-                r && r.startPress(ev);
-            });
-        };
-        this.endPress = () => {
-            rippleFn().then((r) => {
-                r && r.endPress();
-            });
-        };
-        this.startFocus = () => {
-            rippleFn().then((r) => {
-                r && r.startFocus();
-            });
-        };
-        this.endFocus = () => {
-            rippleFn().then((r) => {
-                r && r.endFocus();
-            });
-        };
-        this.startHover = () => {
-            rippleFn().then((r) => {
-                r && r.startHover();
-            });
-        };
-        this.endHover = () => {
-            rippleFn().then((r) => {
-                r && r.endHover();
-            });
-        };
     }
 }
 
@@ -2329,7 +2509,7 @@ __decorate([
  * Copyright 2021 Google LLC
  * SPDX-LIcense-Identifier: Apache-2.0
  */
-const styles$2 = i$5 `.material-icons{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}.mdc-icon-button{font-size:24px;width:48px;height:48px;padding:12px}.mdc-icon-button .mdc-icon-button__focus-ring{display:none}.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{display:block;max-height:48px;max-width:48px}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:100%;width:100%}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{border-color:CanvasText}}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{border-color:CanvasText}}.mdc-icon-button.mdc-icon-button--reduced-size .mdc-icon-button__ripple{width:40px;height:40px;margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}.mdc-icon-button.mdc-icon-button--reduced-size.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button.mdc-icon-button--reduced-size:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{max-height:40px;max-width:40px}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-disabled-on-light, rgba(0, 0, 0, 0.38))}.mdc-icon-button svg,.mdc-icon-button img{width:24px;height:24px}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}:host{display:inline-block;outline:none}:host([disabled]){pointer-events:none}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block}:host{--mdc-ripple-color: currentcolor;-webkit-tap-highlight-color:transparent}:host,.mdc-icon-button{vertical-align:top}.mdc-icon-button{width:var(--mdc-icon-button-size, 48px);height:var(--mdc-icon-button-size, 48px);padding:calc( (var(--mdc-icon-button-size, 48px) - var(--mdc-icon-size, 24px)) / 2 )}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block;width:var(--mdc-icon-size, 24px);height:var(--mdc-icon-size, 24px)}`;
+const styles$1 = i$5 `.material-icons{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}.mdc-icon-button{font-size:24px;width:48px;height:48px;padding:12px}.mdc-icon-button .mdc-icon-button__focus-ring{display:none}.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{display:block;max-height:48px;max-width:48px}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:100%;width:100%}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{border-color:CanvasText}}@media screen and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}}@media screen and (forced-colors: active)and (forced-colors: active){.mdc-icon-button.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring::after,.mdc-icon-button:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring::after{border-color:CanvasText}}.mdc-icon-button.mdc-icon-button--reduced-size .mdc-icon-button__ripple{width:40px;height:40px;margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}.mdc-icon-button.mdc-icon-button--reduced-size.mdc-ripple-upgraded--background-focused .mdc-icon-button__focus-ring,.mdc-icon-button.mdc-icon-button--reduced-size:not(.mdc-ripple-upgraded):focus .mdc-icon-button__focus-ring{max-height:40px;max-width:40px}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{color:rgba(0, 0, 0, 0.38);color:var(--mdc-theme-text-disabled-on-light, rgba(0, 0, 0, 0.38))}.mdc-icon-button svg,.mdc-icon-button img{width:24px;height:24px}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}.mdc-icon-button{display:inline-block;position:relative;box-sizing:border-box;border:none;outline:none;background-color:transparent;fill:currentColor;color:inherit;text-decoration:none;cursor:pointer;user-select:none;z-index:0;overflow:visible}.mdc-icon-button .mdc-icon-button__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}.mdc-icon-button:disabled{cursor:default;pointer-events:none}.mdc-icon-button--display-flex{align-items:center;display:inline-flex;justify-content:center}.mdc-icon-button__icon{display:inline-block}.mdc-icon-button__icon.mdc-icon-button__icon--on{display:none}.mdc-icon-button--on .mdc-icon-button__icon{display:none}.mdc-icon-button--on .mdc-icon-button__icon.mdc-icon-button__icon--on{display:inline-block}.mdc-icon-button__link{height:100%;left:0;outline:none;position:absolute;top:0;width:100%}:host{display:inline-block;outline:none}:host([disabled]){pointer-events:none}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block}:host{--mdc-ripple-color: currentcolor;-webkit-tap-highlight-color:transparent}:host,.mdc-icon-button{vertical-align:top}.mdc-icon-button{width:var(--mdc-icon-button-size, 48px);height:var(--mdc-icon-button-size, 48px);padding:calc( (var(--mdc-icon-button-size, 48px) - var(--mdc-icon-size, 24px)) / 2 )}.mdc-icon-button i,.mdc-icon-button svg,.mdc-icon-button img,.mdc-icon-button ::slotted(*){display:block;width:var(--mdc-icon-size, 24px);height:var(--mdc-icon-size, 24px)}`;
 
 /**
  * @license
@@ -2339,7 +2519,7 @@ const styles$2 = i$5 `.material-icons{font-family:var(--mdc-icon-font, "Material
 /** @soyCompatible */
 let IconButton = class IconButton extends IconButtonBase {
 };
-IconButton.styles = [styles$2];
+IconButton.styles = [styles$1];
 IconButton = __decorate([
     e$4('mwc-icon-button')
 ], IconButton);
@@ -2349,7 +2529,7 @@ IconButton = __decorate([
  * Copyright 2021 Google LLC
  * SPDX-LIcense-Identifier: Apache-2.0
  */
-const styles$1 = i$5 `:host{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}`;
+const styles = i$5 `:host{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}`;
 
 /**
  * @license
@@ -2363,7 +2543,7 @@ let Icon = class Icon extends s {
         return x `<span><slot></slot></span>`;
     }
 };
-Icon.styles = [styles$1];
+Icon.styles = [styles];
 Icon = __decorate([
     e$4('mwc-icon')
 ], Icon);
@@ -2559,186 +2739,6 @@ __decorate([
 ], OscdActionPane.prototype, "level", void 0);
 
 window.customElements.define('oscd-action-pane', OscdActionPane);
-
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/**
- * Fab Base class logic and template definition
- * @soyCompatible
- */
-class FabBase extends s {
-    constructor() {
-        super(...arguments);
-        this.mini = false;
-        this.exited = false;
-        this.disabled = false;
-        this.extended = false;
-        this.showIconAtEnd = false;
-        this.reducedTouchTarget = false;
-        this.icon = '';
-        this.label = '';
-        this.shouldRenderRipple = false;
-        this.useStateLayerCustomProperties = false;
-        this.rippleHandlers = new RippleHandlers(() => {
-            this.shouldRenderRipple = true;
-            return this.ripple;
-        });
-    }
-    /**
-     * @soyTemplate
-     * @soyClasses fabClasses: .mdc-fab
-     */
-    render() {
-        const hasTouchTarget = this.mini && !this.reducedTouchTarget;
-        /** @classMap */
-        const classes = {
-            'mdc-fab--mini': this.mini,
-            'mdc-fab--touch': hasTouchTarget,
-            'mdc-fab--exited': this.exited,
-            'mdc-fab--extended': this.extended,
-            'icon-end': this.showIconAtEnd,
-        };
-        const ariaLabel = this.label ? this.label : this.icon;
-        /*
-         * Some internal styling is sensitive to whitespace in this template, take
-         * care when modifying it.
-         */
-        return x `<button
-          class="mdc-fab ${o$1(classes)}"
-          ?disabled="${this.disabled}"
-          aria-label="${ariaLabel}"
-          @mouseenter=${this.handleRippleMouseEnter}
-          @mouseleave=${this.handleRippleMouseLeave}
-          @focus=${this.handleRippleFocus}
-          @blur=${this.handleRippleBlur}
-          @mousedown=${this.handleRippleActivate}
-          @touchstart=${this.handleRippleStartPress}
-          @touchend=${this.handleRippleDeactivate}
-          @touchcancel=${this.handleRippleDeactivate}><!--
-        -->${this.renderBeforeRipple()}<!--
-        -->${this.renderRipple()}<!--
-        -->${this.showIconAtEnd ? this.renderLabel() : ''}<!--
-        --><span class="material-icons mdc-fab__icon"><!--
-          --><slot name="icon">${this.icon}</slot><!--
-       --></span><!--
-        -->${!this.showIconAtEnd ? this.renderLabel() : ''}<!--
-        -->${this.renderTouchTarget()}<!--
-      --></button>`;
-    }
-    /** @soyTemplate */
-    renderIcon() {
-        // TODO(b/191914389): reimplement once Wit issue is resolved
-        return x ``;
-    }
-    /** @soyTemplate */
-    renderTouchTarget() {
-        const hasTouchTarget = this.mini && !this.reducedTouchTarget;
-        return x `${hasTouchTarget ? x `<div class="mdc-fab__touch"></div>` : ''}`;
-    }
-    /** @soyTemplate */
-    renderLabel() {
-        const showLabel = this.label !== '' && this.extended;
-        return x `${showLabel ? x `<span class="mdc-fab__label">${this.label}</span>` :
-            ''}`;
-    }
-    /** @soyTemplate */
-    renderBeforeRipple() {
-        return x ``;
-    }
-    /** @soyTemplate */
-    renderRipple() {
-        return this.shouldRenderRipple ? x `<mwc-ripple class="ripple"
-        .internalUseStateLayerCustomProperties="${this.useStateLayerCustomProperties}"
-         ></mwc-ripple>` :
-            '';
-    }
-    handleRippleActivate(event) {
-        const onUp = () => {
-            window.removeEventListener('mouseup', onUp);
-            this.handleRippleDeactivate();
-        };
-        window.addEventListener('mouseup', onUp);
-        this.handleRippleStartPress(event);
-    }
-    handleRippleStartPress(event) {
-        this.rippleHandlers.startPress(event);
-    }
-    handleRippleDeactivate() {
-        this.rippleHandlers.endPress();
-    }
-    handleRippleMouseEnter() {
-        this.rippleHandlers.startHover();
-    }
-    handleRippleMouseLeave() {
-        this.rippleHandlers.endHover();
-    }
-    handleRippleFocus() {
-        this.rippleHandlers.startFocus();
-    }
-    handleRippleBlur() {
-        this.rippleHandlers.endFocus();
-    }
-}
-FabBase.shadowRootOptions = { mode: 'open', delegatesFocus: true };
-__decorate([
-    e$1('mwc-ripple')
-], FabBase.prototype, "ripple", void 0);
-__decorate([
-    n$2({ type: Boolean })
-], FabBase.prototype, "mini", void 0);
-__decorate([
-    n$2({ type: Boolean })
-], FabBase.prototype, "exited", void 0);
-__decorate([
-    n$2({ type: Boolean })
-], FabBase.prototype, "disabled", void 0);
-__decorate([
-    n$2({ type: Boolean })
-], FabBase.prototype, "extended", void 0);
-__decorate([
-    n$2({ type: Boolean })
-], FabBase.prototype, "showIconAtEnd", void 0);
-__decorate([
-    n$2({ type: Boolean })
-], FabBase.prototype, "reducedTouchTarget", void 0);
-__decorate([
-    n$2()
-], FabBase.prototype, "icon", void 0);
-__decorate([
-    n$2()
-], FabBase.prototype, "label", void 0);
-__decorate([
-    t$1()
-], FabBase.prototype, "shouldRenderRipple", void 0);
-__decorate([
-    t$1()
-], FabBase.prototype, "useStateLayerCustomProperties", void 0);
-__decorate([
-    e$2({ passive: true })
-], FabBase.prototype, "handleRippleStartPress", null);
-
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-LIcense-Identifier: Apache-2.0
- */
-const styles = i$5 `:host .mdc-fab .material-icons{font-family:var(--mdc-icon-font, "Material Icons");font-weight:normal;font-style:normal;font-size:var(--mdc-icon-size, 24px);line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;-moz-osx-font-smoothing:grayscale;font-feature-settings:"liga"}:host{outline:none;--mdc-ripple-color: currentcolor;user-select:none;-webkit-tap-highlight-color:transparent;display:inline-flex;-webkit-tap-highlight-color:transparent;display:inline-flex;outline:none;user-select:none}:host .mdc-touch-target-wrapper{display:inline}:host .mdc-elevation-overlay{position:absolute;border-radius:inherit;pointer-events:none;opacity:0;opacity:var(--mdc-elevation-overlay-opacity, 0);transition:opacity 280ms cubic-bezier(0.4, 0, 0.2, 1);background-color:#fff;background-color:var(--mdc-elevation-overlay-color, #fff)}:host .mdc-fab{position:relative;display:inline-flex;position:relative;align-items:center;justify-content:center;box-sizing:border-box;width:56px;height:56px;padding:0;border:none;fill:currentColor;text-decoration:none;cursor:pointer;user-select:none;-moz-appearance:none;-webkit-appearance:none;overflow:visible;transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1),opacity 15ms linear 30ms,transform 270ms 0ms cubic-bezier(0, 0, 0.2, 1)}:host .mdc-fab .mdc-elevation-overlay{width:100%;height:100%;top:0;left:0}:host .mdc-fab::-moz-focus-inner{padding:0;border:0}:host .mdc-fab:hover{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab.mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(.mdc-ripple-upgraded):focus{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab .mdc-fab__focus-ring{position:absolute}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc( 100% + 4px );width:calc( 100% + 4px )}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{border-color:CanvasText}}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{border-color:CanvasText}}:host .mdc-fab:active,:host .mdc-fab:focus:active{box-shadow:0px 7px 8px -4px rgba(0, 0, 0, 0.2),0px 12px 17px 2px rgba(0, 0, 0, 0.14),0px 5px 22px 4px rgba(0,0,0,.12)}:host .mdc-fab:active,:host .mdc-fab:focus{outline:none}:host .mdc-fab:hover{cursor:pointer}:host .mdc-fab>svg{width:100%}:host .mdc-fab--mini{width:40px;height:40px}:host .mdc-fab--extended{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-button-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.875rem;font-size:var(--mdc-typography-button-font-size, 0.875rem);line-height:2.25rem;line-height:var(--mdc-typography-button-line-height, 2.25rem);font-weight:500;font-weight:var(--mdc-typography-button-font-weight, 500);letter-spacing:0.0892857143em;letter-spacing:var(--mdc-typography-button-letter-spacing, 0.0892857143em);text-decoration:none;text-decoration:var(--mdc-typography-button-text-decoration, none);text-transform:uppercase;text-transform:var(--mdc-typography-button-text-transform, uppercase);border-radius:24px;padding-left:20px;padding-right:20px;width:auto;max-width:100%;height:48px;line-height:normal}:host .mdc-fab--extended .mdc-fab__ripple{border-radius:24px}:host .mdc-fab--extended .mdc-fab__icon{margin-left:calc(12px - 20px);margin-right:12px}[dir=rtl] :host .mdc-fab--extended .mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__icon[dir=rtl]{margin-left:12px;margin-right:calc(12px - 20px)}:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon{margin-left:12px;margin-right:calc(12px - 20px)}[dir=rtl] :host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon[dir=rtl]{margin-left:calc(12px - 20px);margin-right:12px}:host .mdc-fab--touch{margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}:host .mdc-fab--touch .mdc-fab__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}:host .mdc-fab::before{position:absolute;box-sizing:border-box;width:100%;height:100%;top:0;left:0;border:1px solid transparent;border-radius:inherit;content:"";pointer-events:none}@media screen and (forced-colors: active){:host .mdc-fab::before{border-color:CanvasText}}:host .mdc-fab__label{justify-content:flex-start;text-overflow:ellipsis;white-space:nowrap;overflow-x:hidden;overflow-y:visible}:host .mdc-fab__icon{transition:transform 180ms 90ms cubic-bezier(0, 0, 0.2, 1);fill:currentColor;will-change:transform}:host .mdc-fab .mdc-fab__icon{display:inline-flex;align-items:center;justify-content:center}:host .mdc-fab--exited{transform:scale(0);opacity:0;transition:opacity 15ms linear 150ms,transform 180ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab--exited .mdc-fab__icon{transform:scale(0);transition:transform 135ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab{background-color:#018786;background-color:var(--mdc-theme-secondary, #018786);box-shadow:0px 3px 5px -1px rgba(0, 0, 0, 0.2),0px 6px 10px 0px rgba(0, 0, 0, 0.14),0px 1px 18px 0px rgba(0,0,0,.12)}:host .mdc-fab .mdc-fab__icon{width:24px;height:24px;font-size:24px}:host .mdc-fab,:host .mdc-fab:not(:disabled) .mdc-fab__icon,:host .mdc-fab:not(:disabled) .mdc-fab__label,:host .mdc-fab:disabled .mdc-fab__icon,:host .mdc-fab:disabled .mdc-fab__label{color:#fff;color:var(--mdc-theme-on-secondary, #fff)}:host .mdc-fab:not(.mdc-fab--extended){border-radius:50%}:host .mdc-fab:not(.mdc-fab--extended) .mdc-fab__ripple{border-radius:50%}:host .mdc-fab{position:relative;display:inline-flex;position:relative;align-items:center;justify-content:center;box-sizing:border-box;width:56px;height:56px;padding:0;border:none;fill:currentColor;text-decoration:none;cursor:pointer;user-select:none;-moz-appearance:none;-webkit-appearance:none;overflow:visible;transition:box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1),opacity 15ms linear 30ms,transform 270ms 0ms cubic-bezier(0, 0, 0.2, 1)}:host .mdc-fab .mdc-elevation-overlay{width:100%;height:100%;top:0;left:0}:host .mdc-fab::-moz-focus-inner{padding:0;border:0}:host .mdc-fab:hover{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab.mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(.mdc-ripple-upgraded):focus{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2),0px 8px 10px 1px rgba(0, 0, 0, 0.14),0px 3px 14px 2px rgba(0,0,0,.12)}:host .mdc-fab .mdc-fab__focus-ring{position:absolute}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{pointer-events:none;border:2px solid transparent;border-radius:6px;box-sizing:content-box;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc( 100% + 4px );width:calc( 100% + 4px )}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring{border-color:CanvasText}}:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{content:"";border:2px solid transparent;border-radius:8px;display:block;position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);height:calc(100% + 4px);width:calc(100% + 4px)}@media screen and (forced-colors: active){:host .mdc-fab.mdc-ripple-upgraded--background-focused .mdc-fab__focus-ring::after,:host .mdc-fab:not(.mdc-ripple-upgraded):focus .mdc-fab__focus-ring::after{border-color:CanvasText}}:host .mdc-fab:active,:host .mdc-fab:focus:active{box-shadow:0px 7px 8px -4px rgba(0, 0, 0, 0.2),0px 12px 17px 2px rgba(0, 0, 0, 0.14),0px 5px 22px 4px rgba(0,0,0,.12)}:host .mdc-fab:active,:host .mdc-fab:focus{outline:none}:host .mdc-fab:hover{cursor:pointer}:host .mdc-fab>svg{width:100%}:host .mdc-fab--mini{width:40px;height:40px}:host .mdc-fab--extended{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;font-family:Roboto, sans-serif;font-family:var(--mdc-typography-button-font-family, var(--mdc-typography-font-family, Roboto, sans-serif));font-size:0.875rem;font-size:var(--mdc-typography-button-font-size, 0.875rem);line-height:2.25rem;line-height:var(--mdc-typography-button-line-height, 2.25rem);font-weight:500;font-weight:var(--mdc-typography-button-font-weight, 500);letter-spacing:0.0892857143em;letter-spacing:var(--mdc-typography-button-letter-spacing, 0.0892857143em);text-decoration:none;text-decoration:var(--mdc-typography-button-text-decoration, none);text-transform:uppercase;text-transform:var(--mdc-typography-button-text-transform, uppercase);border-radius:24px;padding-left:20px;padding-right:20px;width:auto;max-width:100%;height:48px;line-height:normal}:host .mdc-fab--extended .mdc-fab__ripple{border-radius:24px}:host .mdc-fab--extended .mdc-fab__icon{margin-left:calc(12px - 20px);margin-right:12px}[dir=rtl] :host .mdc-fab--extended .mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__icon[dir=rtl]{margin-left:12px;margin-right:calc(12px - 20px)}:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon{margin-left:12px;margin-right:calc(12px - 20px)}[dir=rtl] :host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon,:host .mdc-fab--extended .mdc-fab__label+.mdc-fab__icon[dir=rtl]{margin-left:calc(12px - 20px);margin-right:12px}:host .mdc-fab--touch{margin-top:4px;margin-bottom:4px;margin-right:4px;margin-left:4px}:host .mdc-fab--touch .mdc-fab__touch{position:absolute;top:50%;height:48px;left:50%;width:48px;transform:translate(-50%, -50%)}:host .mdc-fab::before{position:absolute;box-sizing:border-box;width:100%;height:100%;top:0;left:0;border:1px solid transparent;border-radius:inherit;content:"";pointer-events:none}@media screen and (forced-colors: active){:host .mdc-fab::before{border-color:CanvasText}}:host .mdc-fab__label{justify-content:flex-start;text-overflow:ellipsis;white-space:nowrap;overflow-x:hidden;overflow-y:visible}:host .mdc-fab__icon{transition:transform 180ms 90ms cubic-bezier(0, 0, 0.2, 1);fill:currentColor;will-change:transform}:host .mdc-fab .mdc-fab__icon{display:inline-flex;align-items:center;justify-content:center}:host .mdc-fab--exited{transform:scale(0);opacity:0;transition:opacity 15ms linear 150ms,transform 180ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab--exited .mdc-fab__icon{transform:scale(0);transition:transform 135ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab .ripple{overflow:hidden}:host .mdc-fab:not(.mdc-fab--extended) .ripple{border-radius:50%}:host .mdc-fab.mdc-fab--extended .ripple{border-radius:24px}:host .mdc-fab .mdc-fab__label{z-index:0}:host .mdc-fab .mdc-fab__icon ::slotted(*){width:inherit;height:inherit;font-size:inherit}:host .mdc-fab--extended.mdc-fab--exited .mdc-fab__icon ::slotted(*){transform:scale(0);transition:transform 135ms 0ms cubic-bezier(0.4, 0, 1, 1)}:host .mdc-fab{padding-top:0px;padding-top:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-right:0px;padding-right:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-bottom:0px;padding-bottom:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-left:0px;padding-left:max(0px, var(--mdc-fab-focus-outline-width, 0px));box-shadow:0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 0px 1px 18px 0px rgba(0, 0, 0, 0.12);box-shadow:var(--mdc-fab-box-shadow, 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 0px 1px 18px 0px rgba(0, 0, 0, 0.12))}:host .mdc-fab:not(:disabled).mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(:disabled):not(.mdc-ripple-upgraded):focus{border-color:initial;border-color:var(--mdc-fab-focus-outline-color, initial)}:host .mdc-fab:not(:disabled).mdc-ripple-upgraded--background-focused,:host .mdc-fab:not(:disabled):not(.mdc-ripple-upgraded):focus{border-style:solid;border-width:var(--mdc-fab-focus-outline-width, 0px);padding-top:0px;padding-top:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-right:0px;padding-right:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-bottom:0px;padding-bottom:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-left:0px;padding-left:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1))}:host .mdc-fab:hover,:host .mdc-fab:focus{box-shadow:0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12);box-shadow:var(--mdc-fab-box-shadow, 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12))}:host .mdc-fab:active{box-shadow:0px 7px 8px -4px rgba(0, 0, 0, 0.2), 0px 12px 17px 2px rgba(0, 0, 0, 0.14), 0px 5px 22px 4px rgba(0, 0, 0, 0.12);box-shadow:var(--mdc-fab-box-shadow, 0px 7px 8px -4px rgba(0, 0, 0, 0.2), 0px 12px 17px 2px rgba(0, 0, 0, 0.14), 0px 5px 22px 4px rgba(0, 0, 0, 0.12))}:host .mdc-fab .ripple{overflow:hidden}:host .mdc-fab .mdc-fab__label{z-index:0}:host .mdc-fab:not(.mdc-fab--extended) .ripple{border-radius:50%}:host .mdc-fab.mdc-fab--extended .ripple{border-radius:24px}:host .mdc-fab .mdc-fab__icon{width:24px;width:var(--mdc-icon-size, 24px);height:24px;height:var(--mdc-icon-size, 24px);font-size:24px;font-size:var(--mdc-icon-size, 24px);transition:transform 180ms 90ms cubic-bezier(0, 0, 0.2, 1);fill:currentColor;will-change:transform;display:inline-flex;align-items:center;justify-content:center}:host .mdc-fab.mdc-fab--extended{padding-top:0px;padding-top:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-right:20px;padding-right:max(var(--mdc-fab-extended-label-padding, 20px), var(--mdc-fab-focus-outline-width, 0px));padding-bottom:0px;padding-bottom:max(0px, var(--mdc-fab-focus-outline-width, 0px));padding-left:20px;padding-left:max(var(--mdc-fab-extended-label-padding, 20px), var(--mdc-fab-focus-outline-width, 0px))}:host .mdc-fab.mdc-fab--extended:not(:disabled).mdc-ripple-upgraded--background-focused,:host .mdc-fab.mdc-fab--extended:not(:disabled):not(.mdc-ripple-upgraded):focus{border-style:solid;border-width:var(--mdc-fab-focus-outline-width, 0px);padding-top:0px;padding-top:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-right:20px;padding-right:max(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-bottom:0px;padding-bottom:max(calc(0px - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(0px - var(--mdc-fab-focus-outline-width, 0px)) * -1));padding-left:20px;padding-left:max(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)), calc(calc(var(--mdc-fab-extended-label-padding, 20px) - var(--mdc-fab-focus-outline-width, 0px)) * -1))}:host .mdc-fab.mdc-fab--extended.icon-end .mdc-fab__icon{margin-left:12px;margin-left:var(--mdc-fab-extended-icon-padding, 12px);margin-right:calc(12px - 20px);margin-right:calc(var(--mdc-fab-extended-icon-padding, 12px) - var(--mdc-fab-extended-label-padding, 20px))}[dir=rtl] :host .mdc-fab.mdc-fab--extended.icon-end .mdc-fab__icon,:host .mdc-fab.mdc-fab--extended.icon-end .mdc-fab__icon[dir=rtl]{margin-left:calc(12px - 20px);margin-left:calc(var(--mdc-fab-extended-icon-padding, 12px) - var(--mdc-fab-extended-label-padding, 20px));margin-right:12px;margin-right:var(--mdc-fab-extended-icon-padding, 12px)}`;
-
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/** @soyCompatible */
-let Fab = class Fab extends FabBase {
-};
-Fab.styles = [styles];
-Fab = __decorate([
-    e$4('mwc-fab')
-], Fab);
 
 /**
  * @slot action - May contain up to eight icon buttons.
@@ -2984,25 +2984,14 @@ __decorate([
 
 window.customElements.define('oscd-action-icon', OscdActionIcon);
 
-/** Sorts selected `ListItem`s to the top and disabled ones to the bottom. */
 function compareNames(a, b) {
-    var _a, _b, _c;
-    if (typeof a === 'string' && typeof b === 'string')
-        return a.localeCompare(b);
-    if (typeof a === 'object' && typeof b === 'string')
-        return ((_a = a.getAttribute('name')) !== null && _a !== void 0 ? _a : '').localeCompare(b);
-    if (typeof a === 'string' && typeof b === 'object')
-        return a.localeCompare(b.getAttribute('name'));
-    if (typeof a === 'object' && typeof b === 'object')
-        return ((_b = a.getAttribute('name')) !== null && _b !== void 0 ? _b : '').localeCompare((_c = b.getAttribute('name')) !== null && _c !== void 0 ? _c : '');
-    return 0;
+    return a.localeCompare(b);
 }
 function getChildElementsByTagName(element, tag) {
     if (!element || !tag)
         return [];
     return Array.from(element.children).filter(child => child.tagName === tag);
 }
-/** @returns a new [[`tag`]] element owned by [[`doc`]]. */
 function createElement(doc, tag, attrs) {
     const element = doc.createElementNS(doc.documentElement.namespaceURI, tag);
     Object.entries(attrs)
@@ -3037,8 +3026,7 @@ function newCreateWizardEvent(parent, tagName, subWizard, eventInitDict) {
 let ConnectedAPEditor = class ConnectedAPEditor extends s {
     /** ConnectedAP attribute apName */
     get apName() {
-        var _a;
-        return (_a = this.element.getAttribute('apName')) !== null && _a !== void 0 ? _a : 'UNDEFINED';
+        return this.element.getAttribute('apName');
     }
     openEditWizard() {
         this.dispatchEvent(newEditWizardEvent(this.element));
@@ -3050,13 +3038,17 @@ let ConnectedAPEditor = class ConnectedAPEditor extends s {
     render() {
         return x `
       <oscd-action-icon label="${this.apName}" icon="settings_input_hdmi"
-        ><mwc-fab
+        ><mwc-fab slot="action" mini style="opacity:0;"></mwc-fab>
+        <mwc-fab slot="action" mini style="opacity:0;"></mwc-fab>
+        <mwc-fab
+          class="action edit"
           slot="action"
           mini
           icon="edit"
           @click="${() => this.openEditWizard()}"
         ></mwc-fab>
         <mwc-fab
+          class="action delete"
           slot="action"
           mini
           icon="delete"
@@ -3072,6 +3064,12 @@ __decorate([
 __decorate([
     n$2({ type: String })
 ], ConnectedAPEditor.prototype, "apName", null);
+__decorate([
+    i$2('.action.edit')
+], ConnectedAPEditor.prototype, "edit", void 0);
+__decorate([
+    i$2('.action.delete')
+], ConnectedAPEditor.prototype, "delete", void 0);
 ConnectedAPEditor = __decorate([
     e$4('connectedap-editor')
 ], ConnectedAPEditor);
@@ -3094,13 +3092,17 @@ let GseEditor = class GseEditor extends s {
         return x `<oscd-action-icon
       label="${this.label}"
       .icon="${sizableGooseIcon}"
-      ><mwc-fab
+      ><mwc-fab slot="action" mini style="opacity:0;"></mwc-fab>
+      <mwc-fab slot="action" mini style="opacity:0;"></mwc-fab>
+      <mwc-fab
+        class="action edit"
         slot="action"
         mini
         icon="edit"
         @click="${() => this.openEditWizard()}"
       ></mwc-fab>
       <mwc-fab
+        class="action delete"
         slot="action"
         mini
         icon="delete"
@@ -3111,13 +3113,16 @@ let GseEditor = class GseEditor extends s {
 };
 __decorate([
     n$2({ attribute: false })
-], GseEditor.prototype, "doc", void 0);
-__decorate([
-    n$2({ attribute: false })
 ], GseEditor.prototype, "element", void 0);
 __decorate([
     t$1()
 ], GseEditor.prototype, "label", null);
+__decorate([
+    i$2('.action.edit')
+], GseEditor.prototype, "edit", void 0);
+__decorate([
+    i$2('.action.delete')
+], GseEditor.prototype, "delete", void 0);
 GseEditor = __decorate([
     e$4('gse-editor')
 ], GseEditor);
@@ -3141,13 +3146,17 @@ let SmvEditor = class SmvEditor extends s {
         return x `<oscd-action-icon
       label="${this.label}"
       .icon="${sizableSmvIcon}"
-      ><mwc-fab
+      ><mwc-fab slot="action" mini style="opacity:0;"></mwc-fab>
+      <mwc-fab slot="action" mini style="opacity:0;"></mwc-fab>
+      <mwc-fab
+        class="action edit"
         slot="action"
         mini
         icon="edit"
         @click="${() => this.openEditWizard()}"
       ></mwc-fab>
       <mwc-fab
+        class="action delete"
         slot="action"
         mini
         icon="delete"
@@ -3165,6 +3174,12 @@ __decorate([
 __decorate([
     t$1()
 ], SmvEditor.prototype, "label", null);
+__decorate([
+    i$2('.action.edit')
+], SmvEditor.prototype, "edit", void 0);
+__decorate([
+    i$2('.action.delete')
+], SmvEditor.prototype, "delete", void 0);
 SmvEditor = __decorate([
     e$4('smv-editor')
 ], SmvEditor);
@@ -3177,8 +3192,7 @@ let SubNetworkEditor = class SubNetworkEditor extends s {
     }
     /** SubNetwork attribute name */
     get name() {
-        var _a;
-        return (_a = this.element.getAttribute('name')) !== null && _a !== void 0 ? _a : 'UNDEFINED';
+        return this.element.getAttribute('name');
     }
     /** SubNetwork attribute desc */
     get desc() {
@@ -3192,11 +3206,10 @@ let SubNetworkEditor = class SubNetworkEditor extends s {
     }
     /** SubNetwork child elements BitRate label */
     get bitrate() {
-        var _a;
         const bitRate = this.element.querySelector('BitRate');
         if (bitRate === null)
             return null;
-        const bitRateValue = (_a = bitRate.textContent) !== null && _a !== void 0 ? _a : '';
+        const bitRateValue = bitRate.textContent;
         const m = bitRate.getAttribute('multiplier');
         const unit = ` ${m !== null && m !== void 0 ? m : ''}b/s`;
         return bitRateValue ? bitRateValue + unit : null;
@@ -3262,18 +3275,21 @@ let SubNetworkEditor = class SubNetworkEditor extends s {
         return x `<oscd-action-pane label="${this.header()}">
       <abbr slot="action" title="Edit">
         <mwc-icon-button
+          class="action edit"
           icon="edit"
           @click=${() => this.openEditWizard()}
         ></mwc-icon-button>
       </abbr>
       <abbr slot="action" title="Remove">
         <mwc-icon-button
+          class="action delete"
           icon="delete"
           @click=${() => this.removeElement()}
         ></mwc-icon-button>
       </abbr>
       <abbr slot="action" title="Add">
         <mwc-icon-button
+          class="action add"
           icon="playlist_add"
           @click="${() => this.openCreateConnectedAPwizard()}"
         ></mwc-icon-button>
@@ -3334,44 +3350,47 @@ __decorate([
 __decorate([
     t$1()
 ], SubNetworkEditor.prototype, "bitrate", null);
+__decorate([
+    i$2('.action.add')
+], SubNetworkEditor.prototype, "add", void 0);
+__decorate([
+    i$2('.action.edit')
+], SubNetworkEditor.prototype, "edit", void 0);
+__decorate([
+    i$2('.action.delete')
+], SubNetworkEditor.prototype, "delete", void 0);
 SubNetworkEditor = __decorate([
     e$4('subnetwork-editor')
 ], SubNetworkEditor);
 
-/** An editor [[`plugin`]] for editing the `Communication` section. */
-class OscdCommunicationPlugin extends s {
+class SclCommunicationPlugin extends s {
     constructor() {
         super(...arguments);
         this.editCount = -1;
     }
-    /**
-     * Creates the Communication Element and returns the created Element
-     * @returns {Element} Communication `Element`
-     */
     createCommunication() {
         const element = createElement(this.doc, 'Communication', {});
         const scl = this.doc.documentElement;
         this.dispatchEvent(newEditEvent({
             parent: scl,
             node: element,
-            reference: getReference(scl, 'Comminucation'),
+            reference: getReference(scl, 'Communication'),
         }));
         return element;
     }
-    /** Opens a [[`WizardDialog`]] for creating a new `SubNetwork` element. */
     openCreateSubNetworkWizard() {
         const parent = this.doc.querySelector(':root > Communication') ||
             this.createCommunication();
         this.dispatchEvent(newCreateWizardEvent(parent, 'SubNetwork'));
     }
     render() {
-        var _a;
-        const communication = (_a = this.doc) === null || _a === void 0 ? void 0 : _a.querySelector('Communication');
+        const communication = this.doc.querySelector('Communication');
         if (!communication)
             return x `<h1>
         <span style="color: var(--oscd-base1)"
           >Missing Communication Section</span
         ><mwc-fab
+          class="action add"
           extended
           icon="add"
           label="Add SubNetwork"
@@ -3379,6 +3398,7 @@ class OscdCommunicationPlugin extends s {
         ></mwc-fab>
       </h1>`;
         return x `<mwc-fab
+        class="action add"
         extended
         icon="add"
         label="Add SubNetwork"
@@ -3393,7 +3413,7 @@ class OscdCommunicationPlugin extends s {
       </section> `;
     }
 }
-OscdCommunicationPlugin.styles = i$5 `
+SclCommunicationPlugin.styles = i$5 `
     * {
       --oscd-action-pane-theme-surface: var(--oscd-theme-base3);
       --oscd-action-pane-theme-on-surface: var(--oscd-theme-base00);
@@ -3423,6 +3443,8 @@ OscdCommunicationPlugin.styles = i$5 `
     }
 
     section {
+      display: flex;
+      flex-direction: column;
       outline: none;
       padding: 8px 12px 16px;
     }
@@ -3438,11 +3460,14 @@ OscdCommunicationPlugin.styles = i$5 `
     }
   `;
 __decorate([
-    n$2()
-], OscdCommunicationPlugin.prototype, "doc", void 0);
+    n$2({ attribute: false })
+], SclCommunicationPlugin.prototype, "doc", void 0);
 __decorate([
     n$2({ type: Number })
-], OscdCommunicationPlugin.prototype, "editCount", void 0);
+], SclCommunicationPlugin.prototype, "editCount", void 0);
+__decorate([
+    i$2('.action.add')
+], SclCommunicationPlugin.prototype, "add", void 0);
 
-export { OscdCommunicationPlugin as default };
-//# sourceMappingURL=oscd-communication.js.map
+export { SclCommunicationPlugin as default };
+//# sourceMappingURL=scl-communication.js.map

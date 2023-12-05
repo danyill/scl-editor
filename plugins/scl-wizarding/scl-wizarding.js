@@ -37428,7 +37428,7 @@ function getValAction(oldVal, Val, abstractda) {
             {
                 parent: abstractda,
                 node: element,
-                reference: abstractda.firstElementChild,
+                reference: getReference(abstractda, 'Val'),
             },
         ];
     }
@@ -45377,7 +45377,7 @@ function getBitRateAction(oldBitRate, BitRate, multiplier, SubNetwork) {
         return {
             parent: SubNetwork,
             node: bitRateElement,
-            reference: SubNetwork.firstElementChild,
+            reference: getReference(SubNetwork, 'BitRate'),
         };
     }
     if (BitRate === null)
@@ -45876,7 +45876,7 @@ function getVoltageAction(oldVoltage, Voltage, multiplier, voltageLevel) {
             {
                 parent: voltageLevel,
                 node: element,
-                reference: voltageLevel.firstElementChild,
+                reference: getReference(voltageLevel, 'VoltageLevel'),
             },
         ];
     }
