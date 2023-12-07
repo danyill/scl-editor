@@ -1,10 +1,14 @@
 import { LitElement, TemplateResult } from 'lit';
-import './substation/zeroline-pane.js';
+import '@material/mwc-icon-button-toggle';
 /** An editor [[`plugin`]] for editing the `Substation` section. */
-export default class SubstationEditorPlugin extends LitElement {
+export default class SclSubstationEditorPlugin extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
     editCount: number;
+    get substations(): Element[];
+    get lines(): Element[];
+    get processes(): Element[];
+    toggleShowFunctions(): void;
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }

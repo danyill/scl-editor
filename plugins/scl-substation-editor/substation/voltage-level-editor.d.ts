@@ -7,6 +7,7 @@ import BaseSubstationElementEditor from './base-substation-element-editor.js';
 export declare class VoltageLevelEditor extends BaseSubstationElementEditor {
     get voltage(): string | null;
     get header(): string;
+    renderBay(): TemplateResult;
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }

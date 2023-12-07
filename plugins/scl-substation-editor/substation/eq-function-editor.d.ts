@@ -7,4 +7,4 @@ export declare class EqFunctionEditor extends BaseSubstationElementEditor {
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }
-export declare function renderEqFunctions(parent: Element, editCount: number, showfunctions: boolean): TemplateResult;
+export declare function renderEqFunctions(parent: Element, editCount: number): TemplateResult;
