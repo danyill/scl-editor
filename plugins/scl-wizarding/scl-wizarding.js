@@ -26089,6 +26089,7 @@ let CodeDialog = class CodeDialog extends s$1 {
         soft-tabs
         theme="ace/theme/solarized_light"
         value="${formatXml(new XMLSerializer().serializeToString(this.element))}"
+        style="width: 80vw; height: calc(100vh - 240px);"
       ></ace-editor>
       <mwc-button slot="secondaryAction" dialogAction="close"
         >Cancel</mwc-button
@@ -45772,6 +45773,8 @@ function render$1({ content }) {
         x `<mwc-textarea
       label="content"
       value="${content}"
+      rows="10"
+      cols="80"
       dialogInitialFocus
     ></mwc-textarea>`,
     ];

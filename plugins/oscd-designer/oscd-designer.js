@@ -701,18 +701,18 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
  * @license
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: Apache-2.0
- */;let Lo=class extends To{};Lo.styles=[Io],Lo=n([bt("mwc-textfield")],Lo);const Ro="Transpower-SLD-Vertices",Oo="https://transpower.co.nz/SCL/SSD/SLD/v0",Do="http://www.w3.org/2000/svg",zo=["CAB","CAP","CBR","CTR","DIS","GEN","IFL","LIN","MOT","REA","RES","SAR","SMC","VTR"];function Po(t){return zo.includes(t)}const Fo=new Set(["GEN","MOT","SMC"]),Mo=new Set(["BAT","EFN","FAN","GEN","IFL","MOT","PMP","RRC","SAR","SMC","VTR"]);function $o(){const t=new Array(36);for(let e=0;e<36;e+=1)[8,13,18,23].includes(e)?t[e]="-":t[e]=Math.floor(16*Math.random());return t[14]=4,t[19]&=-5,t[19]|=8,t.map((t=>t.toString(16))).join("")}const Bo=["default","auto","earthing"];function Ho(t){var e;return["true","1"].includes(null!==(e=null==t?void 0:t.trim())&&void 0!==e?e:"false")}function Vo(t){var e;return"Bay"===t.tagName&&Ho(null===(e=t.querySelector("Section[bus]"))||void 0===e?void 0:e.getAttribute("bus"))}function Uo(t){var e;const[i,n,o,r,a,d,s]=["x","y","w","h","rot","lx","ly"].map((e=>{var i;return parseFloat(null!==(i=t.getAttributeNS(Oo,e))&&void 0!==i?i:"0")})),l=parseInt(null!==(e=t.getAttributeNS(Oo,"weight"))&&void 0!==e?e:"300",10),c=[i,n].map((t=>Math.max(0,t))),p=[o,r].map((t=>Math.max(1,t))),m=[d,s].map((t=>Math.max(0,t))),h=Ho(t.getAttribute("bus")),u=Ho(t.getAttributeNS(Oo,"flip")),f=t.getAttributeNS(Oo,"kind"),g=function(t){return Bo.includes(t)}(f)?f:"default";return{pos:c,dim:p,label:m,flip:u,rot:(a%4+4)%4,bus:h,weight:l,color:t.getAttributeNS(Oo,"color")||"#000",kind:g}}function Go(t,...e){const i=[];let n=t;for(;n.parentElement&&n.hasAttribute("name");)i.unshift(n.getAttribute("name")),n=n.parentElement;return function(...t){return t.join("/")}(...i,...e)}function qo(t){var e;const i=[];if(Ho(null===(e=t.querySelector("Section[bus]"))||void 0===e?void 0:e.getAttribute("bus"))){Array.from(t.querySelectorAll("Section:not([bus])")).forEach((t=>i.push({node:t})));const e=Array.from(t.querySelectorAll("Section[bus]")),n=e[0];Array.from(n.children).slice(1).forEach((t=>i.push({node:t})));const o=e[e.length-1].lastElementChild;o&&i.push({parent:n,node:o,reference:null}),e.slice(1).forEach((t=>i.push({node:t})))}else i.push({node:t});return Array.from(t.ownerDocument.querySelectorAll(`Terminal[connectivityNode="${t.getAttribute("pathName")}"], NeutralPoint[connectivityNode="${t.getAttribute("pathName")}"]`)).forEach((t=>i.push({node:t}))),i}function jo(t){const[e,i]=["x","y"].map((e=>t.getAttributeNS(Oo,e))),n=n=>n!==t&&n.getAttributeNS(Oo,"x")===e&&n.getAttributeNS(Oo,"y")===i,o=Array.from(t.closest("Private").getElementsByTagNameNS(Oo,"Section")).flatMap((t=>Array.from(t.children).filter(n))).map((t=>t.parentElement));if(o.length>2)return[];if(o.length<2)return qo(t.closest("ConnectivityNode"));const[r,a]=o.map((t=>Ho(t.getAttribute("bus"))));if(r!==a)return[];const d=[],[s,l]=o;n(s.firstElementChild)&&d.push(function(t){const e=[];return Array.from(t.children).reverse().forEach((i=>e.push({parent:t,node:i,reference:null}))),e}(s));const c=Array.from(l.children);n(l.lastElementChild)&&c.reverse(),c.slice(1).forEach((t=>d.push({parent:s,node:t,reference:null})));const p=Array.from(s.children).find(n),m=n(s.firstElementChild)?s.children[1]:s.children[s.childElementCount-2],h=c[1];return m&&p&&h&&function(t,e,i){const[[n,o],[r,a],[d,s]]=[t,e,i].map((t=>["x","y"].map((e=>t.getAttributeNS(Oo,e)))));return n===r&&r===d||o===a&&a===s}(m,p,h)&&d.push({node:p}),d.push({node:l}),d}function Wo(t,e,i){var n;const o=[],r=Array.from(t.getElementsByTagName("ConnectivityNode"));"ConnectivityNode"===t.tagName&&r.push(t);const a=e.closest("Substation").getAttribute("name");let d=null===(n=e.closest("VoltageLevel"))||void 0===n?void 0:n.getAttribute("name");return"VoltageLevel"===t.tagName&&(d=i),r.forEach((n=>{var r,s;let l=n.getAttribute("name");t===n&&(l=i);let c=null!==(s=null===(r=n.parentElement)||void 0===r?void 0:r.getAttribute("name"))&&void 0!==s?s:"";if("Bay"===t.tagName&&(c=i),"Bay"===e.tagName&&e.hasAttribute("name")&&(c=e.getAttribute("name")),l&&c){const t=`${a}/${d}/${c}/${l}`;o.push({element:n,attributes:{pathName:t}}),a&&d&&c&&o.push(...function(t,e,i,n,o,r,a){const d=[],s=e.getAttribute("pathName");if(!s)return[];const[l,c,p,m]=s.split("/");return Array.from(e.getRootNode().querySelectorAll(`Terminal[substationName="${l}"][voltageLevelName="${c}"][bayName="${p}"][cNodeName="${m}"], Terminal[connectivityNode="${s}"], NeutralPoint[substationName="${l}"][voltageLevelName="${c}"][bayName="${p}"][cNodeName="${m}"], NeutralPoint[connectivityNode="${s}"]`)).forEach((t=>{d.push({element:t,attributes:{substationName:i,voltageLevelName:n,bayName:o,connectivityNode:a,cNodeName:r}})})),d}(0,n,a,d,c,l,t))}})),o}function Yo(t,e){var i,n,o;const r=Array.from(e.children),a=t.getAttribute("name");if(a&&!r.find((t=>t.getAttribute("name")===a)))return a;const d=null!==(o=null!==(n=null===(i=t.getAttribute("name"))||void 0===i?void 0:i.replace(/[0-9]*$/,""))&&void 0!==n?n:t.getAttribute("type"))&&void 0!==o?o:t.tagName.charAt(0);let s=1;function l(t){return t.getAttribute("name")===d+s.toString()}for(;r.find(l);)s+=1;return d+s.toString()}function Xo(t,e){const i=[];i.push({node:t,parent:e,reference:re(e,t.tagName)});const n=Yo(t,e);return n!==t.getAttribute("name")&&i.push({element:t,attributes:{name:n}}),i.push(...Wo(t,e,n)),i}function Ko(t){const e=[];e.push({node:t});const i=t.getAttribute("connectivityNode"),n=t.ownerDocument.querySelector(`ConnectivityNode[pathName="${i}"]`),o=Array.from(t.ownerDocument.querySelectorAll(`Terminal[connectivityNode="${i}"], NeutralPoint[connectivityNode="${i}"]`)).filter((e=>e!==t));if(n&&o.length>1&&o.some((t=>t.closest("Bay")))&&o.every((t=>t.closest("Bay")!==n.closest("Bay")))&&!Vo(n.closest("Bay"))){const t=o.find((t=>t.closest("Bay"))).closest("Bay");t&&e.push(...Xo(n,t))}if(n&&o.length<=1&&"grounded"!==n.getAttribute("name"))return e.push(...qo(n)),e;const r=null==n?void 0:n.querySelector(`Private[type="${Ro}"]`),a=null==r?void 0:r.querySelector(`Vertex[*|uuid="${t.getAttributeNS(Oo,"uuid")}"]`),d=null==a?void 0:a.parentElement;if(!d)return e;e.push({node:d});const s=a===d.lastElementChild?d.firstElementChild:d.lastElementChild;return s&&e.push(...jo(s)),e}function Zo(t){const{pos:[e,i],rot:n}=Uo(t);return{T1:[[[e+.5,i+.16],[e+.84,i+.5],[e+.5,i+.84],[e+.16,i+.5]][n],[[e+.5,i],[e+1,i+.5],[e+.5,i+1],[e,i+.5]][n]],T2:[[[e+.5,i+.84],[e+.16,i+.5],[e+.5,i+.16],[e+.84,i+.5]][n],[[e+.5,i+1],[e,i+.5],[e+.5,i],[e+1,i+.5]][n]]}}function Jo(t){return new CustomEvent("oscd-sld-place",{bubbles:!0,composed:!0,detail:t})}function Qo(t){return new CustomEvent("oscd-sld-connect",{bubbles:!0,composed:!0,detail:t})}function tr(t){return new CustomEvent("oscd-sld-rotate",{bubbles:!0,composed:!0,detail:t})}function er(t){return new CustomEvent("oscd-sld-start-resize-tl",{bubbles:!0,composed:!0,detail:t})}function ir(t){return new CustomEvent("oscd-sld-start-resize-br",{bubbles:!0,composed:!0,detail:t})}function nr(t){return new CustomEvent("oscd-sld-start-place-label",{bubbles:!0,composed:!0,detail:t})}function or(t,e=[0,0]){return new CustomEvent("oscd-sld-start-place",{bubbles:!0,composed:!0,detail:{element:t,offset:e}})}function rr(t){return new CustomEvent("oscd-sld-start-connect",{bubbles:!0,composed:!0,detail:t})}const ar=(new DOMParser).parseFromString(['<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform">','  <xsl:strip-space elements="*"/>','  <xsl:template match="para[content-style][not(text())]">','    <xsl:value-of select="normalize-space(.)"/>',"  </xsl:template>",'  <xsl:template match="node()|@*">','    <xsl:copy><xsl:apply-templates select="node()|@*"/></xsl:copy>',"  </xsl:template>",'  <xsl:output indent="yes"/>',"</xsl:stylesheet>"].join("\n"),"application/xml"),dr=new XSLTProcessor;dr.importStylesheet(ar);const sr=G`<path
+ */;let Lo=class extends To{};Lo.styles=[Io],Lo=n([bt("mwc-textfield")],Lo);const Ro="Transpower-SLD-Vertices",Oo="https://transpower.co.nz/SCL/SSD/SLD/v0",Do="http://www.w3.org/2000/svg",zo=["CAB","CAP","CBR","CTR","DIS","GEN","IFL","LIN","MOT","REA","RES","SAR","SMC","VTR"];function Po(t){return zo.includes(t)}const Fo=new Set(["GEN","MOT","SMC"]),Mo=new Set(["BAT","EFN","FAN","GEN","IFL","MOT","PMP","RRC","SAR","SMC","VTR"]);function $o(){const t=new Array(36);for(let e=0;e<36;e+=1)[8,13,18,23].includes(e)?t[e]="-":t[e]=Math.floor(16*Math.random());return t[14]=4,t[19]&=-5,t[19]|=8,t.map((t=>t.toString(16))).join("")}const Bo=["default","auto","earthing"];function Ho(t){var e;return["true","1"].includes(null!==(e=null==t?void 0:t.trim())&&void 0!==e?e:"false")}function Vo(t){var e;return"Bay"===t.tagName&&Ho(null===(e=t.querySelector("Section[bus]"))||void 0===e?void 0:e.getAttribute("bus"))}function Uo(t){var e;const[i,n,o,r,a,d,s]=["x","y","w","h","rot","lx","ly"].map((e=>{var i;return parseFloat(null!==(i=t.getAttributeNS(Oo,e))&&void 0!==i?i:"0")})),l=parseInt(null!==(e=t.getAttributeNS(Oo,"weight"))&&void 0!==e?e:"300",10),c=[i,n].map((t=>Math.max(0,t))),p=[o,r].map((t=>Math.max(1,t))),m=[d,s].map((t=>Math.max(0,t))),h=Ho(t.getAttribute("bus")),u=Ho(t.getAttributeNS(Oo,"flip")),f=t.getAttributeNS(Oo,"kind"),g=function(t){return Bo.includes(t)}(f)?f:"default";return{pos:c,dim:p,label:m,flip:u,rot:(a%4+4)%4,bus:h,weight:l,color:t.getAttributeNS(Oo,"color")||"#000",kind:g}}function Go(t,...e){const i=[];let n=t;for(;n.parentElement&&n.hasAttribute("name");)i.unshift(n.getAttribute("name")),n=n.parentElement;return function(...t){return t.join("/")}(...i,...e)}function qo(t){var e;const i=[];if(Ho(null===(e=t.querySelector("Section[bus]"))||void 0===e?void 0:e.getAttribute("bus"))){Array.from(t.querySelectorAll("Section:not([bus])")).forEach((t=>i.push({node:t})));const e=Array.from(t.querySelectorAll("Section[bus]")),n=e[0];Array.from(n.children).slice(1).forEach((t=>i.push({node:t})));const o=e[e.length-1].lastElementChild;o&&i.push({parent:n,node:o,reference:null}),e.slice(1).forEach((t=>i.push({node:t})))}else i.push({node:t});return Array.from(t.ownerDocument.querySelectorAll(`Terminal[connectivityNode="${t.getAttribute("pathName")}"], NeutralPoint[connectivityNode="${t.getAttribute("pathName")}"]`)).forEach((t=>i.push({node:t}))),i}function jo(t){const[e,i]=["x","y"].map((e=>t.getAttributeNS(Oo,e))),n=n=>n!==t&&n.getAttributeNS(Oo,"x")===e&&n.getAttributeNS(Oo,"y")===i,o=Array.from(t.closest("Private").getElementsByTagNameNS(Oo,"Section")).flatMap((t=>Array.from(t.children).filter(n))).map((t=>t.parentElement));if(o.length>2)return[];if(o.length<2)return qo(t.closest("ConnectivityNode"));const[r,a]=o.map((t=>Ho(t.getAttribute("bus"))));if(r!==a)return[];const d=[],[s,l]=o;n(s.firstElementChild)&&d.push(function(t){const e=[];return Array.from(t.children).reverse().forEach((i=>e.push({parent:t,node:i,reference:null}))),e}(s));const c=Array.from(l.children);n(l.lastElementChild)&&c.reverse(),c.slice(1).forEach((t=>d.push({parent:s,node:t,reference:null})));const p=Array.from(s.children).find(n),m=n(s.firstElementChild)?s.children[1]:s.children[s.childElementCount-2],h=c[1];return m&&p&&h&&function(t,e,i){const[[n,o],[r,a],[d,s]]=[t,e,i].map((t=>["x","y"].map((e=>t.getAttributeNS(Oo,e)))));return n===r&&r===d||o===a&&a===s}(m,p,h)&&d.push({node:p}),d.push({node:l}),d}function Wo(t,e,i){var n;const o=[],r=Array.from(t.getElementsByTagName("ConnectivityNode"));"ConnectivityNode"===t.tagName&&r.push(t);const a=e.closest("Substation").getAttribute("name");let d=null===(n=e.closest("VoltageLevel"))||void 0===n?void 0:n.getAttribute("name");return"VoltageLevel"===t.tagName&&(d=i),r.forEach((n=>{var r,s;let l=n.getAttribute("name");t===n&&(l=i);let c=null!==(s=null===(r=n.parentElement)||void 0===r?void 0:r.getAttribute("name"))&&void 0!==s?s:"";if("Bay"===t.tagName&&(c=i),"Bay"===e.tagName&&e.hasAttribute("name")&&(c=e.getAttribute("name")),l&&c){const t=`${a}/${d}/${c}/${l}`;o.push({element:n,attributes:{pathName:t}}),a&&d&&c&&o.push(...function(t,e,i,n,o,r,a){const d=[],s=e.getAttribute("pathName");if(!s)return[];const[l,c,p,m]=s.split("/");return Array.from(e.getRootNode().querySelectorAll(`Terminal[substationName="${l}"][voltageLevelName="${c}"][bayName="${p}"][cNodeName="${m}"], Terminal[connectivityNode="${s}"], NeutralPoint[substationName="${l}"][voltageLevelName="${c}"][bayName="${p}"][cNodeName="${m}"], NeutralPoint[connectivityNode="${s}"]`)).forEach((t=>{d.push({element:t,attributes:{substationName:i,voltageLevelName:n,bayName:o,connectivityNode:a,cNodeName:r}})})),d}(0,n,a,d,c,l,t))}})),o}function Yo(t,e){var i,n,o;const r=Array.from(e.children),a=t.getAttribute("name");if(a&&!r.find((t=>t.getAttribute("name")===a)))return a;const d=null!==(o=null!==(n=null===(i=t.getAttribute("name"))||void 0===i?void 0:i.replace(/[0-9]*$/,""))&&void 0!==n?n:t.getAttribute("type"))&&void 0!==o?o:t.tagName.charAt(0);let s=1;function l(t){return t.getAttribute("name")===d+s.toString()}for(;r.find(l);)s+=1;return d+s.toString()}function Xo(t,e){const i=[];i.push({node:t,parent:e,reference:re(e,t.tagName)});const n=Yo(t,e);return n!==t.getAttribute("name")&&i.push({element:t,attributes:{name:n}}),i.push(...Wo(t,e,n)),i}function Ko(t){const e=[];e.push({node:t});const i=t.getAttribute("connectivityNode"),n=t.ownerDocument.querySelector(`ConnectivityNode[pathName="${i}"]`),o=Array.from(t.ownerDocument.querySelectorAll(`Terminal[connectivityNode="${i}"], NeutralPoint[connectivityNode="${i}"]`)).filter((e=>e!==t));if(n&&o.length>1&&o.some((t=>t.closest("Bay")))&&o.every((t=>t.closest("Bay")!==n.closest("Bay")))&&!Vo(n.closest("Bay"))){const t=o.find((t=>t.closest("Bay"))).closest("Bay");t&&e.push(...Xo(n,t))}if(n&&o.length<=1&&"grounded"!==n.getAttribute("name"))return e.push(...qo(n)),e;const r=null==n?void 0:n.querySelector(`Private[type="${Ro}"]`),a=null==r?void 0:r.querySelector(`Vertex[*|uuid="${t.getAttributeNS(Oo,"uuid")}"]`),d=null==a?void 0:a.parentElement;if(!d)return e;e.push({node:d});const s=a===d.lastElementChild?d.firstElementChild:d.lastElementChild;return s&&e.push(...jo(s)),e}function Zo(t){const{pos:[e,i],rot:n}=Uo(t);return{T1:[[[e+.5,i+.16],[e+.84,i+.5],[e+.5,i+.84],[e+.16,i+.5]][n],[[e+.5,i],[e+1,i+.5],[e+.5,i+1],[e,i+.5]][n]],T2:[[[e+.5,i+.84],[e+.16,i+.5],[e+.5,i+.16],[e+.84,i+.5]][n],[[e+.5,i+1],[e,i+.5],[e+.5,i],[e+1,i+.5]][n]]}}function Jo(t){return new CustomEvent("oscd-sld-place",{bubbles:!0,composed:!0,detail:t})}function Qo(t){return new CustomEvent("oscd-sld-connect",{bubbles:!0,composed:!0,detail:t})}function tr(t){return new CustomEvent("oscd-sld-rotate",{bubbles:!0,composed:!0,detail:t})}function er(t){return new CustomEvent("oscd-sld-start-resize-tl",{bubbles:!0,composed:!0,detail:t})}function ir(t){return new CustomEvent("oscd-sld-start-resize-br",{bubbles:!0,composed:!0,detail:t})}function nr(t,e=[0,0]){return new CustomEvent("oscd-sld-start-place",{bubbles:!0,composed:!0,detail:{element:t,offset:e}})}function or(t,e=[0,0]){return new CustomEvent("oscd-sld-start-place-label",{bubbles:!0,composed:!0,detail:{element:t,offset:e}})}function rr(t){return new CustomEvent("oscd-sld-start-connect",{bubbles:!0,composed:!0,detail:t})}const ar=(new DOMParser).parseFromString(['<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform">','  <xsl:strip-space elements="*"/>','  <xsl:template match="para[content-style][not(text())]">','    <xsl:value-of select="normalize-space(.)"/>',"  </xsl:template>",'  <xsl:template match="node()|@*">','    <xsl:copy><xsl:apply-templates select="node()|@*"/></xsl:copy>',"  </xsl:template>",'  <xsl:output indent="yes"/>',"</xsl:stylesheet>"].join("\n"),"application/xml");let dr;function sr(t){const e=dr?dr.transformToDocument(t):t;return(new XMLSerializer).serializeToString(e)}navigator.userAgent.toLowerCase().includes("firefox")||(dr=new XSLTProcessor,dr.importStylesheet(ar));const lr=G`<path
   d="M120 616v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm160 0v-80h80v80h-80Zm160 640v-80h80v80h-80Zm0-640v-80h80v80h-80Zm160 640v-80h80v80h-80Zm160 0v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160V296H600v-80h240v240h-80ZM120 936V696h80v160h160v80H120Z"
-/>`,lr=G`<path
-  d="m 120,616 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 320,0 H 600 V 216 H 840 Z M 120,936 V 696 h 80 v 160 z" /> `,cr=G`<path
-  d="m 440,936 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 V 296 l 80,-80 v 240 z m -640,480 80,-80 h 160 v 80 z" />`,pr=G`<path d="M480 976 310 806l57-57 73 73V616l-205-1 73 73-58 58L80 576l169-169 57 57-72 72h206V330l-73 73-57-57 170-170 170 170-57 57-73-73v206l205 1-73-73 58-58 170 170-170 170-57-57 73-73H520l-1 205 73-73 58 58-170 170Z"/>`,mr=G`<path
+/>`,cr=G`<path
+  d="m 120,616 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 320,0 H 600 V 216 H 840 Z M 120,936 V 696 h 80 v 160 z" /> `,pr=G`<path
+  d="m 440,936 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 160,0 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 v -80 h 80 v 80 z m 0,-160 V 296 l 80,-80 v 240 z m -640,480 80,-80 h 160 v 80 z" />`,mr=G`<path d="M480 976 310 806l57-57 73 73V616l-205-1 73 73-58 58L80 576l169-169 57 57-72 72h206V330l-73 73-57-57 170-170 170 170-57 57-73-73v206l205 1-73-73 58-58 170 170-170 170-57-57 73-73H520l-1 205 73-73 58 58-170 170Z"/>`,hr=G`<path
     d="M 4 4 L 12.5 21 L 21 4"
     fill="none"
     stroke="currentColor"
     stroke-width="3"
     stroke-linejoin="round"
     stroke-linecap="round"
-  />`,hr=G`<path
+  />`,ur=G`<path
     d="M 3 2 L 22 2"
     fill="none"
     stroke="currentColor"
@@ -775,30 +775,30 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     stroke-width="1.5"
     stroke-linejoin="round"
     stroke-linecap="round"
-  />`,ur=G`
+  />`,fr=G`
   <circle fill="none" cx="1.5" cy="1.5" r="0.7"/>
   <path fill="none" d="M 1.5 0.8 C 0.5 0.8, 0.4 1.3, 0.3 1.5"/>
-`,fr=G`
-  <circle fill="none" cx="1.5" cy="1.5" r="0.7"/>
-  <path fill="none" d="M 1.5 0.8 C 0.5 0.8, 0.4 1.3, 0.3 1.5"/>
-  <circle fill="none" cx="1.5" cy="2.5" r="0.7"/>
 `,gr=G`
   <circle fill="none" cx="1.5" cy="1.5" r="0.7"/>
+  <path fill="none" d="M 1.5 0.8 C 0.5 0.8, 0.4 1.3, 0.3 1.5"/>
+  <circle fill="none" cx="1.5" cy="2.5" r="0.7"/>
 `,br=G`
   <circle fill="none" cx="1.5" cy="1.5" r="0.7"/>
-  <circle fill="none" cx="1.5" cy="2.5" r="0.7"/>
 `,vr=G`
+  <circle fill="none" cx="1.5" cy="1.5" r="0.7"/>
+  <circle fill="none" cx="1.5" cy="2.5" r="0.7"/>
+`,xr=G`
   <circle fill="none" cx="1.5" cy="1.5" r="0.7"/>
   <circle fill="none" cx="2" cy="2.5" r="0.7"/>
   <circle fill="none" cx="1" cy="2.5" r="0.7"/>
-`,xr=G`
+`,yr=G`
   <line x1="1.5" y1="1.5" x2="1.5" y2="1.25" />
   <line transform="rotate(240 1.5 1.25)" x1="1.5" y1="1.5" x2="1.5" y2="1.25" />
-`,yr=G`
-<g>${xr}</g>
-<g transform="rotate(120 1.5 1.5)">${xr}</g>
-<g transform="rotate(240 1.5 1.5)">${xr}</g>
-`,_r="matrix(0.8, 0, 0, 0.8, 0.3, 0.3) translate(0 -0.1) rotate(-20 1.5 1.5)";function wr(t,{slot:e="icon",kind:i="default"}={}){let n=G``;3===t?n=vr:2===t?n="auto"===i?fr:br:1===t&&(n="auto"===i?ur:gr);const o="earthing"===i?G`<g transform="${t>1?_r:j}">${yr}</g>`:j;return U`<svg
+`,_r=G`
+<g>${yr}</g>
+<g transform="rotate(120 1.5 1.5)">${yr}</g>
+<g transform="rotate(240 1.5 1.5)">${yr}</g>
+`,wr="matrix(0.8, 0, 0, 0.8, 0.3, 0.3) translate(0 -0.1) rotate(-20 1.5 1.5)";function Ar(t,{slot:e="icon",kind:i="default"}={}){let n=G``;3===t?n=xr:2===t?n="auto"===i?gr:vr:1===t&&(n="auto"===i?fr:br);const o="earthing"===i?G`<g transform="${t>1?wr:j}">${_r}</g>`:j;return U`<svg
     viewBox="0.3 0.5 2.4 ${t>1?3:2}"
     width="24"
     height="24"
@@ -808,35 +808,35 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     slot="${e}"
   >
     ${n} ${o}
-  </svg>`}const Ar=U`<svg
+  </svg>`}const Er=U`<svg
   viewBox="0 0 25 25"
   width="24"
   height="24"
   slot="icon"
 >
-  ${mr}
-</svg>`,Er=U`<svg
-  viewBox="0 0 25 25"
-  width="24"
-  height="24"
-  slot="graphic"
->
-  ${mr}
+  ${hr}
 </svg>`,Sr=U`<svg
   viewBox="0 0 25 25"
   width="24"
   height="24"
-  slot="icon"
+  slot="graphic"
 >
   ${hr}
 </svg>`,Cr=U`<svg
   viewBox="0 0 25 25"
   width="24"
   height="24"
+  slot="icon"
+>
+  ${ur}
+</svg>`,kr=U`<svg
+  viewBox="0 0 25 25"
+  width="24"
+  height="24"
   slot="graphic"
 >
-  ${hr}
-</svg>`,kr={CAB:G`
+  ${ur}
+</svg>`,Nr={CAB:G`
   <path
     d="M 9.4,4.2 H 15.6 L 12.5,8.3 Z"
     fill="currentColor"
@@ -1097,7 +1097,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     stroke-width="1.5"
     stroke-linecap="round"
   />
-`},Nr=G`
+`},Tr=G`
   <circle
     cx="12.5"
     cy="12.5"
@@ -1107,7 +1107,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     stroke-width="1.5"
     stroke-linecap="round"
   />
-  `,Tr=G`
+  `,Ir=G`
   <circle
     cx="12.5"
     cy="12.5"
@@ -1156,7 +1156,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     stroke-linejoin="round"
     stroke-linecap="round"
   />
-`;function Ir(t){return t&&Po(t)?kr[t]:Tr}function Lr(t){return U`<svg viewBox="0 0 25 25" width="24" height="24" slot="graphic">
+`;function Lr(t){return t&&Po(t)?Nr[t]:Ir}function Rr(t){return U`<svg viewBox="0 0 25 25" width="24" height="24" slot="graphic">
     <line
       x1="12.5"
       y1="0"
@@ -1175,15 +1175,15 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
       stroke-width="1.5"
       stroke-linecap="round"
     />`}
-    ${Ir(t)}
-    ${t&&Fo.has(t)?Nr:j}
-  </svg>`}function Rr(t){return G`<symbol
+    ${Lr(t)}
+    ${t&&Fo.has(t)?Tr:j}
+  </svg>`}function Or(t){return G`<symbol
     id="${t}"
     viewBox="0 0 25 25"
     width="1" height="1"
   >
-    ${Ir(t)}
-  </symbol>`}const Or=G`<marker
+    ${Lr(t)}
+  </symbol>`}const Dr=G`<marker
   markerWidth="20" markerHeight="20"
   refX="12.5" refY="12.5"
   viewBox="0 0 25 25"
@@ -1217,7 +1217,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     stroke-linecap="round"
     stroke-width="1.5"
   />
-</marker>`,Dr=G`
+</marker>`,zr=G`
 <marker
   id="arrow"
   viewBox="0 0 10 10"
@@ -1228,7 +1228,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
   orient="auto-start-reverse">
   <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
 </marker>
-`,zr=G`
+`,Pr=G`
   <defs>
   <pattern id="halfgrid" patternUnits="userSpaceOnUse" width="1" height="1" viewBox="0 0 1 1">
   <circle cx="0.1" cy="0.25" r="0.035" fill="#888" opacity="0.3" />
@@ -1242,12 +1242,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
   <line x1="1" y1="0" x2="1" y2="1" stroke="#888" stroke-opacity="0.3" stroke-width="0.06" />
   <line x1="0" y1="1" x2="1" y2="1" stroke="#888" stroke-opacity="0.3" stroke-width="0.06" />
   </pattern>
-  ${zo.map((t=>Rr(t)))}
-  ${Rr("ConductingEquipment")}
-  ${Or}
+  ${zo.map((t=>Or(t)))}
+  ${Or("ConductingEquipment")}
   ${Dr}
+  ${zr}
   </defs>
-`,Pr={ConductingEquipment:["Bay"],Bay:["VoltageLevel"],VoltageLevel:["Substation"],PowerTransformer:["Bay","VoltageLevel","Substation"]};function Fr(t){return new CustomEvent("oscd-edit-wizard-request",{bubbles:!0,composed:!0,detail:{element:t}})}function Mr([t,e,i,n],[o,r,a,d]){return t<=o&&e<=r&&t+i>=o+a&&e+n>=r+d}function $r(t,e,i,n,o){const{pos:[r,a],dim:[d,s]}=Uo(t);return Mr([r,a,d,s],[e,i,n,o])}function Br(t){var e;const i=t.classList;i.contains("handle")||i.contains("preview")||i.contains("port")||i.contains("label")&&i.contains("container")?t.remove():((i.contains("voltagelevel")||i.contains("bay"))&&(null===(e=t.querySelector("rect"))||void 0===e||e.remove()),Array.from(t.childNodes).forEach((e=>{8===e.nodeType&&t.removeChild(e),1===e.nodeType&&Br(e)})))}function Hr(t,e,i){return t<=e&&e<=i||i<=e&&e<=t}function Vr([t,e],[i,n],[o,r]){return t===i&&t===o&&Hr(n,e,r)||e===n&&e===r&&Hr(i,t,o)}function Ur([t,e],[i,n]){return Math.abs(t-i)+Math.abs(e-n)}function Gr(t,e,i){let n=e;const o=function(t,e){const i=[],n=t[0]===e[0]?1:0;let o=t[n]<e[n]?t:e;const r=o===t?e:t;for(o=o.slice(),o[n]=Math.floor(2*o[n])/2;o[n]<=r[n];)i.push(o),o=o.slice(),o[n]+=.5;return i}(e,i);return o.forEach((e=>{Ur(e,t)<Ur(n,t)&&(n=e)})),n}function qr(t){let e=t.length-2;for(;e>0;){const[i,n]=t[e],[o,r]=t[e+1],[a,d]=t[e-1];(i===o&&n===r||i===o&&i===a||n===r&&n===d)&&t.splice(e,1),e-=1}}function jr(t){return"Bay"===t.tagName&&!Vo(t)}function Wr(t){1===t.button&&t.preventDefault()}function Yr(t,e){const i=t.cloneNode(!0),n=new Set(Array.from(t.querySelectorAll("Terminal, NeutralPoint"))),o=new Set(Array.from(t.querySelectorAll("ConnectivityNode")));n.forEach((e=>{const i=t.ownerDocument.querySelector(`ConnectivityNode[pathName="${e.getAttribute("connectivityNode")}"]`);i&&o.add(i)}));const r=new Set;return o.forEach((e=>{(Array.from(t.ownerDocument.querySelectorAll(`[connectivityNode="${e.getAttribute("pathName")}"]`)).find((t=>!n.has(t)))||Vo(e.closest("Bay"))&&e.closest(t.tagName)!==t)&&r.add(e)})),r.forEach((e=>{var o,r,a;e.closest(t.tagName)===t&&(Vo(e.closest("Bay"))?null===(r=null===(o=i.querySelector(`ConnectivityNode[pathName="${e.getAttribute("pathName")}"]`))||void 0===o?void 0:o.closest("Bay"))||void 0===r||r.remove():null===(a=i.querySelector(`ConnectivityNode[pathName="${e.getAttribute("pathName")}"]`))||void 0===a||a.remove()),n.forEach((t=>{var n;t.getAttribute("connectivityNode")===e.getAttribute("pathName")&&(null===(n=i.querySelector(`[*|uuid="${t.getAttributeNS(Oo,"uuid")}"]`))||void 0===n||n.remove())}))})),Array.from(i.querySelectorAll("Terminal, NeutralPoint")).forEach((t=>{const n=t.getAttributeNS(Oo,"uuid");if(!n)return;const o=$o();Array.from(i.querySelectorAll(`Vertex[*|uuid="${n}"`)).forEach((t=>t.setAttributeNS(Oo,`${e}:uuid`,o))),t.setAttributeNS(Oo,`${e}:uuid`,o)})),i}function Xr(t){const e=t.getAttribute("name")||t.tagName;let i=t.getAttribute("desc");const n=t.getAttribute("type");n&&(i=i?U`${n} &mdash; ${i}`:n);let o=Lr(null);if("PowerTransformer"===t.tagName){const e=t.querySelectorAll("TransformerWinding").length,{kind:i}=Uo(t);o=3===e?wr(3,{slot:"graphic"}):wr(2===e?2:1,{slot:"graphic",kind:i})}else"TransformerWinding"===t.tagName?o=wr(1,{slot:"graphic"}):"ConductingEquipment"===t.tagName?o=Lr(n):"Bay"===t.tagName&&Vo(t)?o=U`<mwc-icon slot="graphic">horizontal_rule</mwc-icon>`:"Bay"===t.tagName?o=Cr:"VoltageLevel"===t.tagName?o=Er:"Text"===t.tagName&&(o=U`<mwc-icon slot="graphic">title</mwc-icon>`,i=t.textContent);return U`<mwc-list-item ?twoline=${i} graphic="avatar" noninteractive>
+`,Fr={ConductingEquipment:["Bay"],Bay:["VoltageLevel"],VoltageLevel:["Substation"],PowerTransformer:["Bay","VoltageLevel","Substation"]};function Mr(t){return new CustomEvent("oscd-edit-wizard-request",{bubbles:!0,composed:!0,detail:{element:t}})}function $r([t,e,i,n],[o,r,a,d]){return t<=o&&e<=r&&t+i>=o+a&&e+n>=r+d}function Br(t,e,i,n,o){const{pos:[r,a],dim:[d,s]}=Uo(t);return $r([r,a,d,s],[e,i,n,o])}function Hr(t){var e;const i=t.classList;i.contains("handle")||i.contains("preview")||i.contains("port")||i.contains("label")&&i.contains("container")?t.remove():((i.contains("voltagelevel")||i.contains("bay"))&&(null===(e=t.querySelector("rect"))||void 0===e||e.remove()),Array.from(t.childNodes).forEach((e=>{8===e.nodeType&&t.removeChild(e),1===e.nodeType&&Hr(e)})))}function Vr(t,e,i){return t<=e&&e<=i||i<=e&&e<=t}function Ur([t,e],[i,n],[o,r]){return t===i&&t===o&&Vr(n,e,r)||e===n&&e===r&&Vr(i,t,o)}function Gr([t,e],[i,n]){return Math.abs(t-i)+Math.abs(e-n)}function qr(t,e,i){let n=e;const o=function(t,e){const i=[],n=t[0]===e[0]?1:0;let o=t[n]<e[n]?t:e;const r=o===t?e:t;for(o=o.slice(),o[n]=Math.floor(2*o[n])/2;o[n]<=r[n];)i.push(o),o=o.slice(),o[n]+=.5;return i}(e,i);return o.forEach((e=>{Gr(e,t)<Gr(n,t)&&(n=e)})),n}function jr(t){let e=t.length-2;for(;e>0;){const[i,n]=t[e],[o,r]=t[e+1],[a,d]=t[e-1];(i===o&&n===r||i===o&&i===a||n===r&&n===d)&&t.splice(e,1),e-=1}}function Wr(t){return"Bay"===t.tagName&&!Vo(t)}function Yr(t){1===t.button&&t.preventDefault()}function Xr(t,e){const i=t.cloneNode(!0),n=new Set(Array.from(t.querySelectorAll("Terminal, NeutralPoint"))),o=new Set(Array.from(t.querySelectorAll("ConnectivityNode")));n.forEach((e=>{const i=t.ownerDocument.querySelector(`ConnectivityNode[pathName="${e.getAttribute("connectivityNode")}"]`);i&&o.add(i)}));const r=new Set;return o.forEach((e=>{(Array.from(t.ownerDocument.querySelectorAll(`[connectivityNode="${e.getAttribute("pathName")}"]`)).find((t=>!n.has(t)))||Vo(e.closest("Bay"))&&e.closest(t.tagName)!==t)&&r.add(e)})),r.forEach((e=>{var o,r,a;e.closest(t.tagName)===t&&(Vo(e.closest("Bay"))?null===(r=null===(o=i.querySelector(`ConnectivityNode[pathName="${e.getAttribute("pathName")}"]`))||void 0===o?void 0:o.closest("Bay"))||void 0===r||r.remove():null===(a=i.querySelector(`ConnectivityNode[pathName="${e.getAttribute("pathName")}"]`))||void 0===a||a.remove()),n.forEach((t=>{var n;t.getAttribute("connectivityNode")===e.getAttribute("pathName")&&(null===(n=i.querySelector(`[*|uuid="${t.getAttributeNS(Oo,"uuid")}"]`))||void 0===n||n.remove())}))})),Array.from(i.querySelectorAll("Terminal, NeutralPoint")).forEach((t=>{const n=t.getAttributeNS(Oo,"uuid");if(!n)return;const o=$o();Array.from(i.querySelectorAll(`Vertex[*|uuid="${n}"`)).forEach((t=>t.setAttributeNS(Oo,`${e}:uuid`,o))),t.setAttributeNS(Oo,`${e}:uuid`,o)})),i}function Kr(t){const e=t.getAttribute("name")||t.tagName;let i=t.getAttribute("desc");const n=t.getAttribute("type");n&&(i=i?U`${n} &mdash; ${i}`:n);let o=Rr(null);if("PowerTransformer"===t.tagName){const e=t.querySelectorAll("TransformerWinding").length,{kind:i}=Uo(t);o=3===e?Ar(3,{slot:"graphic"}):Ar(2===e?2:1,{slot:"graphic",kind:i})}else"TransformerWinding"===t.tagName?o=Ar(1,{slot:"graphic"}):"ConductingEquipment"===t.tagName?o=Rr(n):"Bay"===t.tagName&&Vo(t)?o=U`<mwc-icon slot="graphic">horizontal_rule</mwc-icon>`:"Bay"===t.tagName?o=kr:"VoltageLevel"===t.tagName?o=Sr:"Text"===t.tagName&&(o=U`<mwc-icon slot="graphic">title</mwc-icon>`,i=t.textContent);return U`<mwc-list-item ?twoline=${i} graphic="avatar" noninteractive>
     <span>${e}</span>
     ${i?U`<span
           slot="secondary"
@@ -1256,16 +1256,16 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
           ${i}
         </span>`:j}
     ${o}
-  </mwc-list-item>`}let Kr=class extends pt{constructor(){super(...arguments),this.editCount=-1,this.gridSize=32,this.nsp="esld",this.placingOffset=[0,0],this.mouseX=0,this.mouseY=0,this.mouseX2=0,this.mouseY2=0,this.mouseX2f=0,this.mouseY2f=0,this.coordinatesRef=new hi,this.handleKeydown=({key:t})=>{"Escape"===t&&(this.menu=void 0)},this.handleClick=t=>{this.menu&&!t.composedPath().find((t=>"id"in t&&"sld-context-menu"===t.id))&&(t.stopImmediatePropagation(),this.menu=void 0)}}get idle(){return!(this.placing||this.resizingBR||this.resizingTL||this.placingLabel||this.connecting)}positionCoordinates(t){var e;const i=null===(e=this.coordinatesRef)||void 0===e?void 0:e.value;i&&(i.style.top=`${t.clientY}px`,i.style.left=`${t.clientX+16}px`)}openMenu(t,e){this.idle&&(this.menu={element:t,left:e.clientX,top:e.clientY}),e.preventDefault()}svgCoordinates(t,e){const i=new DOMPoint(t,e),{x:n,y:o}=i.matrixTransform(this.sld.getScreenCTM().inverse());return[n,o].map((t=>Math.max(0,t)))}canPlaceAt(t,e,i,n,o){if("Substation"===t.tagName)return!0;const r=Array.from(this.substation.querySelectorAll(`${t.tagName}, PowerTransformer`)).find((r=>r.closest(t.tagName)!==t&&function(t,e,i,n,o){const{pos:[r,a],dim:[d,s]}=Uo(t);return function([t,e,i,n],[o,r,a,d]){return!(t>=o+a||o>=t+i||e>=r+d||r>=e+n)}([r,a,d,s],[e,i,n,o])}(r,e,i,n,o)&&!Vo(r)));if(r&&!Vo(t))return!1;return!!("VoltageLevel"===t.tagName||"PowerTransformer"===t.tagName?$r(this.substation,e,i,n,o):Array.from(this.substation.querySelectorAll(Pr[t.tagName].join(","))).find((t=>!Vo(t)&&$r(t,e,i,n,o))))}canResizeTo(t,e,i){const{pos:[n,o],dim:[r,a]}=Uo(t);if(!this.canPlaceAt(t,n,o,e,i)&&this.canPlaceAt(t,n,o,r,a))return!1;const d=Array.from(t.children).find((r=>{var a;if(!(null===(a=Pr[r.tagName])||void 0===a?void 0:a.includes(t.tagName)))return!1;const{pos:[d,s],dim:[l,c]}=Uo(r);return!Mr([n,o,e,i],[d,s,l,c])}));return!d}canResizeToTL(t,e,i,n,o){if(!this.canPlaceAt(t,e,i,n,o))return!1;const r=Array.from(t.children).find((r=>{var a;if(!(null===(a=Pr[r.tagName])||void 0===a?void 0:a.includes(t.tagName)))return!1;const{pos:[d,s],dim:[l,c]}=Uo(r);return!Mr([e,i,n,o],[d,s,l,c])}));return!r}renderedLabelPosition(t){let{label:[e,i]}=Uo(t);if(this.placing&&t.closest(this.placing.tagName)===this.placing){const{pos:[t,n]}=Uo(this.placing),[o,r]=this.placingOffset;e+=this.mouseX-t-o,i+=this.mouseY-n-r}if(this.resizingTL===t){const{pos:[n,o],dim:[r,a]}=Uo(t);n===e&&o===i&&(e+=Math.min(this.mouseX,n+r-1)-n,i+=Math.min(this.mouseY,o+a-1)-o)}return this.placingLabel===t&&(e=this.mouseX2-.5,i=this.mouseY2+.5),[e,i]}renderedPosition(t){let{pos:[e,i]}=Uo(t);if(this.placing&&t.closest(this.placing.tagName)===this.placing){const{pos:[t,n]}=Uo(this.placing),[o,r]=this.placingOffset;e+=this.mouseX-t-o,i+=this.mouseY-n-r}return[e,i]}connectedCallback(){super.connectedCallback(),window.addEventListener("keydown",this.handleKeydown),window.addEventListener("click",this.handleClick,!0),window.addEventListener("click",this.positionCoordinates)}disconnectedCallback(){super.disconnectedCallback(),window.removeEventListener("keydown",this.handleKeydown),window.removeEventListener("click",this.handleClick),window.removeEventListener("click",this.positionCoordinates)}saveSVG(){const t=this.sld.cloneNode(!0);Br(t);const e=new Blob([(i=t,(new XMLSerializer).serializeToString(dr.transformToDocument(i)))],{type:"application/xml"});var i;const n=document.createElement("a");n.download=`${this.substation.getAttribute("name")}.svg`,n.href=URL.createObjectURL(e),n.dataset.downloadurl=["application/xml",n.download,n.href].join(":"),n.style.display="none",document.body.appendChild(n),n.click(),document.body.removeChild(n),setTimeout((()=>{URL.revokeObjectURL(n.href)}),5e3)}nearestOpenTerminal(t){if(!t)return;const e=t.querySelector('Terminal[name="T1"]'),i=t.querySelector('Terminal:not([name="T1"])'),n=Mo.has(t.getAttribute("type"));if(e&&i)return;if(n&&(e||i))return;if(n)return"T1";if(e)return"T2";if(i)return"T1";const[o,r]=[this.mouseX2f,this.mouseY2f],{rot:a,pos:[d,s]}=Uo(t);return 0===a&&r>=s+.5||1===a&&o<d+.5||2===a&&r<s+.5||3===a&&o>=d+.5?"T2":"T1"}groundTerminal(t,e){const i=e.startsWith("N"),n=t.closest("Bay");if(!n)return void this.groundHint.show();const o=[];let r=n.querySelector(':scope > ConnectivityNode[name="grounded"]'),a=null==r?void 0:r.getAttribute("pathName");a||(a=Go(n,"grounded"),r=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"ConnectivityNode"),r.setAttribute("name","grounded"),r.setAttribute("pathName",a),o.push({parent:n,node:r,reference:re(n,"ConnectivityNode")}));const d=i?"NeutralPoint":"Terminal",s=this.doc.createElementNS(this.doc.documentElement.namespaceURI,d);s.setAttribute("name",e),s.setAttribute("cNodeName","grounded");const l=n.closest("Substation").getAttribute("name");l&&s.setAttribute("substationName",l);const c=n.closest("VoltageLevel").getAttribute("name");c&&s.setAttribute("voltageLevelName",c);const p=n.getAttribute("name");p&&s.setAttribute("bayName",p),s.setAttribute("connectivityNode",a),o.push({parent:t,node:s,reference:re(t,d)}),this.dispatchEvent(Tt(o))}flipElement(t){const{flip:e,kind:i}=Uo(t),n=[{element:t,attributes:{[`${this.nsp}:flip`]:{namespaceURI:Oo,value:e?null:"true"}}}];if("PowerTransformer"===t.tagName){const e=t.querySelector("TransformerWinding");Array.from(e.querySelectorAll("Terminal")).forEach((t=>n.push(...Ko(t)))),"earthing"===i&&Array.from(e.querySelectorAll("NeutralPoint")).forEach((t=>n.push(...Ko(t))))}this.dispatchEvent(Tt(n))}addTextTo(t){const{pos:[e,i]}=Uo(t),n=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"Text");n.setAttributeNS(Oo,`${this.nsp}:lx`,e.toString()),n.setAttributeNS(Oo,`${this.nsp}:ly`,(i<2?i+1:i-1).toString()),this.dispatchEvent(Tt({node:n,parent:t,reference:re(t,"Text")}))}transformerWindingMenuItems(t){const e=t.querySelector("TapChanger"),i=[{content:U`<mwc-list-item graphic="icon">
+  </mwc-list-item>`}let Zr=class extends pt{constructor(){super(...arguments),this.editCount=-1,this.gridSize=32,this.nsp="esld",this.placingOffset=[0,0],this.mouseX=0,this.mouseY=0,this.mouseX2=0,this.mouseY2=0,this.mouseX2f=0,this.mouseY2f=0,this.coordinatesRef=new hi,this.handleKeydown=({key:t})=>{"Escape"===t&&(this.menu=void 0)},this.handleClick=t=>{this.menu&&!t.composedPath().find((t=>"id"in t&&"sld-context-menu"===t.id))&&(t.stopImmediatePropagation(),this.menu=void 0)}}get idle(){return!(this.placing||this.resizingBR||this.resizingTL||this.placingLabel||this.connecting)}positionCoordinates(t){var e;const i=null===(e=this.coordinatesRef)||void 0===e?void 0:e.value;i&&(i.style.top=`${t.clientY}px`,i.style.left=`${t.clientX+16}px`)}openMenu(t,e){this.idle&&(this.menu={element:t,left:e.clientX,top:e.clientY}),e.preventDefault()}svgCoordinates(t,e){const i=new DOMPoint(t,e),{x:n,y:o}=i.matrixTransform(this.sld.getScreenCTM().inverse());return[n,o].map((t=>Math.max(0,t)))}canPlaceAt(t,e,i,n,o){if("Substation"===t.tagName)return!0;const r=Array.from(this.substation.querySelectorAll(`${t.tagName}, PowerTransformer`)).find((r=>r.closest(t.tagName)!==t&&function(t,e,i,n,o){const{pos:[r,a],dim:[d,s]}=Uo(t);return function([t,e,i,n],[o,r,a,d]){return!(t>=o+a||o>=t+i||e>=r+d||r>=e+n)}([r,a,d,s],[e,i,n,o])}(r,e,i,n,o)&&!Vo(r)));if(r&&!Vo(t))return!1;return!!("VoltageLevel"===t.tagName||"PowerTransformer"===t.tagName?Br(this.substation,e,i,n,o):Array.from(this.substation.querySelectorAll(Fr[t.tagName].join(","))).find((t=>!Vo(t)&&Br(t,e,i,n,o))))}canResizeTo(t,e,i){const{pos:[n,o],dim:[r,a]}=Uo(t);if(!this.canPlaceAt(t,n,o,e,i)&&this.canPlaceAt(t,n,o,r,a))return!1;const d=Array.from(t.children).find((r=>{var a;if(!(null===(a=Fr[r.tagName])||void 0===a?void 0:a.includes(t.tagName)))return!1;const{pos:[d,s],dim:[l,c]}=Uo(r);return!$r([n,o,e,i],[d,s,l,c])}));return!d}canResizeToTL(t,e,i,n,o){if(!this.canPlaceAt(t,e,i,n,o))return!1;const r=Array.from(t.children).find((r=>{var a;if(!(null===(a=Fr[r.tagName])||void 0===a?void 0:a.includes(t.tagName)))return!1;const{pos:[d,s],dim:[l,c]}=Uo(r);return!$r([e,i,n,o],[d,s,l,c])}));return!r}renderedLabelPosition(t){let{label:[e,i]}=Uo(t);const[n,o]=this.placingOffset;if(this.placing&&t.closest(this.placing.tagName)===this.placing){const{pos:[t,r]}=Uo(this.placing);e+=this.mouseX-t-n,i+=this.mouseY-r-o}if(this.placingLabel===t&&(e=this.mouseX2-.5-n,i=this.mouseY2+.5-o),this.resizingTL===t){const{pos:[n,o],dim:[r,a]}=Uo(t);n===e&&o===i&&(e+=Math.min(this.mouseX,n+r-1)-n,i+=Math.min(this.mouseY,o+a-1)-o)}return[e,i]}renderedPosition(t){let{pos:[e,i]}=Uo(t);if(this.placing&&t.closest(this.placing.tagName)===this.placing){const{pos:[t,n]}=Uo(this.placing),[o,r]=this.placingOffset;e+=this.mouseX-t-o,i+=this.mouseY-n-r}return[e,i]}connectedCallback(){super.connectedCallback(),window.addEventListener("keydown",this.handleKeydown),window.addEventListener("click",this.handleClick,!0),window.addEventListener("click",this.positionCoordinates)}disconnectedCallback(){super.disconnectedCallback(),window.removeEventListener("keydown",this.handleKeydown),window.removeEventListener("click",this.handleClick),window.removeEventListener("click",this.positionCoordinates)}saveSVG(){const t=this.sld.cloneNode(!0);Hr(t);const e=new Blob([sr(t)],{type:"application/xml"}),i=document.createElement("a");i.download=`${this.substation.getAttribute("name")}.svg`,i.href=URL.createObjectURL(e),i.dataset.downloadurl=["application/xml",i.download,i.href].join(":"),i.style.display="none",document.body.appendChild(i),i.click(),document.body.removeChild(i),setTimeout((()=>{URL.revokeObjectURL(i.href)}),5e3)}nearestOpenTerminal(t){if(!t)return;const e=t.querySelector('Terminal[name="T1"]'),i=t.querySelector('Terminal:not([name="T1"])'),n=Mo.has(t.getAttribute("type"));if(e&&i)return;if(n&&(e||i))return;if(n)return"T1";if(e)return"T2";if(i)return"T1";const[o,r]=[this.mouseX2f,this.mouseY2f],{rot:a,pos:[d,s]}=Uo(t);return 0===a&&r>=s+.5||1===a&&o<d+.5||2===a&&r<s+.5||3===a&&o>=d+.5?"T2":"T1"}groundTerminal(t,e){const i=e.startsWith("N"),n=t.closest("Bay");if(!n)return void this.groundHint.show();const o=[];let r=n.querySelector(':scope > ConnectivityNode[name="grounded"]'),a=null==r?void 0:r.getAttribute("pathName");a||(a=Go(n,"grounded"),r=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"ConnectivityNode"),r.setAttribute("name","grounded"),r.setAttribute("pathName",a),o.push({parent:n,node:r,reference:re(n,"ConnectivityNode")}));const d=i?"NeutralPoint":"Terminal",s=this.doc.createElementNS(this.doc.documentElement.namespaceURI,d);s.setAttribute("name",e),s.setAttribute("cNodeName","grounded");const l=n.closest("Substation").getAttribute("name");l&&s.setAttribute("substationName",l);const c=n.closest("VoltageLevel").getAttribute("name");c&&s.setAttribute("voltageLevelName",c);const p=n.getAttribute("name");p&&s.setAttribute("bayName",p),s.setAttribute("connectivityNode",a),o.push({parent:t,node:s,reference:re(t,d)}),this.dispatchEvent(Tt(o))}flipElement(t){const{flip:e,kind:i}=Uo(t),n=[{element:t,attributes:{[`${this.nsp}:flip`]:{namespaceURI:Oo,value:e?null:"true"}}}];if("PowerTransformer"===t.tagName){const e=t.querySelector("TransformerWinding");Array.from(e.querySelectorAll("Terminal")).forEach((t=>n.push(...Ko(t)))),"earthing"===i&&Array.from(e.querySelectorAll("NeutralPoint")).forEach((t=>n.push(...Ko(t))))}this.dispatchEvent(Tt(n))}addTextTo(t){const{pos:[e,i]}=Uo(t),n=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"Text");n.setAttributeNS(Oo,`${this.nsp}:lx`,e.toString()),n.setAttributeNS(Oo,`${this.nsp}:ly`,(i<2?i+1:i-1).toString()),this.dispatchEvent(Tt({node:n,parent:t,reference:re(t,"Text")}))}transformerWindingMenuItems(t){const e=t.querySelector("TapChanger"),i=[{content:U`<mwc-list-item graphic="icon">
           <span>Edit${e?" Winding":j}</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(Fr(t))}];e?i.unshift({handler:()=>this.dispatchEvent(Tt({node:e})),content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(Mr(t))}];e?i.unshift({handler:()=>this.dispatchEvent(Tt({node:e})),content:U`<mwc-list-item graphic="icon">
             <span>Remove Tap Changer</span>
             <mwc-icon slot="graphic">remove</mwc-icon>
           </mwc-list-item>`},{content:U`<mwc-list-item graphic="icon">
             <span>Edit Tap Changer</span>
             <mwc-icon slot="graphic">edit</mwc-icon>
-          </mwc-list-item>`,handler:()=>this.dispatchEvent(Fr(e))}):i.unshift({handler:()=>{const e=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"TapChanger");e.setAttribute("name","LTC"),e.setAttribute("type","LTC"),e.setAttribute("name",Yo(e,t)),this.dispatchEvent(Tt({parent:t,node:e,reference:re(t,"TapChanger")}))},content:U`<mwc-list-item graphic="icon">
+          </mwc-list-item>`,handler:()=>this.dispatchEvent(Mr(e))}):i.unshift({handler:()=>{const e=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"TapChanger");e.setAttribute("name","LTC"),e.setAttribute("type","LTC"),e.setAttribute("name",Yo(e,t)),this.dispatchEvent(Tt({parent:t,node:e,reference:re(t,"TapChanger")}))},content:U`<mwc-list-item graphic="icon">
           <span>Add Tap Changer</span>
           <mwc-icon slot="graphic">north_east</mwc-icon>
         </mwc-list-item>`});const n=Array.from(t.querySelectorAll("NeutralPoint"));n.length&&i.unshift({handler:()=>this.dispatchEvent(Tt(n.map((t=>Ko(t))))),content:U`<mwc-list-item graphic="icon">
@@ -1280,7 +1280,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
         </mwc-list-item>`,handler:()=>{this.dispatchEvent(tr(t))}},{content:U`<mwc-list-item graphic="icon">
           <span>Copy</span>
           <mwc-icon slot="graphic">copy_all</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(Yr(t,this.nsp),o))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(Xr(t,this.nsp),o))},{content:U`<mwc-list-item graphic="icon">
           <span>Move</span>
           <svg
             xmlns="${Do}"
@@ -1289,12 +1289,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             slot="graphic"
             viewBox="0 96 960 960"
           >
-            ${pr}
+            ${mr}
           </svg>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t,o))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t,o))},{content:U`<mwc-list-item graphic="icon">
           <span>Move Label</span>
           <mwc-icon slot="graphic">text_rotation_none</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t))},e?{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t))},e?{content:U`<mwc-list-item graphic="icon">
               <span>Delete Text</span>
               <mwc-icon slot="graphic">format_strikethrough</mwc-icon>
             </mwc-list-item>`,handler:()=>this.dispatchEvent(Tt({node:e}))}:{content:U`<mwc-list-item graphic="icon">
@@ -1303,7 +1303,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             </mwc-list-item>`,handler:()=>this.addTextTo(t)},{content:U`<mwc-list-item graphic="icon">
           <span>Edit</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(Fr(t))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(Mr(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Delete</span>
           <mwc-icon slot="graphic">delete</mwc-icon>
         </mwc-list-item>`,handler:()=>{const e=[];Array.from(t.querySelectorAll("Terminal, NeutralPoint")).forEach((t=>e.push(...Ko(t)))),e.push({node:t}),this.dispatchEvent(Tt(e))}}],a=t.getAttributeNS(Oo,"kind"),d=t.querySelectorAll("TransformerWinding").length;return("auto"===a||"earthing"===a&&2===d)&&r.unshift({content:U`<mwc-list-item graphic="icon">
@@ -1318,7 +1318,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
         </mwc-list-item>`,handler:()=>{this.dispatchEvent(tr(t))}},{content:U`<mwc-list-item graphic="icon">
           <span>Copy</span>
           <mwc-icon slot="graphic">copy_all</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(Yr(t,this.nsp)))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(Xr(t,this.nsp)))},{content:U`<mwc-list-item graphic="icon">
           <span>Move</span>
           <svg
             xmlns="${Do}"
@@ -1327,12 +1327,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             slot="graphic"
             viewBox="0 96 960 960"
           >
-            ${pr}
+            ${mr}
           </svg>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Move Label</span>
           <mwc-icon slot="graphic">text_rotation_none</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t))},e?{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t))},e?{content:U`<mwc-list-item graphic="icon">
               <span>Remove Text</span>
               <mwc-icon slot="graphic">format_strikethrough</mwc-icon>
             </mwc-list-item>`,handler:()=>this.dispatchEvent(Tt({node:e}))}:{content:U`<mwc-list-item graphic="icon">
@@ -1341,7 +1341,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             </mwc-list-item>`,handler:()=>this.addTextTo(t)},{content:U`<mwc-list-item graphic="icon">
           <span>Edit</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(Fr(t))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(Mr(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Delete</span>
           <mwc-icon slot="graphic">delete</mwc-icon>
         </mwc-list-item>`,handler:()=>{const e=[];Array.from(t.querySelectorAll("Terminal")).forEach((t=>e.push(...Ko(t)))),e.push({node:t}),this.dispatchEvent(Tt(e))}}],{rot:n}=Uo(t),o={connect:["north","east","south","west"],ground:["expand_less","chevron_right","expand_more","chevron_left"],disconnect:["arrow_drop_up","arrow_right","arrow_drop_down","arrow_left"]},r={connect:["Connect top","Connect right","Connect bottom","Connect left"],ground:["Ground top","Ground right","Ground bottom","Ground left"],disconnect:["Detach top","Detach right","Detach bottom","Detach left"]},a=(t,e)=>U`<mwc-list-item graphic="icon">
@@ -1356,7 +1356,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             height="24"
             viewBox="0 96 960 960"
           >
-            ${cr}
+            ${pr}
           </svg>
         </mwc-list-item>`,handler:()=>this.dispatchEvent(ir(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Move</span>
@@ -1367,12 +1367,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             slot="graphic"
             viewBox="0 96 960 960"
           >
-            ${pr}
+            ${mr}
           </svg>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t,o))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t,o))},{content:U`<mwc-list-item graphic="icon">
           <span>Move Label</span>
           <mwc-icon slot="graphic">text_rotation_none</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t))},e?{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t))},e?{content:U`<mwc-list-item graphic="icon">
               <span>Remove Text</span>
               <mwc-icon slot="graphic">format_strikethrough</mwc-icon>
             </mwc-list-item>`,handler:()=>this.dispatchEvent(Tt({node:e}))}:{content:U`<mwc-list-item graphic="icon">
@@ -1381,7 +1381,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             </mwc-list-item>`,handler:()=>this.addTextTo(t)},{content:U`<mwc-list-item graphic="icon">
           <span>Edit</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(Fr(t))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(Mr(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Delete</span>
           <mwc-icon slot="graphic">delete</mwc-icon>
         </mwc-list-item>`,handler:()=>{const e=t.querySelector("ConnectivityNode");this.dispatchEvent(Tt([...qo(e),{node:t}]))}}]}containerMenuItems(t){const e=t.querySelector(":scope > Text"),{pos:[i,n]}=Uo(t),o=[this.mouseX-i,this.mouseY-n];return[{content:U`<mwc-list-item graphic="icon">
@@ -1393,12 +1393,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             height="24"
             viewBox="0 96 960 960"
           >
-            ${cr}
+            ${pr}
           </svg>
         </mwc-list-item>`,handler:()=>this.dispatchEvent(ir(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Copy</span>
           <mwc-icon slot="graphic">copy_all</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(Yr(t,this.nsp),o))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(Xr(t,this.nsp),o))},{content:U`<mwc-list-item graphic="icon">
           <span>Move</span>
           <svg
             xmlns="${Do}"
@@ -1407,12 +1407,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             slot="graphic"
             viewBox="0 96 960 960"
           >
-            ${pr}
+            ${mr}
           </svg>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t,o))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t,o))},{content:U`<mwc-list-item graphic="icon">
           <span>Move Label</span>
           <mwc-icon slot="graphic">text_rotation_none</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t))},e?{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t))},e?{content:U`<mwc-list-item graphic="icon">
               <span>Remove Text</span>
               <mwc-icon slot="graphic">format_strikethrough</mwc-icon>
             </mwc-list-item>`,handler:()=>this.dispatchEvent(Tt({node:e}))}:{content:U`<mwc-list-item graphic="icon">
@@ -1421,7 +1421,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             </mwc-list-item>`,handler:()=>this.addTextTo(t)},{content:U`<mwc-list-item graphic="icon">
           <span>Edit</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(Fr(t))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(Mr(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Delete</span>
           <mwc-icon slot="graphic">delete</mwc-icon>
         </mwc-list-item>`,handler:()=>{const e=[];Array.from(t.getElementsByTagName("ConnectivityNode")).forEach((i=>{Array.from(this.doc.querySelectorAll(`[connectivityNode="${i.getAttribute("pathName")}"]`)).find((e=>e.closest(t.tagName)!==t))&&e.push(...qo(i))})),Array.from(t.querySelectorAll("Terminal, NeutralPoint")).forEach((i=>{const n=this.doc.querySelector(`ConnectivityNode[pathName="${i.getAttribute("connectivityNode")}"]`);n&&n.closest(t.tagName)!==t&&e.push(...qo(n))})),e.push({node:t}),this.dispatchEvent(Tt(e))}}]}textMenuItems(t){const{weight:e,color:i}=Uo(t),n=[{content:U`<mwc-list-item graphic="icon">
@@ -1436,12 +1436,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             slot="graphic"
             viewBox="0 96 960 960"
           >
-            ${pr}
+            ${mr}
           </svg>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(nr(t))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(or(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Edit</span>
           <mwc-icon slot="graphic">edit</mwc-icon>
-        </mwc-list-item>`,handler:()=>this.dispatchEvent(Fr(t))},{content:U`<mwc-list-item graphic="icon">
+        </mwc-list-item>`,handler:()=>this.dispatchEvent(Mr(t))},{content:U`<mwc-list-item graphic="icon">
           <span>Delete</span>
           <mwc-icon slot="graphic">delete</mwc-icon>
         </mwc-list-item>`,handler:()=>{this.dispatchEvent(Tt({node:t}))}}];return 500!==e&&n.unshift({content:U`<mwc-list-item graphic="icon">
@@ -1465,7 +1465,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
         </mwc-list-item>`,handler:()=>{this.dispatchEvent(Tt({element:t,attributes:{[`${this.nsp}:color`]:{namespaceURI:Oo,value:"#12579B"}}}))}}),"#000"!==i&&n.unshift({content:U`<mwc-list-item graphic="icon">
           <span>Reset Color</span>
           <mwc-icon slot="graphic">format_color_reset</mwc-icon>
-        </mwc-list-item>`,handler:()=>{this.dispatchEvent(Tt({element:t,attributes:{[`${this.nsp}:color`]:{namespaceURI:Oo,value:null}}}))}}),n}renderMenu(){if(!this.menu)return U``;const{element:t}=this.menu,e=[{content:Xr(t)},{content:U`<li divider role="separator"></li>`}];if("ConductingEquipment"===t.tagName)e.push(...this.equipmentMenuItems(t));else if("PowerTransformer"===t.tagName)e.push(...this.transformerMenuItems(t));else if("Bay"===t.tagName&&Vo(t))e.push(...this.busBarMenuItems(t));else if("Bay"===t.tagName||"VoltageLevel"===t.tagName)e.push(...this.containerMenuItems(t));else if("TransformerWinding"===t.tagName){e.push(...this.transformerWindingMenuItems(t));const i=t.parentElement;e.push({content:U`<li divider role="separator"></li>`}),e.push({content:Xr(i)}),e.push({content:U`<li divider role="separator"></li>`}),e.push(...this.transformerMenuItems(i))}else"Text"===t.tagName&&(e.push(...this.textMenuItems(t)),e.push({content:U`<li divider role="separator"></li>`}),e.push({content:Xr(t.parentElement)}));const i=t.hasAttribute("desc")||t.hasAttribute("type")?73:57;return U`
+        </mwc-list-item>`,handler:()=>{this.dispatchEvent(Tt({element:t,attributes:{[`${this.nsp}:color`]:{namespaceURI:Oo,value:null}}}))}}),n}renderMenu(){if(!this.menu)return U``;const{element:t}=this.menu,e=[{content:Kr(t)},{content:U`<li divider role="separator"></li>`}];if("ConductingEquipment"===t.tagName)e.push(...this.equipmentMenuItems(t));else if("PowerTransformer"===t.tagName)e.push(...this.transformerMenuItems(t));else if("Bay"===t.tagName&&Vo(t))e.push(...this.busBarMenuItems(t));else if("Bay"===t.tagName||"VoltageLevel"===t.tagName)e.push(...this.containerMenuItems(t));else if("TransformerWinding"===t.tagName){e.push(...this.transformerWindingMenuItems(t));const i=t.parentElement;e.push({content:U`<li divider role="separator"></li>`}),e.push({content:Kr(i)}),e.push({content:U`<li divider role="separator"></li>`}),e.push(...this.transformerMenuItems(i))}else"Text"===t.tagName&&(e.push(...this.textMenuItems(t)),e.push({content:U`<li divider role="separator"></li>`}),e.push({content:Kr(t.parentElement)}));const i=t.hasAttribute("desc")||t.hasAttribute("type")||"Text"===t.tagName&&t.textContent?73:57;return U`
       <menu
         id="sld-context-menu"
         style="top: ${this.menu.top-i}px; left: ${this.menu.left}px;"
@@ -1479,7 +1479,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
       </menu>
     `}render(){var t,e,i,n;const{dim:[o,r]}=Uo(this.substation),a="VoltageLevel"===(null===(t=this.placing)||void 0===t?void 0:t.tagName)?G`<rect width="100%" height="100%" fill="url(#grid)" />`:j,d="PowerTransformer"===(null===(e=this.placing)||void 0===e?void 0:e.tagName)?G`<rect width="100%" height="100%" fill="url(#grid)" />`:j,s=this.placingLabel?G`<rect width="100%" height="100%" fill="url(#halfgrid)"
       @click=${()=>{const t=this.placingLabel,[e,i]=this.renderedLabelPosition(t);this.dispatchEvent(new CustomEvent("oscd-sld-place-label",{bubbles:!0,composed:!0,detail:{element:t,x:e,y:i}}))}}
-      />`:j;let l=G``;this.placing&&("VoltageLevel"===this.placing.tagName||jr(this.placing)?l=this.renderContainer(this.placing,!0):"ConductingEquipment"===this.placing.tagName?l=this.renderEquipment(this.placing,{preview:!0}):"PowerTransformer"===this.placing.tagName?l=this.renderPowerTransformer(this.placing,!0):Vo(this.placing)&&(l=this.renderBusBar(this.placing)));let c=U``,p=!1,m=!0;if(this.placing){const{dim:[t,e]}=Uo(this.placing);m=!1;const[i,n]=this.placingOffset,o=this.mouseX-i,r=this.mouseY-n;p=!this.canPlaceAt(this.placing,o,r,t,e),c=U`${o},${r}`}if(this.resizingBR&&!Vo(this.resizingBR)){const{pos:[t,e]}=Uo(this.resizingBR),i=Math.max(1,this.mouseX-t+1),n=Math.max(1,this.mouseY-e+1);m=!1,p=!this.canResizeTo(this.resizingBR,i,n),c=U`${i}&times;${n}`}if(this.resizingTL){const{pos:[t,e],dim:[i,n]}=Uo(this.resizingTL),o=Math.max(1,t+i-this.mouseX),r=Math.max(1,e+n-this.mouseY),a=Math.min(this.mouseX,t+n-1),d=Math.min(this.mouseY,e+i-1);m=!1,p=!this.canResizeToTL(this.resizingTL,a,d,o,r),c=U`${o}&times;${r}`}const h=U`<div
+      />`:j;let l=G``;this.placing&&("VoltageLevel"===this.placing.tagName||Wr(this.placing)?l=this.renderContainer(this.placing,!0):"ConductingEquipment"===this.placing.tagName?l=this.renderEquipment(this.placing,{preview:!0}):"PowerTransformer"===this.placing.tagName?l=this.renderPowerTransformer(this.placing,!0):Vo(this.placing)&&(l=this.renderBusBar(this.placing)));let c=U``,p=!1,m=!0;if(this.placing){const{dim:[t,e]}=Uo(this.placing);m=!1;const[i,n]=this.placingOffset,o=this.mouseX-i,r=this.mouseY-n;p=!this.canPlaceAt(this.placing,o,r,t,e),c=U`${o},${r}`}if(this.resizingBR&&!Vo(this.resizingBR)){const{pos:[t,e]}=Uo(this.resizingBR),i=Math.max(1,this.mouseX-t+1),n=Math.max(1,this.mouseY-e+1);m=!1,p=!this.canResizeTo(this.resizingBR,i,n),c=U`${i}&times;${n}`}if(this.resizingTL){const{pos:[t,e],dim:[i,n]}=Uo(this.resizingTL),o=Math.max(1,t+i-this.mouseX),r=Math.max(1,e+n-this.mouseY),a=Math.min(this.mouseX,t+n-1),d=Math.min(this.mouseY,e+i-1);m=!1,p=!this.canResizeToTL(this.resizingTL,a,d,o,r),c=U`${o}&times;${r}`}const h=U`<div
       ${fi(this.coordinatesRef)}
       class="${Fe({coordinates:!0,invalid:p,hidden:m})}"
     >
@@ -1489,13 +1489,13 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
                 stroke-linecap="square" stroke="black" />`,G`<line x1="${g}" y1="${b}" x2="${l}" y2="${c}"
                 stroke-linecap="square" stroke="black" />`,G`<line x1="${l}" y1="${c}" x2="${p}" y2="${m}"
                 stroke-linecap="square" stroke="black" />`),u.push(G`<rect width="100%" height="100%" fill="url(#grid)"
-      @click=${()=>{e[e.length-1]=[g,b],e.push([l,c]),e.push([p,m]),qr(e),this.requestUpdate(),h&&f&&this.dispatchEvent(Qo({from:t,fromTerminal:i,path:e,to:h,toTerminal:f}))}} />`)}const f=this.renderMenu();return U`<section>
+      @click=${()=>{e[e.length-1]=[g,b],e.push([l,c]),e.push([p,m]),jr(e),this.requestUpdate(),h&&f&&this.dispatchEvent(Qo({from:t,fromTerminal:i,path:e,to:h,toTerminal:f}))}} />`)}const f=this.renderMenu();return U`<section>
       <h2>
         ${this.substation.getAttribute("name")}
         <mwc-icon-button
           label="Edit Substation"
           title="Edit Substation"
-          @click=${()=>this.dispatchEvent(Fr(this.substation))}
+          @click=${()=>this.dispatchEvent(Mr(this.substation))}
           icon="edit"
         >
         </mwc-icon-button>
@@ -1511,7 +1511,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             viewBox="0 96 960 960"
             opacity="0.83"
           >
-            ${sr}
+            ${lr}
           </svg>
         </mwc-icon-button>
         <mwc-icon-button
@@ -1572,7 +1572,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             opacity: 0.75;
           }
         </style>
-        ${zr}
+        ${Pr}
         <rect width="100%" height="100%" fill="white" />
         ${a}
         ${Array.from(this.substation.children).filter((t=>"VoltageLevel"===t.tagName)).map((t=>G`${this.renderContainer(t)}`))}
@@ -1630,12 +1630,12 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
                   x="${a+.1}" dy="${0===e?j:"1.19em"}"
                   visibility="${t?j:"hidden"}">
                   ${t||"."}
-                </tspan>`)):(n="<Middle click to edit>",r="#aaa",o=500));const s="ConductingEquipment"===t.tagName?.45:.6;let l="none",c=j;this.idle&&(l="all",c=()=>this.dispatchEvent(nr(t)));const p=t.closest("Substation")===this.substation&&"Text"!==t.tagName?he(t):j,m=Fe({label:!0,container:"Bay"===t.tagName&&!Vo(t)||"VoltageLevel"===t.tagName});return G`<g class="${m}" id="label:${p}"
+                </tspan>`)):(n="<Middle click to edit>",r="#aaa",o=500));const s="ConductingEquipment"===t.tagName?.45:.6;let l="none",c=j;if(this.idle){l="all";const e=[this.mouseX2-a-.5,this.mouseY2-d+.5];c=()=>this.dispatchEvent(or(t,e))}const p=t.closest("Substation")===this.substation&&"Text"!==t.tagName?he(t):j,m=Fe({label:!0,container:"Bay"===t.tagName&&!Vo(t)||"VoltageLevel"===t.tagName});return G`<g class="${m}" id="label:${p}"
                  transform="rotate(${i} ${a+.5} ${d-.5})">
         <text x="${a+.1}" y="${d-.5}"
           alignment-baseline="central"
-          @mousedown=${Wr}
-          @auxclick=${e=>{1===e.button&&(this.dispatchEvent(Fr(t)),e.preventDefault())}}
+          @mousedown=${Yr}
+          @auxclick=${e=>{1===e.button&&(this.dispatchEvent(Mr(t)),e.preventDefault())}}
           @click=${c}
           @contextmenu=${e=>this.openMenu(t,e)}
           pointer-events="${l}" fill="${r}" font-weight="${o}"
@@ -1643,28 +1643,28 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
           style="cursor: default;">
           ${n}
         </text>
-      </g>`}renderContainer(t,e=!1){var i,n,o;const r="VoltageLevel"===t.tagName;if(this.placing===t&&!e)return G``;let[a,d]=this.renderedPosition(t);const s=[this.mouseX-a,this.mouseY-d];let{dim:[l,c]}=Uo(t),p=e=>{this.idle&&this.dispatchEvent(or(e.shiftKey?Yr(t,this.nsp):t,s))},m=!1;this.resizingBR===t&&(l=Math.max(1,this.mouseX-a+1),c=Math.max(1,this.mouseY-d+1),this.canResizeTo(t,l,c)?p=()=>this.dispatchEvent(new CustomEvent("oscd-sld-resize",{bubbles:!0,composed:!0,detail:{w:l,h:c,element:t}})):m=!0);const h=a+l-1,u=d+c-1;if(this.resizingTL===t&&(l=Math.max(1,a+l-this.mouseX),c=Math.max(1,d+c-this.mouseY),a=Math.min(this.mouseX,h),d=Math.min(this.mouseY,u),this.canResizeToTL(t,a,d,l,c)?p=()=>this.dispatchEvent(new CustomEvent("oscd-sld-resize-tl",{bubbles:!0,composed:!0,detail:{x:a,y:d,w:l,h:c,element:t}})):m=!0),this.placing===t){let e;e=r?this.substation:Array.from(this.substation.querySelectorAll(":root > Substation > VoltageLevel")).find((t=>$r(t,a,d,l,c))),e&&this.canPlaceAt(t,a,d,l,c)?p=()=>this.dispatchEvent(Jo({x:a,y:d,element:t,parent:e})):m=!0}let f=G``,g=G``;(r&&"Bay"===(null===(i=this.placing)||void 0===i?void 0:i.tagName)||!r&&"ConductingEquipment"===(null===(n=this.placing)||void 0===n?void 0:n.tagName))&&(f=G`<rect x="${a}" y="${d}" width="${l}" height="${c}"
+      </g>`}renderContainer(t,e=!1){var i,n,o;const r="VoltageLevel"===t.tagName;if(this.placing===t&&!e)return G``;let[a,d]=this.renderedPosition(t);const s=[this.mouseX-a,this.mouseY-d];let{dim:[l,c]}=Uo(t),p=e=>{this.idle&&this.dispatchEvent(nr(e.shiftKey?Xr(t,this.nsp):t,s))},m=!1;this.resizingBR===t&&(l=Math.max(1,this.mouseX-a+1),c=Math.max(1,this.mouseY-d+1),this.canResizeTo(t,l,c)?p=()=>this.dispatchEvent(new CustomEvent("oscd-sld-resize",{bubbles:!0,composed:!0,detail:{w:l,h:c,element:t}})):m=!0);const h=a+l-1,u=d+c-1;if(this.resizingTL===t&&(l=Math.max(1,a+l-this.mouseX),c=Math.max(1,d+c-this.mouseY),a=Math.min(this.mouseX,h),d=Math.min(this.mouseY,u),this.canResizeToTL(t,a,d,l,c)?p=()=>this.dispatchEvent(new CustomEvent("oscd-sld-resize-tl",{bubbles:!0,composed:!0,detail:{x:a,y:d,w:l,h:c,element:t}})):m=!0),this.placing===t){let e;e=r?this.substation:Array.from(this.substation.querySelectorAll(":root > Substation > VoltageLevel")).find((t=>Br(t,a,d,l,c))),e&&this.canPlaceAt(t,a,d,l,c)?p=()=>this.dispatchEvent(Jo({x:a,y:d,element:t,parent:e})):m=!0}let f=G``,g=G``;(r&&"Bay"===(null===(i=this.placing)||void 0===i?void 0:i.tagName)||!r&&"ConductingEquipment"===(null===(n=this.placing)||void 0===n?void 0:n.tagName))&&(f=G`<rect x="${a}" y="${d}" width="${l}" height="${c}"
         @click=${p} fill="url(#grid)" />`),(this.resizingBR===t||this.resizingTL===t||(null===(o=this.resizingBR)||void 0===o?void 0:o.parentElement)===t&&Vo(this.resizingBR))&&(g=G`<rect x="${a}" y="${d}" width="${l}" height="${c}"
         @click=${p||j} fill="url(#grid)" />`);const b=this.idle?G`<svg xmlns="${Do}" height="1" width="1" fill="black"
           opacity="0.83" class="handle"
           @click=${()=>this.dispatchEvent(ir(t))}
           viewBox="0 96 960 960" x="${l+a-1}" y="${c+d-1}">
           <rect fill="white" x="28.8" y="124.8" width="902.4" height="902.4" />
-          ${cr}
+          ${pr}
         </svg>`:j,v=this.idle?G`<svg xmlns="${Do}" height="1" width="1" fill="black"
           opacity="0.83" class="handle"
           @click=${()=>this.dispatchEvent(er(t))}
           viewBox="0 96 960 960" x="${a}" y="${d}">
           <rect fill="white" x="28.8" y="124.8" width="902.4" height="902.4" />
-          ${lr}
+          ${cr}
         </svg>`:j,x=!this.idle&&this.placing!==t&&this.resizingBR!==t&&this.resizingTL!==t;return G`<g id="${t.closest("Substation")===this.substation?he(t):j}" class=${Fe({voltagelevel:r,bay:!r,preview:e})} tabindex="0" pointer-events="${x?"none":"all"}" style="outline: none;">
       <rect x="${a}" y="${d}" width="${l}" height="${c}"
         @contextmenu=${e=>this.openMenu(t,e)}
-        @click=${p||j} @mousedown=${Wr}
-        @auxclick=${({clientX:e,clientY:i,button:n})=>{if(1!==n)return;const o=this.svgCoordinates(e,i);Ur(o,[a,d])<Ur(o,[h,u])?this.dispatchEvent(er(t)):this.dispatchEvent(ir(t))}}
+        @click=${p||j} @mousedown=${Yr}
+        @auxclick=${({clientX:e,clientY:i,button:n})=>{if(1!==n)return;const o=this.svgCoordinates(e,i);Gr(o,[a,d])<Gr(o,[h,u])?this.dispatchEvent(er(t)):this.dispatchEvent(ir(t))}}
         fill="white" stroke-dasharray="${r?j:"0.18"}"
         stroke="${m?"#BB1326":r?"#F5E214":"#12579B"}" />
-      ${Array.from(t.children).filter(jr).map((t=>this.renderContainer(t)))}
+      ${Array.from(t.children).filter(Wr).map((t=>this.renderContainer(t)))}
       ${Array.from(t.children).filter((t=>"ConductingEquipment"===t.tagName)).map((t=>this.renderEquipment(t)))}
       ${Array.from(t.children).filter((t=>"PowerTransformer"===t.tagName)).map((t=>this.renderPowerTransformer(t)))}
       ${e?Array.from(t.querySelectorAll("ConnectivityNode")).filter((t=>"grounded"!==t.getAttribute("name"))).map((t=>this.renderConnectivityNode(t))):j}
@@ -1673,19 +1673,22 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
       ${b}
       ${f}
       ${g}
-    </g>`}windingMeasures(t){const e=t.parentElement,i=Array.from(e.children).filter((t=>"TransformerWinding"===t.tagName)),[n,o]=this.renderedPosition(e).map((t=>t+.5));let r=[n,o];const a=.7,d={},s={};let l,c;const p=Array.from(t.children).filter((t=>"Terminal"===t.tagName)),m=p.find((t=>"T1"===t.getAttribute("name"))),h=p.find((t=>"T1"!==t.getAttribute("name"))),u=Array.from(t.children).find((t=>"NeutralPoint"===t.tagName)),f=i.indexOf(t),{rot:g,kind:b,flip:v}=Uo(e);function x(t,e,i){const n=t.slice();return 0===e?n[g%2]+=g<2?i:-i:n[(g+1)%2]+=g>0&&g<3?-i:i,n}if(1===i.length)if("earthing"===b){c="";const t=x(r,1,a);if(u){if("grounded"===u.getAttribute("cNodeName")){const e=x(t,1,.2);d.N1=[e,t]}}else s.N1=t;m||h||(s.T1=x(r,1,-.7))}else{const t=v?-1:1,e=x(r,0,-.7),i=x(r,0,a),n=x(r,1,-1.2*t),o=x(r,1,a*t);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const t=x(e,0,-.2);d.N1=[t,e]}else{const t=x(i,0,.2);d.N2=[t,i]}}else s.N1=e,s.N2=i;l={from:i,fromCtl:x(i,1,-t),to:n,toCtl:x(x(n,0,.2),1,.1*t)},m||(s.T1=n),h||(s.T2=o)}else if(2===i.length)if(1===f&&(r=x(r,1,1)),"auto"===b)if(1===f){const t=x(r,0,-.7),e=x(r,0,a);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e;m||h||(s.T1=x(r,1,a))}else{const t=v?-1:1,e=x(r,0,a*t),i=x(r,0,-1.2*t),n=x(r,1,-.7);if(l={from:n,fromCtl:x(n,0,-t),to:i,toCtl:x(x(i,1,-.2),0,.1*t)},m||(s.T1=e),h||(s.T2=i),u){if("grounded"===u.getAttribute("cNodeName")){const t=x(n,1,-.2);d.N1=[t,n]}}else s.N1=n}else if("earthing"===b)if(1===f)m||h||(s.T1=x(r,1,a));else{c=_r;const t=v?-1:1;m||h||(s.T1=x(r,0,-.7*t));const e=x(r,0,a*t);if(u){if("grounded"===u.getAttribute("cNodeName")){const i=x(e,0,.2*t);d.N1=[i,e]}}else s.N1=e}else if(1===f){const t=x(r,0,-.7),e=x(r,0,.7);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e;m||h||(s.T1=x(r,1,.7))}else{const t=x(r,0,-.7),e=x(r,0,.7);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e;m||h||(s.T1=x(r,1,-.7))}else if(3===i.length)if(0===f){m||h||(s.T1=x(r,1,-.7));const t=x(r,0,-.7),e=x(r,0,.7);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e}else if(1===f){r=x(x(r,0,.5),1,1),m||h||(s.T1=x(r,0,a));const t=x(r,1,a);if(u){if("grounded"===u.getAttribute("cNodeName")){const e=x(t,1,.2);d.N1=[e,t]}}else s.N1=t}else if(2===f){r=x(x(r,0,-.5),1,1),m||h||(s.T1=x(r,0,-.7));const t=x(r,1,a);if(u){if("grounded"===u.getAttribute("cNodeName")){const e=x(t,1,.2);d.N1=[e,t]}}else s.N1=t}return{center:r,size:a,terminals:s,grounded:d,arc:l,zigZagTransform:c}}renderTransformerWinding(t){const{size:e,center:[i,n],terminals:o,grounded:r,arc:a,zigZagTransform:d}=this.windingMeasures(t),s=[];Object.entries(r).forEach((([t,[[e,i],[n,o]]])=>{s.push(G`<line x1="${e}" y1="${i}" x2="${n}" y2="${o}" stroke="black" stroke-width="0.06" marker-start="url(#grounded)" />`)}));const l=t.closest("Bay");this.connecting||this.resizingBR||this.resizingTL||this.placingLabel||this.placing&&this.placing!==t.closest("PowerTransformer")||Object.entries(o).forEach((([e,i])=>{if(!i)return;const[n,o]=i,r=Number.isInteger(2*n)?n:n+1,a=Number.isInteger(2*o)?o:o+1,d=e.startsWith("T"),c=d?"BB1326":"12579B";s.push(G`<circle class="port" cx="${n}" cy="${o}" r="0.2" opacity="0.4"
+    </g>`}windingMeasures(t){const e=t.parentElement,i=Array.from(e.children).filter((t=>"TransformerWinding"===t.tagName)),[n,o]=this.renderedPosition(e).map((t=>t+.5));let r=[n,o];const a=.7,d={},s={};let l,c;const p=Array.from(t.children).filter((t=>"Terminal"===t.tagName)),m=p.find((t=>"T1"===t.getAttribute("name"))),h=p.find((t=>"T1"!==t.getAttribute("name"))),u=Array.from(t.children).find((t=>"NeutralPoint"===t.tagName)),f=i.indexOf(t),{rot:g,kind:b,flip:v}=Uo(e);function x(t,e,i){const n=t.slice();return 0===e?n[g%2]+=g<2?i:-i:n[(g+1)%2]+=g>0&&g<3?-i:i,n}if(1===i.length)if("earthing"===b){c="";const t=x(r,1,a);if(u){if("grounded"===u.getAttribute("cNodeName")){const e=x(t,1,.2);d.N1=[e,t]}}else s.N1=t;m||h||(s.T1=x(r,1,-.7))}else{const t=v?-1:1,e=x(r,0,-.7),i=x(r,0,a),n=x(r,1,-1.2*t),o=x(r,1,a*t);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const t=x(e,0,-.2);d.N1=[t,e]}else{const t=x(i,0,.2);d.N2=[t,i]}}else s.N1=e,s.N2=i;l={from:i,fromCtl:x(i,1,-t),to:n,toCtl:x(x(n,0,.2),1,.1*t)},m||(s.T1=n),h||(s.T2=o)}else if(2===i.length)if(1===f&&(r=x(r,1,1)),"auto"===b)if(1===f){const t=x(r,0,-.7),e=x(r,0,a);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e;m||h||(s.T1=x(r,1,a))}else{const t=v?-1:1,e=x(r,0,a*t),i=x(r,0,-1.2*t),n=x(r,1,-.7);if(l={from:n,fromCtl:x(n,0,-t),to:i,toCtl:x(x(i,1,-.2),0,.1*t)},m||(s.T1=e),h||(s.T2=i),u){if("grounded"===u.getAttribute("cNodeName")){const t=x(n,1,-.2);d.N1=[t,n]}}else s.N1=n}else if("earthing"===b)if(1===f)m||h||(s.T1=x(r,1,a));else{c=wr;const t=v?-1:1;m||h||(s.T1=x(r,0,-.7*t));const e=x(r,0,a*t);if(u){if("grounded"===u.getAttribute("cNodeName")){const i=x(e,0,.2*t);d.N1=[i,e]}}else s.N1=e}else if(1===f){const t=x(r,0,-.7),e=x(r,0,.7);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e;m||h||(s.T1=x(r,1,.7))}else{const t=x(r,0,-.7),e=x(r,0,.7);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e;m||h||(s.T1=x(r,1,-.7))}else if(3===i.length)if(0===f){m||h||(s.T1=x(r,1,-.7));const t=x(r,0,-.7),e=x(r,0,.7);if(u){if("grounded"===u.getAttribute("cNodeName"))if("N1"===u.getAttribute("name")){const e=x(t,0,-.2);d.N1=[e,t]}else{const t=x(e,0,.2);d.N2=[t,e]}}else s.N1=t,s.N2=e}else if(1===f){r=x(x(r,0,.5),1,1),m||h||(s.T1=x(r,0,a));const t=x(r,1,a);if(u){if("grounded"===u.getAttribute("cNodeName")){const e=x(t,1,.2);d.N1=[e,t]}}else s.N1=t}else if(2===f){r=x(x(r,0,-.5),1,1),m||h||(s.T1=x(r,0,-.7));const t=x(r,1,a);if(u){if("grounded"===u.getAttribute("cNodeName")){const e=x(t,1,.2);d.N1=[e,t]}}else s.N1=t}return{center:r,size:a,terminals:s,grounded:d,arc:l,zigZagTransform:c}}renderTransformerWinding(t){const{size:e,center:[i,n],terminals:o,grounded:r,arc:a,zigZagTransform:d}=this.windingMeasures(t),s=[];Object.entries(r).forEach((([t,[[e,i],[n,o]]])=>{s.push(G`<line x1="${e}" y1="${i}" x2="${n}" y2="${o}" stroke="black" stroke-width="0.06" marker-start="url(#grounded)" />`)}));const l=t.closest("Bay");this.connecting||this.resizingBR||this.resizingTL||this.placingLabel||this.placing&&this.placing!==t.closest("PowerTransformer")||Object.entries(o).forEach((([e,i])=>{if(!i)return;const[n,o]=i,r=Number.isInteger(2*n)?n:n+1,a=Number.isInteger(2*o)?o:o+1,d=e.startsWith("T"),c=d?"BB1326":"12579B";s.push(G`<circle class="port" cx="${n}" cy="${o}" r="0.2" opacity="0.4"
               @contextmenu=${i=>{d||(i.preventDefault(),i.stopImmediatePropagation(),this.idle&&this.groundTerminal(t,e))}}
               @click=${i=>{i.stopImmediatePropagation(),this.idle&&this.dispatchEvent(rr({from:t,fromTerminal:e,path:[[n,o],[r,a]]}))}}
               fill="#${c}"
               stroke="${l&&!d?"#F5E214":c}" />`)}));let c=!1,p=G``;const{flip:m,rot:h}=Uo(t.parentElement);if(a){const{from:[t,e],fromCtl:[i,n],to:[o,r],toCtl:[d,s]}=a;!m&&n<e&&(c=!0),m&&i>t&&(c=!0),p=G`<path d="M ${t} ${e} C ${i} ${n}, ${d} ${s}, ${o} ${r}" stroke="black" stroke-width="0.06" />`}const u=t.querySelector("TapChanger")?G`<line x1="${i-.8}" y1="${n+.8}" x2="${i+.8}" y2="${n-(c?1:.8)}"
-              stroke="black" stroke-width="0.06" marker-end="url(#arrow)" />`:j,f=void 0===d?j:G`<g stroke="black" transform="rotate(${90*h} ${i} ${n}) translate(${i-1.5} ${n-1.5}) ${d}">${yr}</g>`;return G`<g class="winding"
+              stroke="black" stroke-width="0.06" marker-end="url(#arrow)" />`:j,f=void 0===d?j:G`<g stroke="black" stroke-linecap="round"
+                transform="rotate(${90*h} ${i} ${n})
+                translate(${i-1.5} ${n-1.5})
+                ${d}">${_r}</g>`;return G`<g class="winding"
         @contextmenu=${e=>this.openMenu(t,e)}
     ><circle cx="${i}" cy="${n}" r="${e}" stroke="black" stroke-width="0.06" />${p}${f}${u}${s}</g>`}renderPowerTransformer(t,e=!1){if(this.placing===t&&!e)return G``;const i=Array.from(t.children).filter((t=>"TransformerWinding"===t.tagName)),[n,o]=this.renderedPosition(t),r=[this.mouseX-n,this.mouseY-o],a=this.placing===t?G`<rect width="1" height="1" fill="none"
               x="${this.mouseX}" y="${this.mouseY}" />`:j;return G`<g class="${Fe({transformer:!0,preview:e})}"
         pointer-events="all"
-        @mousedown=${Wr}
+        @mousedown=${Yr}
         @auxclick=${e=>{1===e.button&&(this.dispatchEvent(tr(t)),e.preventDefault())}}
-        @click=${e=>{if(this.placing===t){const e=Array.from(this.substation.querySelectorAll(":scope > VoltageLevel > Bay")).concat(Array.from(this.substation.querySelectorAll(":scope > VoltageLevel"))).find((t=>$r(t,n,o,1,1)))||this.substation;this.dispatchEvent(Jo({element:t,parent:e,x:n,y:o}))}if(!this.idle)return;let i=t;e.shiftKey&&(i=Yr(t,this.nsp)),this.dispatchEvent(or(i,r))}}>
+        @click=${e=>{if(this.placing===t){const e=Array.from(this.substation.querySelectorAll(":scope > VoltageLevel > Bay")).concat(Array.from(this.substation.querySelectorAll(":scope > VoltageLevel"))).find((t=>Br(t,n,o,1,1)))||this.substation;this.dispatchEvent(Jo({element:t,parent:e,x:n,y:o}))}if(!this.idle)return;let i=t;e.shiftKey&&(i=Xr(t,this.nsp)),this.dispatchEvent(nr(i,r))}}>
         ${i.map((t=>this.renderTransformerWinding(t)))}
         ${a}
       </g>
@@ -1694,9 +1697,9 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     width="1"
     height="1"
   >
-    ${Nr}
+    ${Tr}
   </svg>`:G`<use href="#${p}" xlink:href="#${p}"
-              pointer-events="none" />`;let h=e=>{let i=t;e.shiftKey&&(i=Yr(t,this.nsp)),this.dispatchEvent(or(i))};if(this.placing===t){const e=Array.from(this.substation.querySelectorAll(":root > Substation > VoltageLevel > Bay")).find((t=>!Vo(t)&&$r(t,o,r,1,1)));e&&this.canPlaceAt(t,o,r,1,1)&&(h=()=>{this.dispatchEvent(Jo({x:o,y:r,element:t,parent:e}))})}const u=Array.from(t.children).filter((t=>"Terminal"===t.tagName)),f=u.find((t=>"T1"===t.getAttribute("name"))),g=u.find((t=>"T1"!==t.getAttribute("name"))),b=f||this.resizingBR||this.resizingTL||this.connecting||this.placingLabel||this.placing&&this.placing!==t?j:G`<circle class="port" cx="0.5" cy="0" r="0.2" opacity="0.4"
+              pointer-events="none" />`;let h=e=>{let i=t;e.shiftKey&&(i=Xr(t,this.nsp)),this.dispatchEvent(nr(i))};if(this.placing===t){const e=Array.from(this.substation.querySelectorAll(":root > Substation > VoltageLevel > Bay")).find((t=>!Vo(t)&&Br(t,o,r,1,1)));e&&this.canPlaceAt(t,o,r,1,1)&&(h=()=>{this.dispatchEvent(Jo({x:o,y:r,element:t,parent:e}))})}const u=Array.from(t.children).filter((t=>"Terminal"===t.tagName)),f=u.find((t=>"T1"===t.getAttribute("name"))),g=u.find((t=>"T1"!==t.getAttribute("name"))),b=f||this.resizingBR||this.resizingTL||this.connecting||this.placingLabel||this.placing&&this.placing!==t?j:G`<circle class="port" cx="0.5" cy="0" r="0.2" opacity="0.4"
       fill="#BB1326" stroke="#F5E214" pointer-events="${this.placing?"none":j}"
     @click=${()=>this.dispatchEvent(rr({from:t,fromTerminal:"T1",path:Zo(t).T1}))}
     @contextmenu=${e=>{e.preventDefault(),this.groundTerminal(t,"T1")}}
@@ -1716,7 +1719,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
       ${c?G`<use transform="rotate(${-s} 0.5 0.5)" pointer-events="none"
                   href="#${p}" xlink:href="#${p}" />`:j}
       <rect width="1" height="1" fill="none" pointer-events="${A?"none":"all"}"
-        @mousedown=${Wr}
+        @mousedown=${Yr}
         @click=${h}
         @auxclick=${e=>{1===e.button&&(this.dispatchEvent(tr(t)),e.preventDefault())}}
         @contextmenu=${e=>this.openMenu(t,e)}
@@ -1730,34 +1733,34 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     </g>
     <g class="preview">${e?[this.renderLabel(t),...Array.from(t.querySelectorAll("Text")).map((t=>this.renderLabel(t)))]:j}</g>`}renderBusBar(t){const[e,i]=this.renderedPosition(t),{dim:[n,o]}=Uo(t);let r=G``;return r=G`<rect x="${e}" y="${i}" width="${n}" height="${o}"
           pointer-events="all" fill="none" 
-          @click=${()=>{const r=Array.from(this.substation.querySelectorAll(":root > Substation > VoltageLevel")).find((t=>$r(t,e,i,n,o)));r&&this.dispatchEvent(Jo({x:e,y:i,element:t,parent:r}))}}
+          @click=${()=>{const r=Array.from(this.substation.querySelectorAll(":root > Substation > VoltageLevel")).find((t=>Br(t,e,i,n,o)));r&&this.dispatchEvent(Jo({x:e,y:i,element:t,parent:r}))}}
         />`,G`<g class="bus preview" id="${t.closest("Substation")===this.substation?he(t):j}">
       <title>${t.getAttribute("name")}</title>
       ${this.renderLabel(t)}
       ${Array.from(t.querySelectorAll("Text")).map((t=>this.renderLabel(t)))}
       ${this.renderConnectivityNode(t.querySelector("ConnectivityNode"))}
       ${r}
-    </g>`}renderConnectivityNode(t){const e=t.querySelector(`Private[type="${Ro}"]`);if(!e)return j;const i=[],n=Object.entries(Array.from(e.querySelectorAll("Vertex")).reduce(((t,e)=>{const i=t,n=JSON.stringify(this.renderedPosition(e));return i[n]?i[n].push(e):i[n]=[e],i}),{})).filter((([t,e])=>e.length>2||2===e.length&&e.find((t=>t.hasAttributeNS(Oo,"uuid"))))).map((([t,[e]])=>this.renderedPosition(e)));n.forEach((([t,e])=>i.push(G`<circle fill="black" cx="${t}" cy="${e}" r="0.15" />`)));const o=[],r=Array.from(e.getElementsByTagNameNS(Oo,"Section")),a=t.closest("Bay"),d=.5,s=!this.resizingBR||this.resizingBR===a&&Vo(this.resizingBR)?"all":"none";r.forEach((e=>{const n=Ho(e.getAttribute("bus")),l=Array.from(e.getElementsByTagNameNS(Oo,"Vertex"));let c=0;for(;c<l.length-1;){const[p,m]=this.renderedPosition(l[c]);let[h,u]=this.renderedPosition(l[c+1]),f=j,g=j,b=j;if(n&&a){const{pos:[t,e]}=Uo(a),i=[this.mouseX-t,this.mouseY-e];f=()=>this.dispatchEvent(or(a,i)),g=({button:t})=>{1===t&&this.dispatchEvent(ir(a))},b=t=>this.openMenu(a,t)}if(n&&this.resizingBR===a){if(e!==r.find((t=>Ho(t.getAttribute("bus")))))return;i.length=0;const{pos:[t,n],dim:[d,g]}=Uo(a.parentElement),b=t+d-.5,v=n+g-.5;if(0===c){Math.max(this.mouseX-p,0)>Math.max(this.mouseY-m,0)?(h=Math.max(p,Math.min(b,this.mouseX+.5)),u=m):(u=Math.max(m,Math.min(v,this.mouseY+.5)),h=p),p===h&&m===u&&(h>=b?u+=1:h+=1)}f=()=>{this.dispatchEvent(Jo({parent:e,element:l[l.length-1],x:h,y:u}))},o.push(G`<rect x="${this.mouseX}" y="${this.mouseY}"
+    </g>`}renderConnectivityNode(t){const e=t.querySelector(`Private[type="${Ro}"]`);if(!e)return j;const i=[],n=Object.entries(Array.from(e.querySelectorAll("Vertex")).reduce(((t,e)=>{const i=t,n=JSON.stringify(this.renderedPosition(e));return i[n]?i[n].push(e):i[n]=[e],i}),{})).filter((([t,e])=>e.length>2||2===e.length&&e.find((t=>t.hasAttributeNS(Oo,"uuid"))))).map((([t,[e]])=>this.renderedPosition(e)));n.forEach((([t,e])=>i.push(G`<circle fill="black" cx="${t}" cy="${e}" r="0.15" />`)));const o=[],r=Array.from(e.getElementsByTagNameNS(Oo,"Section")),a=t.closest("Bay"),d=.5,s=this.placing||this.resizingBR&&(this.resizingBR!==a||!Vo(a))?"none":"all";r.forEach((e=>{const n=Ho(e.getAttribute("bus")),l=Array.from(e.getElementsByTagNameNS(Oo,"Vertex"));let c=0;for(;c<l.length-1;){const[p,m]=this.renderedPosition(l[c]);let[h,u]=this.renderedPosition(l[c+1]),f=j,g=j,b=j;if(n&&a){const{pos:[t,e]}=Uo(a),i=[this.mouseX-t,this.mouseY-e];f=()=>this.dispatchEvent(nr(a,i)),g=({button:t})=>{1===t&&this.dispatchEvent(ir(a))},b=t=>this.openMenu(a,t)}if(n&&this.resizingBR===a){if(e!==r.find((t=>Ho(t.getAttribute("bus")))))return;i.length=0;const{pos:[t,n],dim:[d,g]}=Uo(a.parentElement),b=t+d-.5,v=n+g-.5;if(0===c){Math.max(this.mouseX-p,0)>Math.max(this.mouseY-m,0)?(h=Math.max(p,Math.min(b,this.mouseX+.5)),u=m):(u=Math.max(m,Math.min(v,this.mouseY+.5)),h=p),p===h&&m===u&&(h>=b?u+=1:h+=1)}f=()=>{this.dispatchEvent(Jo({parent:e,element:l[l.length-1],x:h,y:u}))},o.push(G`<rect x="${this.mouseX}" y="${this.mouseY}"
               width="1" height="1" fill="none" pointer-events="${s}"
-              @click=${f} />`)}this.connecting&&(f=()=>{const{from:e,path:i,fromTerminal:n}=this.connecting;if(e.closest("ConductingEquipment, PowerTransformer").querySelector(`[connectivityNode="${t.getAttribute("pathName")}"]`))return;const[[o,r],[a,d]]=i.slice(-2),s=o===a;let l=this.mouseX2,c=this.mouseY2,f=s?a:l,g=s?c:d;const b=f===l&&g===c?[o,r]:[f,g];var v,x,y,_;[l,c]=(x=[l,c],Vr(v=b,y=[p,m],_=[h,u])?v:Vr(y,v,x)?y:Vr(_,v,x)?_:Gr(x,y,_)),f=s?a:l,g=s?c:d,i[i.length-1]=[f,g],i.push([l,c]),qr(i),this.dispatchEvent(Qo({from:e,fromTerminal:n,path:i,to:t}))}),o.push(G`<line x1="${p}" y1="${m}" x2="${h}" y2="${u}"
+              @click=${f} />`)}this.connecting&&(f=()=>{const{from:e,path:i,fromTerminal:n}=this.connecting;if(e.closest("ConductingEquipment, PowerTransformer").querySelector(`[connectivityNode="${t.getAttribute("pathName")}"]`))return;const[[o,r],[a,d]]=i.slice(-2),s=o===a;let l=this.mouseX2,c=this.mouseY2,f=s?a:l,g=s?c:d;const b=f===l&&g===c?[o,r]:[f,g];var v,x,y,_;[l,c]=(x=[l,c],Ur(v=b,y=[p,m],_=[h,u])?v:Ur(y,v,x)?y:Ur(_,v,x)?_:qr(x,y,_)),f=s?a:l,g=s?c:d,i[i.length-1]=[f,g],i.push([l,c]),jr(i),this.dispatchEvent(Qo({from:e,fromTerminal:n,path:i,to:t}))}),o.push(G`<line x1="${p}" y1="${m}" x2="${h}" y2="${u}"
                 pointer-events="${s}"
                 stroke-width="${n?.12:j}" stroke="black" 
                 stroke-linecap="${n?"round":"square"}" />`),o.push(G`<line x1="${p}" y1="${m}" x2="${h}" y2="${u}"
                 pointer-events="${s}" stroke-width="${d}"
-                @contextmenu=${b} @mousedown=${Wr}
+                @contextmenu=${b} @mousedown=${Yr}
                 @click=${f} @auxclick=${g} />`),(n||this.connecting&&!l[c].hasAttributeNS(Oo,"uuid"))&&o.push(G`<rect x="${p-.25}" y="${m-.25}"
                   width="${d}" height="${d}"
                   @click=${f} @auxclick=${g}
-                  @contextmenu=${b} @mousedown=${Wr}
+                  @contextmenu=${b} @mousedown=${Yr}
                   pointer-events="${s}" fill="none" />`),(n||this.connecting&&!l[c+1].hasAttributeNS(Oo,"uuid"))&&o.push(G`<rect x="${h-.25}" y="${u-.25}"
                   width="${d}" height="${d}"
                   @click=${f} @auxclick=${g}
-                  @contextmenu=${b} @mousedown=${Wr}
+                  @contextmenu=${b} @mousedown=${Yr}
                   pointer-events="${s}" fill="none" />`),c+=1}}));const l=t.closest("Substation")===this.substation?he(t):j;return G`<g class="node" id="${l}" >
         <title>${t.getAttribute("pathName")}</title>
         ${i}
         ${o}
-      </g>`}};Kr.styles=c`
+      </g>`}};Zr.styles=c`
     h2 {
       font-family: Roboto;
       font-weight: 300;
@@ -1801,7 +1804,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
     * {
       user-select: none;
     }
-  `,n([yt()],Kr.prototype,"doc",void 0),n([yt()],Kr.prototype,"substation",void 0),n([yt()],Kr.prototype,"editCount",void 0),n([yt()],Kr.prototype,"gridSize",void 0),n([yt()],Kr.prototype,"nsp",void 0),n([yt()],Kr.prototype,"resizingBR",void 0),n([yt()],Kr.prototype,"resizingTL",void 0),n([yt()],Kr.prototype,"placing",void 0),n([yt()],Kr.prototype,"placingOffset",void 0),n([yt()],Kr.prototype,"placingLabel",void 0),n([yt()],Kr.prototype,"connecting",void 0),n([yt()],Kr.prototype,"showLabels",void 0),n([_t()],Kr.prototype,"idle",null),n([Et("#resizeSubstationUI")],Kr.prototype,"resizeSubstationUI",void 0),n([Et("#substationWidthUI")],Kr.prototype,"substationWidthUI",void 0),n([Et("#substationHeightUI")],Kr.prototype,"substationHeightUI",void 0),n([Et("svg#sld")],Kr.prototype,"sld",void 0),n([Et("mwc-snackbar")],Kr.prototype,"groundHint",void 0),n([_t()],Kr.prototype,"mouseX",void 0),n([_t()],Kr.prototype,"mouseY",void 0),n([_t()],Kr.prototype,"mouseX2",void 0),n([_t()],Kr.prototype,"mouseY2",void 0),n([_t()],Kr.prototype,"mouseX2f",void 0),n([_t()],Kr.prototype,"mouseY2f",void 0),n([_t()],Kr.prototype,"menu",void 0),Kr=n([bt("sld-editor")],Kr);const Zr=await fetch(new URL(new URL("assets/about-6406e407.html",import.meta.url).href,import.meta.url)).then((t=>t.text()));function Jr(t,e,[i,n],o){const r=t.parentElement,a=[],d=Array.from(t.getElementsByTagNameNS(Oo,"Vertex")),s=d.find((t=>t.getAttributeNS(Oo,"x")===i.toString()&&t.getAttributeNS(Oo,"y")===n.toString()));if(s===d[0]||s===d[d.length-1])return[];const l=t.cloneNode(!0);Array.from(l.getElementsByTagNameNS(Oo,"Vertex")).slice(0,e+1).forEach((t=>t.remove()));const c=d[e].cloneNode();if(c.setAttributeNS(Oo,`${o}:x`,i.toString()),c.setAttributeNS(Oo,`${o}:y`,n.toString()),c.removeAttributeNS(Oo,"uuid"),l.prepend(c),a.push({node:l,parent:r,reference:t.nextElementSibling}),d.slice(e+1).forEach((t=>a.push({node:t}))),!s){const e=c.cloneNode();a.push({node:e,parent:t,reference:null})}return a}class Qr extends pt{constructor(){super(...arguments),this._editCount=-1,this.gridSize=32,this.nsp="esld",this.templateElements={},this.handleKeydown=({key:t})=>{"Escape"===t&&this.reset()}}get editCount(){return this._editCount}set editCount(t){var e,i;this.connecting=void 0,(null===(e=this.resizingBR)||void 0===e?void 0:e.parentElement)||(this.resizingBR=void 0),(null===(i=this.placingLabel)||void 0===i?void 0:i.parentElement)||(this.placingLabel=void 0),this._editCount=t}get showLabels(){return!this.labelToggle||this.labelToggle.on}zoomIn(t=4){this.gridSize+=t}zoomOut(t=4){this.gridSize-=t,this.gridSize<4&&(this.gridSize=4)}startResizingBottomRight(t){this.reset(),this.resizingBR=t}startResizingTopLeft(t){this.reset(),this.resizingTL=t}startPlacing(t,e=[0,0]){this.reset(),this.placing=t,this.placingOffset=e}startPlacingLabel(t){this.reset(),this.placingLabel=t}startConnecting(t){this.reset(),this.connecting=t}reset(){this.resizingBR=void 0,this.resizingTL=void 0,this.placing=void 0,this.placingLabel=void 0,this.connecting=void 0}connectedCallback(){super.connectedCallback(),window.addEventListener("keydown",this.handleKeydown)}disconnectedCallback(){super.disconnectedCallback(),window.removeEventListener("keydown",this.handleKeydown)}updated(t){if(!t.has("doc"))return;const e=this.doc.documentElement.lookupPrefix(Oo);e?this.nsp=e:(this.doc.documentElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:esld",Oo),this.nsp="esld"),["Substation","VoltageLevel","Bay","ConductingEquipment","PowerTransformer","TransformerWinding"].forEach((t=>{this.templateElements[t]=this.doc.createElementNS(this.doc.documentElement.namespaceURI,t)})),this.templateElements.BusBar=function(t,e){const i=t.createElementNS(t.documentElement.namespaceURI,"Bay");i.setAttribute("name","BB1"),i.setAttributeNS(Oo,`${e}:w`,"2");const n=t.createElementNS(t.documentElement.namespaceURI,"ConnectivityNode");n.setAttribute("name","L");const o=t.createElementNS(t.documentElement.namespaceURI,"Private");o.setAttribute("type",Ro);const r=t.createElementNS(Oo,`${e}:Section`);r.setAttribute("bus","true");const a=t.createElementNS(Oo,`${e}:Vertex`);a.setAttributeNS(Oo,`${e}:x`,"0.5"),a.setAttributeNS(Oo,`${e}:y`,"0.5"),r.appendChild(a);const d=t.createElementNS(Oo,`${e}:Vertex`);return d.setAttributeNS(Oo,`${e}:x`,"1.5"),d.setAttributeNS(Oo,`${e}:y`,"0.5"),r.appendChild(d),o.appendChild(r),n.appendChild(o),i.appendChild(n),i}(this.doc,this.nsp)}rotateElement(t){const{rot:e}=Uo(t),i=[{element:t,attributes:{[`${this.nsp}:rot`]:{namespaceURI:Oo,value:((e+1)%4).toString()}}}];"ConductingEquipment"!==t.tagName&&"PowerTransformer"!==t.tagName||Array.from(t.querySelectorAll("Terminal, NeutralPoint")).filter((t=>"grounded"!==t.getAttribute("cNodeName"))).forEach((t=>i.push(...Ko(t)))),this.dispatchEvent(Tt(i))}placeLabel(t,e,i){this.dispatchEvent(Tt({element:t,attributes:{lx:{namespaceURI:Oo,value:e.toString()},ly:{namespaceURI:Oo,value:i.toString()}}})),this.reset()}placeElement(t,e,i,n){var o,r;const a=[];t.parentElement!==e&&a.push(...Xo(t,e));const{pos:[d,s],label:[l,c],rot:p}=Uo(t),m=i-d,h=n-s;if("Vertex"!==t.localName){let e=l,o=c;"ConductingEquipment"!==t.tagName||t.hasAttributeNS(Oo,"lx")||p%2!=0||(e+=1,o+=1),"PowerTransformer"!==t.tagName||t.hasAttributeNS(Oo,"lx")||(p<2?e+=1.5:(e-=2,o+=2)),a.push({element:t,attributes:{x:{namespaceURI:Oo,value:i.toString()},y:{namespaceURI:Oo,value:n.toString()},lx:{namespaceURI:Oo,value:(e+m).toString()},ly:{namespaceURI:Oo,value:(o+h).toString()}}})}if(Array.from(t.querySelectorAll("Text")).forEach((t=>{const{label:[e,i]}=Uo(t),n={lx:{namespaceURI:Oo,value:(e+m).toString()},ly:{namespaceURI:Oo,value:(i+h).toString()}};a.push({element:t,attributes:n})})),Array.from(t.querySelectorAll("Bay, ConductingEquipment, PowerTransformer, Vertex")).forEach((t=>{const{pos:[e,i],label:[n,o]}=Uo(t),r={x:{namespaceURI:Oo,value:(e+m).toString()},y:{namespaceURI:Oo,value:(i+h).toString()}};"Vertex"!==t.localName&&(r.lx={namespaceURI:Oo,value:(n+m).toString()},r.ly={namespaceURI:Oo,value:(o+h).toString()}),a.push({element:t,attributes:r})})),"ConductingEquipment"===t.tagName||"PowerTransformer"===t.tagName){Array.from(t.querySelectorAll("Terminal, NeutralPoint")).filter((t=>"grounded"!==t.getAttribute("cNodeName"))).forEach((t=>a.push(...Ko(t))));const i=Array.from(t.querySelectorAll("Terminal, NeutralPoint")).filter((t=>"grounded"===t.getAttribute("cNodeName")));if(i.length>0){const t=null===(o=e.closest("Bay"))||void 0===o?void 0:o.getAttribute("name");t||i.forEach((t=>a.push(...Ko(t))));let n=e.querySelector('ConnectivityNode[name="grounded"]');n||(n=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"ConnectivityNode"),n.setAttribute("name","grounded"),n.setAttribute("pathName",Go(e,"grounded")),a.push({node:n,parent:e,reference:re(e,"ConnectivityNode")}));const d=null===(r=e.closest("VoltageLevel"))||void 0===r?void 0:r.getAttribute("name"),s=e.closest("Substation").getAttribute("name"),l=n.getAttribute("pathName");i.forEach((e=>{a.push({element:e,attributes:{connectivityNode:l,bayName:t,voltageLevelName:d,substationName:s}})}))}}else t.getRootNode()===this.doc&&(Array.from(t.getElementsByTagName("ConnectivityNode")).forEach((e=>{Array.from(this.doc.querySelectorAll(`Terminal[connectivityNode="${e.getAttribute("pathName")}"],\n                 NeutralPoint[connectivityNode="${e.getAttribute("pathName")}"]`)).find((e=>e.closest(t.tagName)!==t))&&a.push(...qo(e))})),Array.from(t.querySelectorAll("Terminal, NeutralPoint")).forEach((e=>{const i=this.doc.querySelector(`ConnectivityNode[pathName="${e.getAttribute("connectivityNode")}"]`);i&&i.closest(t.tagName)!==t&&a.push(...qo(i))})));if("Vertex"===t.localName){const e=t.closest("Bay"),o=Array.from(e.querySelectorAll("Section[bus]")),r=o[0],d=r.querySelector("Vertex"),s=o[o.length-1].querySelector("Vertex:last-of-type"),{pos:[l,c]}=Uo(d),p=i-l+1,m=n-c+1;Vo(e)&&(a.push(...qo(r.closest("ConnectivityNode"))),a.push({element:s,attributes:{x:{namespaceURI:Oo,value:i.toString()},y:{namespaceURI:Oo,value:n.toString()}}}),a.push({element:e,attributes:{w:{namespaceURI:Oo,value:p.toString()},h:{namespaceURI:Oo,value:m.toString()}}}))}this.dispatchEvent(Tt(a)),!["Bay","VoltageLevel"].includes(t.tagName)||t.hasAttributeNS(Oo,"w")&&t.hasAttributeNS(Oo,"h")?this.reset():this.startResizingBottomRight(t)}connectEquipment({from:t,fromTerminal:e,to:i,toTerminal:n,path:o}){var r,a;if("TransformerWinding"===t.tagName&&"TransformerWinding"===i.tagName)return;const d=[];let s,l,c,p;if("ConnectivityNode"!==i.tagName){s=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"ConnectivityNode"),s.setAttribute("name","L1");const e=t.closest("Bay")||i.closest("Bay");d.push(...Xo(s,e)),l=d.find((t=>"attributes"in t&&"pathName"in t.attributes)).attributes.pathName,c=null!==(a=null===(r=d.find((t=>"attributes"in t&&"name"in t.attributes)))||void 0===r?void 0:r.attributes.name)&&void 0!==a?a:s.getAttribute("name"),p=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"Private"),p.setAttribute("type",Ro),d.push({parent:s,node:p,reference:re(s,"Private")})}else s=i,l=s.getAttribute("pathName"),c=s.getAttribute("name"),p=s.querySelector(`Private[type="${Ro}"]`);const m=this.doc.createElementNS(Oo,`${this.nsp}:Section`);d.push({parent:p,node:m,reference:null});const h=$o(),u=$o();if(o.forEach((([t,e],n)=>{const r=this.doc.createElementNS(Oo,`${this.nsp}:Vertex`);r.setAttributeNS(Oo,`${this.nsp}:x`,t.toString()),r.setAttributeNS(Oo,`${this.nsp}:y`,e.toString()),0===n?r.setAttributeNS(Oo,`${this.nsp}:uuid`,h):n===o.length-1&&"ConnectivityNode"!==i.tagName&&r.setAttributeNS(Oo,`${this.nsp}:uuid`,u),d.push({parent:m,node:r,reference:null})})),"ConnectivityNode"===i.tagName){const[t,e]=o[o.length-1];Array.from(p.getElementsByTagNameNS(Oo,"Section")).find((i=>{const n=Array.from(i.getElementsByTagNameNS(Oo,"Vertex")).map((t=>Uo(t).pos));for(let o=0;o<n.length-1;o+=1){const[r,a]=n[o],[s,l]=n[o+1];if(a===e&&e===l&&(r<t&&t<s||s<t&&t<r)||r===t&&t===s&&(a<e&&e<l||l<e&&e<a)||a===e&&r===t)return d.push(Jr(i,o,[t,e],this.nsp)),!0}return!1}))}const[f,g,b]=l.split("/",3),v=e.startsWith("T")?"Terminal":"NeutralPoint",x=this.doc.createElementNS(this.doc.documentElement.namespaceURI,v);if(x.setAttributeNS(Oo,`${this.nsp}:uuid`,h),x.setAttribute("name",e),x.setAttribute("connectivityNode",l),x.setAttribute("substationName",f),x.setAttribute("voltageLevelName",g),x.setAttribute("bayName",b),x.setAttribute("cNodeName",c),d.push({node:x,parent:t,reference:re(t,v)}),"ConductingEquipment"===i.tagName){const t=n.startsWith("T")?"Terminal":"NeutralPoint",e=this.doc.createElementNS(this.doc.documentElement.namespaceURI,t);e.setAttributeNS(Oo,`${this.nsp}:uuid`,u),e.setAttribute("name",n),e.setAttribute("connectivityNode",l),e.setAttribute("substationName",f),e.setAttribute("voltageLevelName",g),e.setAttribute("bayName",b),e.setAttribute("cNodeName",c),d.push({node:e,parent:i,reference:re(i,t)})}this.reset(),this.dispatchEvent(Tt(d))}render(){return this.doc?U`<main>
+  `,n([yt()],Zr.prototype,"doc",void 0),n([yt()],Zr.prototype,"substation",void 0),n([yt()],Zr.prototype,"editCount",void 0),n([yt()],Zr.prototype,"gridSize",void 0),n([yt()],Zr.prototype,"nsp",void 0),n([yt()],Zr.prototype,"resizingBR",void 0),n([yt()],Zr.prototype,"resizingTL",void 0),n([yt()],Zr.prototype,"placing",void 0),n([yt()],Zr.prototype,"placingOffset",void 0),n([yt()],Zr.prototype,"placingLabel",void 0),n([yt()],Zr.prototype,"connecting",void 0),n([yt()],Zr.prototype,"showLabels",void 0),n([_t()],Zr.prototype,"idle",null),n([Et("#resizeSubstationUI")],Zr.prototype,"resizeSubstationUI",void 0),n([Et("#substationWidthUI")],Zr.prototype,"substationWidthUI",void 0),n([Et("#substationHeightUI")],Zr.prototype,"substationHeightUI",void 0),n([Et("svg#sld")],Zr.prototype,"sld",void 0),n([Et("mwc-snackbar")],Zr.prototype,"groundHint",void 0),n([_t()],Zr.prototype,"mouseX",void 0),n([_t()],Zr.prototype,"mouseY",void 0),n([_t()],Zr.prototype,"mouseX2",void 0),n([_t()],Zr.prototype,"mouseY2",void 0),n([_t()],Zr.prototype,"mouseX2f",void 0),n([_t()],Zr.prototype,"mouseY2f",void 0),n([_t()],Zr.prototype,"menu",void 0),Zr=n([bt("sld-editor")],Zr);const Jr=await fetch(new URL(new URL("assets/about-977b8a3b.html",import.meta.url).href,import.meta.url)).then((t=>t.text()));function Qr(t,e,[i,n],o){const r=t.parentElement,a=[],d=Array.from(t.getElementsByTagNameNS(Oo,"Vertex")),s=d.find((t=>t.getAttributeNS(Oo,"x")===i.toString()&&t.getAttributeNS(Oo,"y")===n.toString()));if(s===d[0]||s===d[d.length-1])return[];const l=t.cloneNode(!0);Array.from(l.getElementsByTagNameNS(Oo,"Vertex")).slice(0,e+1).forEach((t=>t.remove()));const c=d[e].cloneNode();if(c.setAttributeNS(Oo,`${o}:x`,i.toString()),c.setAttributeNS(Oo,`${o}:y`,n.toString()),c.removeAttributeNS(Oo,"uuid"),l.prepend(c),a.push({node:l,parent:r,reference:t.nextElementSibling}),d.slice(e+1).forEach((t=>a.push({node:t}))),!s){const e=c.cloneNode();a.push({node:e,parent:t,reference:null})}return a}class ta extends pt{constructor(){super(...arguments),this._editCount=-1,this.gridSize=32,this.nsp="esld",this.templateElements={},this.placingOffset=[0,0],this.handleKeydown=({key:t})=>{"Escape"===t&&this.reset()}}get editCount(){return this._editCount}set editCount(t){var e,i;this.connecting=void 0,(null===(e=this.resizingBR)||void 0===e?void 0:e.parentElement)||(this.resizingBR=void 0),(null===(i=this.placingLabel)||void 0===i?void 0:i.parentElement)||(this.placingLabel=void 0),this._editCount=t}get showLabels(){return!this.labelToggle||this.labelToggle.on}zoomIn(){this.gridSize+=3}zoomOut(){this.gridSize-=3,this.gridSize<2&&(this.gridSize=2)}startResizingBottomRight(t){this.reset(),this.resizingBR=t}startResizingTopLeft(t){this.reset(),this.resizingTL=t}startPlacing(t,e=[0,0]){this.reset(),this.placing=t,this.placingOffset=e}startPlacingLabel(t,e=[0,0]){this.reset(),this.placingLabel=t,this.placingOffset=e}startConnecting(t){this.reset(),this.connecting=t}reset(){this.resizingBR=void 0,this.resizingTL=void 0,this.placing=void 0,this.placingLabel=void 0,this.connecting=void 0}connectedCallback(){super.connectedCallback(),window.addEventListener("keydown",this.handleKeydown)}disconnectedCallback(){super.disconnectedCallback(),window.removeEventListener("keydown",this.handleKeydown)}updated(t){if(!t.has("doc"))return;const e=this.doc.documentElement.lookupPrefix(Oo);e?this.nsp=e:(this.doc.documentElement.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:esld",Oo),this.nsp="esld"),["Substation","VoltageLevel","Bay","ConductingEquipment","PowerTransformer","TransformerWinding"].forEach((t=>{this.templateElements[t]=this.doc.createElementNS(this.doc.documentElement.namespaceURI,t)})),this.templateElements.BusBar=function(t,e){const i=t.createElementNS(t.documentElement.namespaceURI,"Bay");i.setAttribute("name","BB1"),i.setAttributeNS(Oo,`${e}:w`,"2");const n=t.createElementNS(t.documentElement.namespaceURI,"ConnectivityNode");n.setAttribute("name","L");const o=t.createElementNS(t.documentElement.namespaceURI,"Private");o.setAttribute("type",Ro);const r=t.createElementNS(Oo,`${e}:Section`);r.setAttribute("bus","true");const a=t.createElementNS(Oo,`${e}:Vertex`);a.setAttributeNS(Oo,`${e}:x`,"0.5"),a.setAttributeNS(Oo,`${e}:y`,"0.5"),r.appendChild(a);const d=t.createElementNS(Oo,`${e}:Vertex`);return d.setAttributeNS(Oo,`${e}:x`,"1.5"),d.setAttributeNS(Oo,`${e}:y`,"0.5"),r.appendChild(d),o.appendChild(r),n.appendChild(o),i.appendChild(n),i}(this.doc,this.nsp)}rotateElement(t){const{rot:e}=Uo(t),i=[{element:t,attributes:{[`${this.nsp}:rot`]:{namespaceURI:Oo,value:((e+1)%4).toString()}}}];"ConductingEquipment"!==t.tagName&&"PowerTransformer"!==t.tagName||Array.from(t.querySelectorAll("Terminal, NeutralPoint")).filter((t=>"grounded"!==t.getAttribute("cNodeName"))).forEach((t=>i.push(...Ko(t)))),this.dispatchEvent(Tt(i))}placeLabel(t,e,i){this.dispatchEvent(Tt({element:t,attributes:{lx:{namespaceURI:Oo,value:e.toString()},ly:{namespaceURI:Oo,value:i.toString()}}})),this.reset()}placeElement(t,e,i,n){var o,r;const a=[];t.parentElement!==e&&a.push(...Xo(t,e));const{pos:[d,s],label:[l,c],rot:p}=Uo(t),m=i-d,h=n-s;if("Vertex"!==t.localName){let e=l,o=c;"ConductingEquipment"!==t.tagName||t.hasAttributeNS(Oo,"lx")||p%2!=0||(e+=1,o+=1),"PowerTransformer"!==t.tagName||t.hasAttributeNS(Oo,"lx")||(p<2?e+=1.5:(e-=2,o+=2)),a.push({element:t,attributes:{x:{namespaceURI:Oo,value:i.toString()},y:{namespaceURI:Oo,value:n.toString()},lx:{namespaceURI:Oo,value:(e+m).toString()},ly:{namespaceURI:Oo,value:(o+h).toString()}}})}if(Array.from(t.querySelectorAll("Text")).forEach((t=>{const{label:[e,i]}=Uo(t),n={lx:{namespaceURI:Oo,value:(e+m).toString()},ly:{namespaceURI:Oo,value:(i+h).toString()}};a.push({element:t,attributes:n})})),Array.from(t.querySelectorAll("Bay, ConductingEquipment, PowerTransformer, Vertex")).forEach((t=>{const{pos:[e,i],label:[n,o]}=Uo(t),r={x:{namespaceURI:Oo,value:(e+m).toString()},y:{namespaceURI:Oo,value:(i+h).toString()}};"Vertex"!==t.localName&&(r.lx={namespaceURI:Oo,value:(n+m).toString()},r.ly={namespaceURI:Oo,value:(o+h).toString()}),a.push({element:t,attributes:r})})),"ConductingEquipment"===t.tagName||"PowerTransformer"===t.tagName){Array.from(t.querySelectorAll("Terminal, NeutralPoint")).filter((t=>"grounded"!==t.getAttribute("cNodeName"))).forEach((t=>a.push(...Ko(t))));const i=Array.from(t.querySelectorAll("Terminal, NeutralPoint")).filter((t=>"grounded"===t.getAttribute("cNodeName")));if(i.length>0){const t=null===(o=e.closest("Bay"))||void 0===o?void 0:o.getAttribute("name");t||i.forEach((t=>a.push(...Ko(t))));let n=e.querySelector('ConnectivityNode[name="grounded"]');n||(n=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"ConnectivityNode"),n.setAttribute("name","grounded"),n.setAttribute("pathName",Go(e,"grounded")),a.push({node:n,parent:e,reference:re(e,"ConnectivityNode")}));const d=null===(r=e.closest("VoltageLevel"))||void 0===r?void 0:r.getAttribute("name"),s=e.closest("Substation").getAttribute("name"),l=n.getAttribute("pathName");i.forEach((e=>{a.push({element:e,attributes:{connectivityNode:l,bayName:t,voltageLevelName:d,substationName:s}})}))}}else t.getRootNode()===this.doc&&(Array.from(t.getElementsByTagName("ConnectivityNode")).forEach((e=>{Array.from(this.doc.querySelectorAll(`Terminal[connectivityNode="${e.getAttribute("pathName")}"],\n                 NeutralPoint[connectivityNode="${e.getAttribute("pathName")}"]`)).find((e=>e.closest(t.tagName)!==t))&&a.push(...qo(e))})),Array.from(t.querySelectorAll("Terminal, NeutralPoint")).forEach((e=>{const i=this.doc.querySelector(`ConnectivityNode[pathName="${e.getAttribute("connectivityNode")}"]`);i&&i.closest(t.tagName)!==t&&a.push(...qo(i))})));if("Vertex"===t.localName){const e=t.closest("Bay"),o=Array.from(e.querySelectorAll("Section[bus]")),r=o[0],d=r.querySelector("Vertex"),s=o[o.length-1].querySelector("Vertex:last-of-type"),{pos:[l,c]}=Uo(d),p=i-l+1,m=n-c+1;Vo(e)&&(a.push(...qo(r.closest("ConnectivityNode"))),a.push({element:s,attributes:{x:{namespaceURI:Oo,value:i.toString()},y:{namespaceURI:Oo,value:n.toString()}}}),a.push({element:e,attributes:{w:{namespaceURI:Oo,value:p.toString()},h:{namespaceURI:Oo,value:m.toString()}}}))}this.dispatchEvent(Tt(a)),!["Bay","VoltageLevel"].includes(t.tagName)||t.hasAttributeNS(Oo,"w")&&t.hasAttributeNS(Oo,"h")?this.reset():this.startResizingBottomRight(t)}connectEquipment({from:t,fromTerminal:e,to:i,toTerminal:n,path:o}){var r,a;if("TransformerWinding"===t.tagName&&"TransformerWinding"===i.tagName)return;const d=[];let s,l,c,p;if("ConnectivityNode"!==i.tagName){s=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"ConnectivityNode"),s.setAttribute("name","L1");const e=t.closest("Bay")||i.closest("Bay");d.push(...Xo(s,e)),l=d.find((t=>"attributes"in t&&"pathName"in t.attributes)).attributes.pathName,c=null!==(a=null===(r=d.find((t=>"attributes"in t&&"name"in t.attributes)))||void 0===r?void 0:r.attributes.name)&&void 0!==a?a:s.getAttribute("name"),p=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"Private"),p.setAttribute("type",Ro),d.push({parent:s,node:p,reference:re(s,"Private")})}else s=i,l=s.getAttribute("pathName"),c=s.getAttribute("name"),p=s.querySelector(`Private[type="${Ro}"]`);const m=this.doc.createElementNS(Oo,`${this.nsp}:Section`);d.push({parent:p,node:m,reference:null});const h=$o(),u=$o();if(o.forEach((([t,e],n)=>{const r=this.doc.createElementNS(Oo,`${this.nsp}:Vertex`);r.setAttributeNS(Oo,`${this.nsp}:x`,t.toString()),r.setAttributeNS(Oo,`${this.nsp}:y`,e.toString()),0===n?r.setAttributeNS(Oo,`${this.nsp}:uuid`,h):n===o.length-1&&"ConnectivityNode"!==i.tagName&&r.setAttributeNS(Oo,`${this.nsp}:uuid`,u),d.push({parent:m,node:r,reference:null})})),"ConnectivityNode"===i.tagName){const[t,e]=o[o.length-1];Array.from(p.getElementsByTagNameNS(Oo,"Section")).find((i=>{const n=Array.from(i.getElementsByTagNameNS(Oo,"Vertex")).map((t=>Uo(t).pos));for(let o=0;o<n.length-1;o+=1){const[r,a]=n[o],[s,l]=n[o+1];if(a===e&&e===l&&(r<t&&t<s||s<t&&t<r)||r===t&&t===s&&(a<e&&e<l||l<e&&e<a)||a===e&&r===t)return d.push(Qr(i,o,[t,e],this.nsp)),!0}return!1}))}const[f,g,b]=l.split("/",3),v=e.startsWith("T")?"Terminal":"NeutralPoint",x=this.doc.createElementNS(this.doc.documentElement.namespaceURI,v);if(x.setAttributeNS(Oo,`${this.nsp}:uuid`,h),x.setAttribute("name",e),x.setAttribute("connectivityNode",l),x.setAttribute("substationName",f),x.setAttribute("voltageLevelName",g),x.setAttribute("bayName",b),x.setAttribute("cNodeName",c),d.push({node:x,parent:t,reference:re(t,v)}),"ConductingEquipment"===i.tagName){const t=n.startsWith("T")?"Terminal":"NeutralPoint",e=this.doc.createElementNS(this.doc.documentElement.namespaceURI,t);e.setAttributeNS(Oo,`${this.nsp}:uuid`,u),e.setAttribute("name",n),e.setAttribute("connectivityNode",l),e.setAttribute("substationName",f),e.setAttribute("voltageLevelName",g),e.setAttribute("bayName",b),e.setAttribute("cNodeName",c),d.push({node:e,parent:i,reference:re(i,t)})}this.reset(),this.dispatchEvent(Tt(d))}render(){return this.doc?U`<main>
       <nav>
         ${Array.from(this.doc.querySelectorAll(":root > Substation > VoltageLevel > Bay")).find((t=>!Vo(t)))?zo.map((t=>{return U`<mwc-fab
                     mini
@@ -1827,8 +1830,8 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
       stroke-width="1.5"
       stroke-linecap="round"
     />`}
-    ${Ir(e)}
-    ${Fo.has(e)?Nr:j}
+    ${Lr(e)}
+    ${Fo.has(e)?Tr:j}
   </svg>`}</mwc-fab
                   >`;var e})).concat():j}${this.doc.querySelector(":root > Substation > VoltageLevel")?U`<mwc-fab
               mini
@@ -1845,7 +1848,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
               @click=${()=>{const t=this.templateElements.Bay.cloneNode();this.startPlacing(t)}}
               style="--mdc-theme-secondary: #12579B; --mdc-theme-on-secondary: white;"
             >
-              ${Sr}
+              ${Cr}
             </mwc-fab>`:j}${Array.from(this.doc.documentElement.children).find((t=>"Substation"===t.tagName))?U`<mwc-fab
             mini
             label="Add VoltageLevel"
@@ -1853,7 +1856,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             @click=${()=>{const t=this.templateElements.VoltageLevel.cloneNode();this.startPlacing(t)}}
             style="--mdc-theme-secondary: #F5E214;"
           >
-            ${Ar}
+            ${Er}
           </mwc-fab>`:j}<mwc-fab
           mini
           icon="margin"
@@ -1868,37 +1871,37 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
                   label="Add Single Winding Auto Transformer"
                   title="Add Single Winding Auto Transformer"
                   @click=${()=>{const t=this.templateElements.PowerTransformer.cloneNode();t.setAttribute("type","PTR"),t.setAttributeNS(Oo,`${this.nsp}:kind`,"auto"),t.setAttributeNS(Oo,`${this.nsp}:rot`,"3");const e=this.templateElements.TransformerWinding.cloneNode();e.setAttribute("type","PTW"),e.setAttribute("name","W1"),t.appendChild(e),this.startPlacing(t)}}
-                  >${wr(1,{kind:"auto"})}</mwc-fab
+                  >${Ar(1,{kind:"auto"})}</mwc-fab
                 ><mwc-fab
                   mini
                   label="Add Two Winding Auto Transformer"
                   title="Add Two Winding Auto Transformer"
                   @click=${()=>{const t=this.templateElements.PowerTransformer.cloneNode();t.setAttribute("type","PTR"),t.setAttributeNS(Oo,`${this.nsp}:kind`,"auto");const e=[];for(let t=1;t<=2;t+=1){const i=this.templateElements.TransformerWinding.cloneNode();i.setAttribute("type","PTW"),i.setAttribute("name",`W${t}`),e.push(i)}t.append(...e),this.startPlacing(t)}}
-                  >${wr(2,{kind:"auto"})}</mwc-fab
+                  >${Ar(2,{kind:"auto"})}</mwc-fab
                 ><mwc-fab
                   mini
                   label="Add Two Winding Transformer"
                   title="Add Two Winding Transformer"
                   @click=${()=>{const t=this.templateElements.PowerTransformer.cloneNode();t.setAttribute("type","PTR");const e=[];for(let t=1;t<=2;t+=1){const i=this.templateElements.TransformerWinding.cloneNode();i.setAttribute("type","PTW"),i.setAttribute("name",`W${t}`),e.push(i)}t.append(...e),this.startPlacing(t)}}
-                  >${wr(2)}</mwc-fab
+                  >${Ar(2)}</mwc-fab
                 ><mwc-fab
                   mini
                   label="Add Three Winding Transformer"
                   title="Add Three Winding Transformer"
                   @click=${()=>{const t=this.templateElements.PowerTransformer.cloneNode();t.setAttribute("type","PTR");const e=[];for(let t=1;t<=3;t+=1){const i=this.templateElements.TransformerWinding.cloneNode();i.setAttribute("type","PTW"),i.setAttribute("name",`W${t}`),e.push(i)}t.append(...e),this.startPlacing(t)}}
-                  >${wr(3)}</mwc-fab
+                  >${Ar(3)}</mwc-fab
                 ><mwc-fab
                   mini
                   label="Add Single Winding Earthing Transformer"
                   title="Add Single Winding Earthing Transformer"
                   @click=${()=>{const t=this.templateElements.PowerTransformer.cloneNode();t.setAttribute("type","PTR"),t.setAttributeNS(Oo,`${this.nsp}:kind`,"earthing");const e=this.templateElements.TransformerWinding.cloneNode();e.setAttribute("type","PTW"),e.setAttribute("name","W1"),t.appendChild(e),this.startPlacing(t)}}
-                  >${wr(1,{kind:"earthing"})}</mwc-fab
+                  >${Ar(1,{kind:"earthing"})}</mwc-fab
                 ><mwc-fab
                   mini
                   label="Add Two Winding Earthing Transformer"
                   title="Add Two Winding Earthing Transformer"
                   @click=${()=>{const t=this.templateElements.PowerTransformer.cloneNode();t.setAttribute("type","PTR"),t.setAttributeNS(Oo,`${this.nsp}:kind`,"earthing");const e=[];for(let t=1;t<=2;t+=1){const i=this.templateElements.TransformerWinding.cloneNode();i.setAttribute("type","PTW"),i.setAttribute("name",`W${t}`),e.push(i)}t.append(...e),this.startPlacing(t)}}
-                  >${wr(2,{kind:"earthing"})}</mwc-fab
+                  >${Ar(2,{kind:"earthing"})}</mwc-fab
                 >`:j}${this.doc.querySelector("VoltageLevel, PowerTransformer")?U`<mwc-icon-button-toggle
             id="labels"
             label="Toggle Labels"
@@ -1910,14 +1913,15 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
           ></mwc-icon-button-toggle>`:j}${this.doc.querySelector("Substation")?U`<mwc-icon-button
               icon="zoom_in"
               label="Zoom In"
-              title="Zoom In"
+              title="Zoom In (${Math.round(100*(this.gridSize+3)/32)}%)"
               @click=${()=>this.zoomIn()}
             >
             </mwc-icon-button
             ><mwc-icon-button
               icon="zoom_out"
               label="Zoom Out"
-              title="Zoom Out"
+              ?disabled=${this.gridSize<4}
+              title="Zoom Out (${Math.round(100*(this.gridSize-3)/32)}%)"
               @click=${()=>this.zoomOut()}
             ></mwc-icon-button>`:j}
         </mwc-icon-button
@@ -1948,7 +1952,7 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
             @oscd-sld-start-resize-br=${({detail:t})=>{this.startResizingBottomRight(t)}}
             @oscd-sld-start-resize-tl=${({detail:t})=>{this.startResizingTopLeft(t)}}
             @oscd-sld-start-place=${({detail:{element:t,offset:e}})=>{this.startPlacing(t,e)}}
-            @oscd-sld-start-place-label=${({detail:t})=>{this.startPlacingLabel(t)}}
+            @oscd-sld-start-place-label=${({detail:{element:t,offset:e}})=>{this.startPlacingLabel(t,e)}}
             @oscd-sld-start-connect=${({detail:t})=>{this.startConnecting(t)}}
             @oscd-sld-resize=${({detail:{element:t,w:e,h:i}})=>{this.dispatchEvent(Tt({element:t,attributes:{w:{namespaceURI:Oo,value:e.toString()},h:{namespaceURI:Oo,value:i.toString()}}})),this.reset()}}
             @oscd-sld-resize-tl=${({detail:{element:t,x:e,y:i,w:n,h:o}})=>{const{pos:[r,a],label:[d,s]}=Uo(t);let l=d,c=s;l===r&&c===a&&(l+=e-r,c+=i-a),this.dispatchEvent(Tt({element:t,attributes:{x:{namespaceURI:Oo,value:e.toString()},y:{namespaceURI:Oo,value:i.toString()},w:{namespaceURI:Oo,value:n.toString()},h:{namespaceURI:Oo,value:o.toString()},lx:{namespaceURI:Oo,value:l.toString()},ly:{namespaceURI:Oo,value:c.toString()}}})),this.reset()}}
@@ -1959,11 +1963,11 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
           ></sld-editor>`))}
     </main>
     ${gt`<mwc-dialog id="about" heading="About">
-        <div>${(t=>({_$litStatic$:t,r:ht}))(Zr)}</div>
+        <div>${(t=>({_$litStatic$:t,r:ht}))(Jr)}</div>
         <mwc-button dialogAction="close" slot="primaryAction">
           close
         </mwc-button>
-      </mwc-dialog>`}`:U`<p>Please open an SCL document</p>`}insertSubstation(){const t=this.doc.documentElement,e=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"Substation"),i=re(t,"Substation");let n=1;for(;this.doc.querySelector(`:root > Substation[name="S${n}"]`);)n+=1;e.setAttribute("name",`S${n}`),e.setAttributeNS(Oo,`${this.nsp}:w`,"50"),e.setAttributeNS(Oo,`${this.nsp}:h`,"25"),this.dispatchEvent(Tt({parent:t,node:e,reference:i}))}}Qr.styles=c`
+      </mwc-dialog>`}`:U`<p>Please open an SCL document</p>`}insertSubstation(){const t=this.doc.documentElement,e=this.doc.createElementNS(this.doc.documentElement.namespaceURI,"Substation"),i=re(t,"Substation");let n=1;for(;this.doc.querySelector(`:root > Substation[name="S${n}"]`);)n+=1;e.setAttribute("name",`S${n}`),e.setAttributeNS(Oo,`${this.nsp}:w`,"50"),e.setAttributeNS(Oo,`${this.nsp}:h`,"25"),this.dispatchEvent(Tt({parent:t,node:e,reference:i}))}}ta.styles=c`
     main {
       padding: 16px;
       width: fit-content;
@@ -1985,9 +1989,14 @@ const Io=c`.mdc-floating-label{-moz-osx-font-smoothing:grayscale;-webkit-font-sm
       z-index: 1;
     }
 
+    mwc-icon-button,
+    mwc-icon-button-toggle {
+      --mdc-theme-text-disabled-on-light: #aaa;
+      color: rgb(0, 0, 0 / 0.83);
+    }
     mwc-fab {
       --mdc-theme-secondary: #fff;
       --mdc-theme-on-secondary: rgb(0, 0, 0 / 0.83);
     }
-  `,n([yt()],Qr.prototype,"doc",void 0),n([yt()],Qr.prototype,"editCount",null),n([_t()],Qr.prototype,"_editCount",void 0),n([_t()],Qr.prototype,"gridSize",void 0),n([_t()],Qr.prototype,"nsp",void 0),n([_t()],Qr.prototype,"templateElements",void 0),n([_t()],Qr.prototype,"resizingBR",void 0),n([_t()],Qr.prototype,"resizingTL",void 0),n([_t()],Qr.prototype,"placing",void 0),n([_t()],Qr.prototype,"placingOffset",void 0),n([_t()],Qr.prototype,"placingLabel",void 0),n([_t()],Qr.prototype,"connecting",void 0),n([_t()],Qr.prototype,"showLabels",null),n([Et("#labels")],Qr.prototype,"labelToggle",void 0),n([Et("#about")],Qr.prototype,"about",void 0);export{Qr as default};
+  `,n([yt()],ta.prototype,"doc",void 0),n([yt()],ta.prototype,"editCount",null),n([_t()],ta.prototype,"_editCount",void 0),n([_t()],ta.prototype,"gridSize",void 0),n([_t()],ta.prototype,"nsp",void 0),n([_t()],ta.prototype,"templateElements",void 0),n([_t()],ta.prototype,"resizingBR",void 0),n([_t()],ta.prototype,"resizingTL",void 0),n([_t()],ta.prototype,"placing",void 0),n([_t()],ta.prototype,"placingOffset",void 0),n([_t()],ta.prototype,"placingLabel",void 0),n([_t()],ta.prototype,"connecting",void 0),n([_t()],ta.prototype,"showLabels",null),n([Et("#labels")],ta.prototype,"labelToggle",void 0),n([Et("#about")],ta.prototype,"about",void 0);export{ta as default};
 //# sourceMappingURL=oscd-designer.js.map

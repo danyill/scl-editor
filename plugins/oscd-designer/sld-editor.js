@@ -323,12 +323,16 @@ let SLDEditor = class SLDEditor extends LitElement {
     }
     renderedLabelPosition(element) {
         let { label: [x, y], } = attributes(element);
+        const [offsetX, offsetY] = this.placingOffset;
         if (this.placing &&
             element.closest(this.placing.tagName) === this.placing) {
             const { pos: [parentX, parentY], } = attributes(this.placing);
-            const [offsetX, offsetY] = this.placingOffset;
             x += this.mouseX - parentX - offsetX;
             y += this.mouseY - parentY - offsetY;
+        }
+        if (this.placingLabel === element) {
+            x = this.mouseX2 - 0.5 - offsetX;
+            y = this.mouseY2 + 0.5 - offsetY;
         }
         if (this.resizingTL === element) {
             const { pos: [resX, resY], dim: [resW, resH], } = attributes(element);
@@ -336,10 +340,6 @@ let SLDEditor = class SLDEditor extends LitElement {
                 x += Math.min(this.mouseX, resX + resW - 1) - resX;
                 y += Math.min(this.mouseY, resY + resH - 1) - resY;
             }
-        }
-        if (this.placingLabel === element) {
-            x = this.mouseX2 - 0.5;
-            y = this.mouseY2 + 0.5;
         }
         return [x, y];
     }
@@ -1132,7 +1132,11 @@ let SLDEditor = class SLDEditor extends LitElement {
                 content: renderMenuHeader(element.parentElement),
             });
         }
-        const headerHeight = element.hasAttribute('desc') || element.hasAttribute('type') ? 73 : 57;
+        const headerHeight = element.hasAttribute('desc') ||
+            element.hasAttribute('type') ||
+            (element.tagName === 'Text' && element.textContent)
+            ? 73
+            : 57;
         return html `
       <menu
         id="sld-context-menu"
@@ -1512,7 +1516,8 @@ let SLDEditor = class SLDEditor extends LitElement {
         let handleClick = nothing;
         if (this.idle) {
             events = 'all';
-            handleClick = () => this.dispatchEvent(newStartPlaceLabelEvent(element));
+            const offset = [this.mouseX2 - x - 0.5, this.mouseY2 - y + 0.5];
+            handleClick = () => this.dispatchEvent(newStartPlaceLabelEvent(element, offset));
         }
         const id = element.closest('Substation') === this.substation &&
             element.tagName !== 'Text'
@@ -1988,7 +1993,10 @@ let SLDEditor = class SLDEditor extends LitElement {
             : nothing;
         const zigZag = zigZagTransform === undefined
             ? nothing
-            : svg `<g stroke="black" transform="rotate(${rot * 90} ${cx} ${cy}) translate(${cx - 1.5} ${cy - 1.5}) ${zigZagTransform}">${zigZagPath}</g>`;
+            : svg `<g stroke="black" stroke-linecap="round"
+                transform="rotate(${rot * 90} ${cx} ${cy})
+                translate(${cx - 1.5} ${cy - 1.5})
+                ${zigZagTransform}">${zigZagPath}</g>`;
         return svg `<g class="winding"
         @contextmenu=${(e) => this.openMenu(winding, e)}
     ><circle cx="${cx}" cy="${cy}" r="${size}" stroke="black" stroke-width="0.06" />${arcPath}${zigZag}${ltcArrow}${ports}</g>`;
@@ -2245,7 +2253,8 @@ let SLDEditor = class SLDEditor extends LitElement {
         const sections = Array.from(priv.getElementsByTagNameNS(sldNs, 'Section'));
         const bay = cNode.closest('Bay');
         const targetSize = 0.5;
-        const pointerEvents = !this.resizingBR || (this.resizingBR === bay && isBusBar(this.resizingBR))
+        const pointerEvents = !this.placing &&
+            (!this.resizingBR || (this.resizingBR === bay && isBusBar(bay)))
             ? 'all'
             : 'none';
         sections.forEach(section => {
