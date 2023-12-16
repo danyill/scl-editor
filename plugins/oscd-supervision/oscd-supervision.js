@@ -12059,18 +12059,14 @@ class Supervision extends s$1 {
             : A}
     </mwc-list>`;
     }
-    renderUsedSupervisionLNs(onlyUsed = false, onlyUnused = false) {
+    renderUsedSupervisionLNs() {
         if (!this.selectedIed)
             return x ``;
-        const usedSupervisions = getSupervisionLNs(this.selectedIed, this.controlType).filter(lN => {
-            const cbRef = getSupervisionCBRef(lN);
-            const cbRefUsed = this.otherIedsCBRefs.includes(cbRef ?? 'Unknown Control');
-            return (cbRefUsed && onlyUsed) || (!cbRefUsed && onlyUnused);
-        });
+        const usedSupervisions = this.getSelectedIedSupLNs(true, false);
         if (usedSupervisions.length === 0)
             return x `<h3>${msg('No supervision nodes used')}</h3>`;
         return x `<mwc-list class="column mlist">
-      ${usedSupervisions.map(lN => x `${this.renderSupervisionListItem(lN, onlyUnused)}`)}
+      ${usedSupervisions.map(lN => x `${this.renderSupervisionListItem(lN, false)}`)}
     </mwc-list>`;
     }
     renderUsedSupervisionRemovalIcons() {
@@ -12156,7 +12152,17 @@ class Supervision extends s$1 {
             const controlElement = getOtherIedControlElements(this.selectedIed, this.controlType).find(control => cbRef === controlBlockReference(control)) ?? null;
             return x `${controlElement
                 ? this.renderControl(controlElement)
-                : A}`;
+                : x `<mwc-list-item
+              noninteractive
+              graphic="icon"
+              data-control="${identity(controlElement)}"
+              value="Control not found"
+            >
+              <span>Control not found</span>
+              <mwc-icon slot="graphic"
+                >${this.controlType === 'GOOSE' ? gooseIcon : smvIcon}</mwc-icon
+              >
+            </mwc-list-item>`}`;
         })}</mwc-list
     >`;
     }
@@ -12432,7 +12438,7 @@ class Supervision extends s$1 {
             ? msg('GOOSE Control Blocks')
             : msg('SV Control Blocks')}
           </h2>
-          ${this.renderUsedSupervisionLNs(true, false)}
+          ${this.renderUsedSupervisionLNs()}
           ${this.renderDeleteIcons(true, false)}
           ${this.renderUsedSupervisionRemovalIcons()}
           ${this.renderUsedControls()}
@@ -12536,6 +12542,7 @@ Supervision.styles = i$5 `
       flex-wrap: wrap;
       column-gap: 20px;
       padding: 10px 20px 0px 20px;
+      margin: 10px;
     }
 
     section.unused {
