@@ -1,7 +1,6 @@
 import { TemplateResult } from 'lit';
 import { List } from '@material/mwc-list';
 import { Select } from '@material/mwc-select';
-import { TextArea } from '@material/mwc-textarea';
 import { TextField } from '@material/mwc-textfield';
 import { Edit } from '@openscd/open-scd-core';
 import { SclTextfield } from '../foundation/components/scl-textfield.js';
@@ -11,8 +10,8 @@ import { SclCheckbox } from '../foundation/components/scl-checkbox.js';
 export declare function unreachable(message: string): never;
 /** @returns the cartesian product of `arrays` */
 export declare function crossProduct<T>(...arrays: T[][]): T[][];
-export declare const wizardInputSelector = "scl-textfield, mwc-textfield, mwc-textarea, ace-editor, mwc-select, scl-select, scl-checkbox";
-export type WizardInputElement = SclTextfield | TextField | TextArea | Select | SclSelect;
+export declare const wizardInputSelector = "scl-textfield, mwc-textfield, ace-editor, mwc-select, scl-select, scl-checkbox";
+export type WizardInputElement = SclTextfield | TextField | Select | SclSelect;
 /** @returns [[`EditorAction`]]s to dispatch on [[`WizardDialog`]] commit. */
 export type WizardActor = (inputs: WizardInputElement[], wizard: Element, list?: List | null) => Edit[];
 export declare function canCheckValidity(type: any): type is SclTextfield | SclSelect | TextField | Select;
