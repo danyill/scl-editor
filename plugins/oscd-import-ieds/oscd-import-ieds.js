@@ -5196,7 +5196,9 @@ SelectionList.styles = i$5 `
     }
 
     md-outlined-text-field {
+      background-color: var(--md-sys-color-surface, #fef7ff);
       --md-outlined-text-field-container-shape: 32px;
+      padding: 8px;
     }
 
     .listitems {
@@ -6073,6 +6075,20 @@ function getReference(parent, tag) {
     return nextSibling ?? null;
 }
 
+/**
+ * Copies an SCL SubNetwork element but without its ConnectedAP children.
+ * @param subNetwork - SCL SubNetwork element.
+ * @returns cloned SubNetwork without Element children.
+ */
+function getNewSubNetwork(subNetwork) {
+    const newSubNetwork = subNetwork.cloneNode(true);
+    newSubNetwork.childNodes.forEach((childNode) => {
+        if (childNode.nodeType === Node.ELEMENT_NODE &&
+            childNode.nodeName === "ConnectedAP")
+            newSubNetwork.removeChild(childNode);
+    });
+    return newSubNetwork;
+}
 function addCommunicationElements(newIed, scl) {
     const edits = [];
     const existingCommunication = scl.querySelector(":root > Communication");
@@ -6085,33 +6101,32 @@ function addCommunicationElements(newIed, scl) {
             node: communication,
             reference: getReference(scl, "Communication"),
         });
-    const newSubNetworks = Array.from(newIed.ownerDocument.querySelectorAll(`:root > Communication > SubNetwork`));
-    newSubNetworks.forEach((newSubNetwork) => {
-        const subNetworkName = newSubNetwork.getAttribute("name");
-        // check if subnetwork already exists
-        const existingSubNetwork = communication.querySelector(`:root > Communication > SubNetwork[name="${subNetworkName}"]`);
-        if (!existingSubNetwork) {
-            // subnetwork is new and can be copied as is
-            const subNetwork = newSubNetwork.cloneNode(true);
+    const subNetworks = Array.from(newIed.ownerDocument.querySelectorAll(":root > Communication > SubNetwork")).filter((subNetwork) => subNetwork.querySelector(`:scope > ConnectedAP[iedName="${newIed.getAttribute("name")}"]`));
+    subNetworks.forEach((subNetwork) => {
+        const connectedAps = Array.from(subNetwork.querySelectorAll(`:scope > ConnectedAP[iedName="${newIed.getAttribute("name")}"]`));
+        const existingSubNetwork = communication.querySelector(`:root > Communication > SubNetwork[name="${subNetwork?.getAttribute("name")}"]`);
+        const usedSubNetwork = existingSubNetwork
+            ? existingSubNetwork
+            : getNewSubNetwork(subNetwork);
+        if (!existingSubNetwork)
             edits.push({
                 parent: communication,
-                node: subNetwork,
+                node: usedSubNetwork,
                 reference: getReference(communication, "SubNetwork"),
             });
-        }
-        else {
-            // subnetwork exists and individual ConnectedAP are copied
-            const newConnectedAPs = newIed.ownerDocument.querySelectorAll(`:root > Communication > SubNetwork[name="${subNetworkName}"] 
-        > ConnectedAP[iedName="${newIed.getAttribute("name")}"]`);
-            newConnectedAPs.forEach((newConnectedAP) => {
-                const connectedAP = newConnectedAP.cloneNode(true);
+        connectedAps.forEach((connectedAp) => {
+            const iedName = newIed.getAttribute("name");
+            const apName = connectedAp.getAttribute("apName");
+            const existingConnectedAp = existingSubNetwork?.querySelector(`:scope > ConnectedAP[iedName="${iedName}"][apName="${apName}"]`);
+            if (!existingConnectedAp) {
+                const connectedAP = connectedAp.cloneNode(true);
                 edits.push({
-                    parent: existingSubNetwork,
+                    parent: usedSubNetwork,
                     node: connectedAP,
-                    reference: getReference(existingSubNetwork, "ConnectedAP"),
+                    reference: getReference(usedSubNetwork, "ConnectedAP"),
                 });
-            });
-        }
+            }
+        });
     });
     return edits;
 }
@@ -6327,6 +6342,31 @@ function uniqueNewIED(doc, newIED, ieds) {
     const duplicateToExistingIEDs = !!doc.querySelector(`:root > IED[name="${newIED.getAttribute('name')}"]`);
     return !(duplicateNewIED || duplicateToExistingIEDs);
 }
+function getIedDescription(ied) {
+    const [manufacturer, type, desc, configVersion, originalSclVersion, originalSclRevision, originalSclRelease,] = [
+        'manufacturer',
+        'type',
+        'desc',
+        'configVersion',
+        'originalSclVersion',
+        'originalSclRevision',
+        'originalSclRelease',
+    ].map(attr => ied === null || ied === void 0 ? void 0 : ied.getAttribute(attr));
+    const firstLine = [manufacturer, type]
+        .filter(val => val !== null)
+        .join(' - ');
+    const schemaInformation = [
+        originalSclVersion,
+        originalSclRevision,
+        originalSclRelease,
+    ]
+        .filter(val => val !== null)
+        .join('');
+    const secondLine = [desc, configVersion, schemaInformation]
+        .filter(val => val !== null)
+        .join(' - ');
+    return { firstLine, secondLine };
+}
 /** An editor [[`plugin`]] to import IEDs from SCL files */
 class ImportIEDsPlugin extends s$5 {
     constructor() {
@@ -6370,13 +6410,16 @@ class ImportIEDsPlugin extends s$5 {
                 unique: uniqueNewIED(this.doc, newIED, ieds),
             }));
         }
-        this.items = ieds.map(ied => ({
-            headline: `${ied.ied.getAttribute('name')}`,
-            supportingText: `${ied.ied.getAttribute('manufacturer')}`,
-            attachedElement: ied.ied,
-            selected: ied.unique,
-        }));
-        this.dialog.show();
+        this.items = ieds.map(ied => {
+            const { firstLine, secondLine } = getIedDescription(ied.ied);
+            return {
+                headline: `${ied.ied.getAttribute('name')} — ${firstLine}`,
+                supportingText: secondLine,
+                attachedElement: ied.ied,
+                selected: ied.unique,
+            };
+        });
+        this.dialogUI.show();
     }
     render() {
         return x$1 `<input
@@ -6389,7 +6432,10 @@ class ImportIEDsPlugin extends s$5 {
         accept=".iid,.cid,.icd,.scd,.sed,.ssd"
         type="file"
         multiple
-      /><md-dialog id="selection-dialog">
+      /><md-dialog
+        id="selection-dialog"
+        @cancel=${(event) => event.preventDefault()}
+      >
         <form slot="content" id="selection" method="dialog">
           <selection-list
             id="selection-list"
@@ -6398,6 +6444,9 @@ class ImportIEDsPlugin extends s$5 {
           ></selection-list>
         </form>
         <div slot="actions">
+          <md-text-button @click=${() => this.dialogUI.close()}
+            >Close</md-text-button
+          >
           <md-text-button
             @click="${() => {
             this.importIEDs();
@@ -6434,7 +6483,7 @@ __decorate([
 ], ImportIEDsPlugin.prototype, "input", void 0);
 __decorate([
     e$a('#selection-dialog')
-], ImportIEDsPlugin.prototype, "dialog", void 0);
+], ImportIEDsPlugin.prototype, "dialogUI", void 0);
 __decorate([
     e$a('#selection-list')
 ], ImportIEDsPlugin.prototype, "selectionList", void 0);

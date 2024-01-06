@@ -17,7 +17,7 @@ export declare function sameAttributeValue(leftElement: Element | undefined, rig
  * @param rightAttributeName - The name of the attribute (right) to check.
  */
 export declare function sameAttributeValueDiffName(leftElement: Element | undefined, leftAttributeName: string, rightElement: Element | undefined, rightAttributeName: string): boolean;
-export declare type SclEdition = '2003' | '2007B' | '2007B4';
+export type SclEdition = '2003' | '2007B' | '2007B4';
 export declare function getSclSchemaVersion(doc: Document): SclEdition;
 export declare const serviceTypes: Partial<Record<string, string>>;
 /**

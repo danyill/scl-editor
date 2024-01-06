@@ -8,16 +8,16 @@ import '@material/mwc-list/mwc-radio-list-item';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
+import '@openscd/oscd-filtered-list';
 import type { ListItem } from '@material/mwc-list/mwc-list-item';
 import type { List } from '@material/mwc-list';
 import type { TextField } from '@material/mwc-textfield';
 import './foundation/components/oscd-filter-button.js';
-import './foundation/components/oscd-filtered-list.js';
 /**
  * Editor to allow allocation of GOOSE and SMV supervision LNs
  * to control blocks
  */
-export default class Supervision extends LitElement {
+export default class OscdSupervision extends LitElement {
     doc: XMLDocument;
     docName: string;
     editCount: number;
@@ -43,6 +43,8 @@ export default class Supervision extends LitElement {
     selectedControl: Element | null;
     selectedSupervision: Element | null;
     newSupervision: boolean;
+    instantiatedSupervisionLNs: number;
+    availableSupervisionLNs: number;
     selectedUnusedControlsListUI: List;
     selectedUnusedSupervisionsListUI: List;
     selectedUnusedControlUI?: ListItem;
@@ -60,17 +62,16 @@ export default class Supervision extends LitElement {
     renderSupervisionListItem(lN: Element, interactive: boolean): TemplateResult;
     clearListSelections(): void;
     private getSelectedIedSupLNs;
+    searchUnusedSupervisionLN(supLn: Element): boolean;
     protected renderUnusedSupervisionLNs(used?: boolean, unused?: boolean): TemplateResult;
     private renderDeleteIcons;
     private renderUsedSupervisionLNs;
     private renderUsedSupervisionRemovalIcons;
     private renderControl;
-    private renderUnusedControls;
     private renderUsedControls;
     private renderInfo;
     private renderIedSelector;
     private resetSearchFilters;
-    private createSupervision;
     private createNewSupervision;
     private renderUnusedControlList;
     private renderUnusedSupervisionList;

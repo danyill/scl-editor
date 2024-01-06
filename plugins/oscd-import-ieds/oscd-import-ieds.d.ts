@@ -12,7 +12,7 @@ export default class ImportIEDsPlugin extends LitElement {
     editCount: number;
     items: SelectItem[];
     input: HTMLInputElement;
-    dialog: Dialog;
+    dialogUI: Dialog;
     selectionList: SelectionList;
     run(): Promise<void>;
     importIEDs(): Promise<void>;

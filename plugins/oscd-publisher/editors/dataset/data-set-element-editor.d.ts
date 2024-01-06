@@ -1,16 +1,14 @@
 import { LitElement, TemplateResult } from 'lit';
 import '@material/mwc-button';
-import '@material/mwc-icon-button';
-import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-dialog';
 import type { Button } from '@material/mwc-button';
 import type { Dialog } from '@material/mwc-dialog';
 import '@openscd/oscd-tree-grid';
 import type { TreeGrid } from '@openscd/oscd-tree-grid';
+import '@openenergytools/filterable-lists/dist/action-list.js';
+import type { ActionList } from '@openenergytools/filterable-lists/dist/action-list.js';
 import '../../foundation/components/scl-textfield.js';
-import '../../foundation/components/action-filtered-list.js';
 import type { SclTextfield } from '../../foundation/components/scl-textfield.js';
-import type { ActionFilteredList } from '../../foundation/components/action-filtered-list.js';
 export declare class DataSetElementEditor extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
     doc: XMLDocument;
@@ -24,7 +22,7 @@ export declare class DataSetElementEditor extends LitElement {
     private someDiffOnInputs;
     inputs: SclTextfield[];
     saveButton: Button;
-    fcdaList: ActionFilteredList;
+    fcdaList: ActionList;
     daPickerButton: Button;
     daPickerDialog: Dialog;
     daPicker: TreeGrid;
@@ -37,7 +35,6 @@ export declare class DataSetElementEditor extends LitElement {
     private saveDataAttributes;
     private onMoveFCDAUp;
     private onMoveFCDADown;
-    updated(): void;
     private renderFCDAList;
     private renderDataObjectPicker;
     private renderDataAttributePicker;
