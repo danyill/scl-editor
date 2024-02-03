@@ -161,6 +161,12 @@ const t$5={ATTRIBUTE:1,CHILD:2,PROPERTY:3,BOOLEAN_ATTRIBUTE:4,EVENT:5,ELEMENT:6}
  */
 const u$1=(e,s,t)=>{const r=new Map;for(let l=s;l<=t;l++)r.set(e[l],l);return r},c$2=e$b(class extends i$6{constructor(e){if(super(e),e.type!==t$5.CHILD)throw Error("repeat() can only be used in text expressions")}ht(e,s,t){let r;void 0===t?t=s:void 0!==s&&(r=s);const l=[],o=[];let i=0;for(const s of e)l[i]=r?r(s,i):i,o[i]=t(s,i),i++;return {values:o,keys:l}}render(e,s,t){return this.ht(e,s,t).values}update(s,[t,r,c]){const d=p$1(s),{values:p,keys:a}=this.ht(t,r,c);if(!Array.isArray(d))return this.dt=a,p;const h=this.dt??=[],v=[];let m,y,x=0,j=d.length-1,k=0,w=p.length-1;for(;x<=j&&k<=w;)if(null===d[x])x++;else if(null===d[j])j--;else if(h[x]===a[k])v[k]=v$1(d[x],p[k]),x++,k++;else if(h[j]===a[w])v[w]=v$1(d[j],p[w]),j--,w--;else if(h[x]===a[w])v[w]=v$1(d[x],p[w]),r$3(s,v[w+1],d[x]),x++,w--;else if(h[j]===a[k])v[k]=v$1(d[j],p[k]),r$3(s,d[x],d[j]),j--,k++;else if(void 0===m&&(m=u$1(a,k,w),y=u$1(h,x,j)),m.has(h[x]))if(m.has(h[j])){const e=y.get(a[k]),t=void 0!==e?d[e]:null;if(null===t){const e=r$3(s,d[x]);v$1(e,p[k]),v[k]=e;}else v[k]=v$1(t,p[k]),r$3(s,d[x],t),d[e]=null;k++;}else h$2(d[j]),j--;else h$2(d[x]),x++;for(;k<=w;){const e=r$3(s,v[w+1]);v$1(e,p[k]),v[k++]=e;}for(;x<=j;){const e=d[x++];null!==e&&h$2(e);}return this.dt=a,m$1(s,v),w$2}});
 
+function isUpdate$1(edit) {
+    return edit.element !== undefined;
+}
+function isInsert$1(edit) {
+    return edit.parent !== undefined;
+}
 /** Utility function to create element with `tagName` and its`attributes` */
 function createElement(doc, tag, attrs) {
     const element = doc.createElementNS(doc.documentElement.namespaceURI, tag);
@@ -1323,6 +1329,373 @@ function lnInstGenerator(parent, tagName) {
     };
 }
 
+/** @returns control block or null for a set of ExtRef attributes */
+function findControlBlockBySrcAttributes(doc, extRefSrc) {
+    return (Array.from(doc.querySelectorAll(`:root > IED[name="${extRefSrc.iedName}"] ReportControl, 
+            :root > IED[name="${extRefSrc.iedName}"] GSEControl, 
+            :root > IED[name="${extRefSrc.iedName}"] SampledValueControl`)).find((cBlock) => cBlock.closest("LDevice").getAttribute("inst") === extRefSrc.ldInst &&
+        (cBlock.closest("LN, LN0").getAttribute("prefix") ?? "") ===
+            extRefSrc.prefix &&
+        cBlock.closest("LN, LN0").getAttribute("lnClass") ===
+            extRefSrc.lnClass &&
+        cBlock.closest("LN, LN0").getAttribute("inst") === extRefSrc.lnInst &&
+        cBlock.getAttribute("name") === extRefSrc.cbName) ?? null);
+}
+
+function type(supervision) {
+    const serviceType = supervision.sourceControlBlock.tagName;
+    return serviceType === "GSEControl" ? "GoCBRef" : "SvCBRef";
+}
+function supervisionLnClass(supervision) {
+    const serviceType = supervision.sourceControlBlock.tagName;
+    return serviceType === "GSEControl" ? "LGOS" : "LSVS";
+}
+/** @returns Unique attribute `inst` for supervision logical nodes. */
+function globalLnInstGenerator() {
+    const lnInstGenerators = new Map();
+    return (supervision) => {
+        const ied = supervision.subscriberIedOrLn;
+        const lnClass = supervisionLnClass(supervision);
+        const formLn = ied.querySelector(`LN[lnClass="${lnClass}"]`);
+        const lDevice = formLn.parentElement;
+        const iedName = `${ied.getAttribute("name")}`;
+        if (!lnInstGenerators.has(iedName))
+            lnInstGenerators.set(iedName, lnInstGenerator(lDevice, "LN"));
+        return lnInstGenerators.get(iedName)(lnClass);
+    };
+}
+
+/** @returns Whether a supervision LN holds a valid control block object ref */
+function holdsValidObjRef(ln, type) {
+    const objRef = ln.querySelector(`:scope > DOI[name="${type}"] > DAI[name="setSrcRef"] > Val`)?.textContent;
+    if (!objRef)
+        return false;
+    // IEDnameLDinst/prefixLnClassLnInst.CbName
+    const indexSlash = objRef.indexOf("/");
+    const indexDot = objRef.indexOf(".");
+    return (indexSlash !== 0 &&
+        indexSlash < indexDot + 1 &&
+        indexDot - 1 < objRef.length);
+}
+/** @returns Whether `Services` element requirement is met */
+function withinSupervisionLimits(supervision) {
+    const subscriberIed = supervision.subscriberIedOrLn.tagName === "IED"
+        ? supervision.subscriberIedOrLn
+        : supervision.subscriberIedOrLn.closest("IED");
+    const lnClass = supervisionLnClass(supervision);
+    const max = subscriberIed
+        ?.querySelector("Services > SupSubscription")
+        ?.getAttribute(`${lnClass === "LGOS" ? "maxGo" : "maxSv"}`);
+    if (!max || isNaN(parseInt(max, 10)))
+        return false;
+    const existingSupervisionLNs = Array.from(subscriberIed.querySelectorAll(`LN[lnClass="${lnClass}"]`));
+    if (existingSupervisionLNs.length < parseInt(max, 10))
+        return true;
+    const availableSupervisorSpots = existingSupervisionLNs.filter((ln) => !holdsValidObjRef(ln, type(supervision)));
+    return (existingSupervisionLNs.length === parseInt(max, 10) &&
+        availableSupervisorSpots.length > 0);
+}
+/** @returns Whether `DA`|`DAI` with name `setSrcRef` is editable */
+function isSrcRefEditable(supervision) {
+    const lnClass = supervisionLnClass(supervision);
+    const ln = supervision.subscriberIedOrLn.tagName === "LN"
+        ? supervision.subscriberIedOrLn
+        : supervision.subscriberIedOrLn.querySelector(`LN[lnClass="${lnClass}"]`);
+    const doiName = type(supervision);
+    if (ln.querySelector(`:scope > DOI[name="${doiName}"] > 
+        DAI[name="setSrcRef"][valImport="true"][valKind="RO"],
+       :scope > DOI[name="${doiName}"] > 
+        DAI[name="setSrcRef"][valImport="true"][valKind="Conf"]`))
+        return true;
+    const rootNode = ln.ownerDocument;
+    const lnType = ln.getAttribute("lnType");
+    const goOrSvCBRef = rootNode.querySelector(`DataTypeTemplates > 
+            LNodeType[id="${lnType}"][lnClass="${lnClass}"] > DO[name="${type(supervision)}"]`);
+    const cbRefId = goOrSvCBRef?.getAttribute("type");
+    const setSrcRef = rootNode.querySelector(`DataTypeTemplates > DOType[id="${cbRefId}"] > DA[name="setSrcRef"]`);
+    return ((setSrcRef?.getAttribute("valKind") === "Conf" ||
+        setSrcRef?.getAttribute("valKind") === "RO") &&
+        setSrcRef.getAttribute("valImport") === "true");
+}
+/**
+ * A pre requirement for a subscription supervision is an already existing
+ * LN of the class `LGOS` or `LSVS` in the subscriber IED.
+ * @returns Whether there is a logical node element `LN` with the class `LGOS`, `LSVS`
+ */
+function existFirstSupervisionOfType(supervision) {
+    const lnClass = supervision.sourceControlBlock.tagName === "GSEControl" ? "LGOS" : "LSVS";
+    const firstSupervisionOfType = supervision.subscriberIedOrLn.querySelector(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"]`);
+    return firstSupervisionOfType ? true : false;
+}
+/** @returns Whether [[`controlBlock`]] is supervised in [[`subscriberIed`]] */
+function isControlBlockSupervised(supervision) {
+    const subscriberIed = supervision.subscriberIedOrLn.tagName === "IED"
+        ? supervision.subscriberIedOrLn
+        : supervision.subscriberIedOrLn.closest("IED");
+    const lnClass = supervision.sourceControlBlock.tagName === "GSEControl" ? "LGOS" : "LSVS";
+    const refType = supervision.sourceControlBlock.tagName === "GSEControl"
+        ? "GoCBRef"
+        : "SvCBRef";
+    return Array.from(subscriberIed?.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"] 
+      > DOI[name="${refType}"] > DAI[name="setSrcRef"] > Val`)).some((val) => val.textContent === controlBlockObjRef(supervision.sourceControlBlock));
+}
+/** Whether subscription supervision instantiation can be performed.
+ * ```md
+ * - check if `valImport` and `valKind` allow to change subscriber logical node
+ * - check whether the control block is already supervised in the IED
+ * - check whether there is an available location for the control block
+ *   reference to be stored in the supervision source reference.
+ * - check whether `Service` element requirements are met
+ * - check whether the logical node has missing or empty `Val` content
+ *   (iedOrLn is LN)
+ * ```
+ * @returns Whether subscription supervision can be done */
+function canInstantiateSubscriptionSupervision(supervision, options = {
+    newSupervisionLn: false,
+    fixedLnInst: -1,
+    checkEditableSrcRef: true,
+    checkDuplicateSupervisions: true,
+    checkMaxSupervisionLimits: true,
+}) {
+    if (options.checkDuplicateSupervisions &&
+        isControlBlockSupervised(supervision))
+        return false;
+    if (supervision.subscriberIedOrLn.tagName === "LN") {
+        const type = supervision.sourceControlBlock.tagName === "GSEControl"
+            ? "GoCBRef"
+            : "SvCBRef";
+        if (holdsValidObjRef(supervision.subscriberIedOrLn, type))
+            return false;
+    }
+    else {
+        if (!existFirstSupervisionOfType(supervision))
+            return false;
+    }
+    if (options.checkMaxSupervisionLimits &&
+        !withinSupervisionLimits(supervision))
+        return false;
+    if (options.checkEditableSrcRef && !isSrcRefEditable(supervision))
+        return false;
+    return true;
+}
+
+function isFixedInst(options) {
+    return "fixedInst" in options;
+}
+function isNewSupervisionLn(options) {
+    return "newSupervisionLn" in options;
+}
+function createSupervisionDaiElement(input) {
+    const dai = createElement(input.doc, "DAI", { name: "setSrcRef" });
+    const val = createElement(input.doc, "Val", {});
+    dai.appendChild(val);
+    val.textContent = input.controlBlockReference;
+    return dai;
+}
+function createSupervisionDoiElement(input) {
+    const doi = createElement(input.doc, "DOI", { name: input.cbRefType });
+    const dai = createElement(input.doc, "DAI", { name: "setSrcRef" });
+    const val = createElement(input.doc, "Val", {});
+    doi.appendChild(dai);
+    dai.appendChild(val);
+    val.textContent = input.controlBlockReference;
+    return doi;
+}
+function cdRefType(logicalNode) {
+    const lnClass = logicalNode.getAttribute("lnClass");
+    const cbRefType = lnClass === "LGOS" ? "GoCBRef" : "SvCBRef";
+    return cbRefType;
+}
+function availableSupervisionLn(supervision, usedSupervisions) {
+    const lnClass = supervisionLnClass(supervision);
+    const cbRefType = type(supervision);
+    return (Array.from(supervision.subscriberIedOrLn.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"]`))
+        // filter already used available logical nodes
+        .filter((ln) => !usedSupervisions?.has(ln))
+        .find((ln) => {
+        return (ln.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`) === null ||
+            ln.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`)?.textContent === "");
+    }) ?? null);
+}
+function createSupervisionLogicalNode(supervision, controlBlockReference, inst) {
+    const subscriberIed = supervision.subscriberIedOrLn;
+    const lnClass = supervisionLnClass(supervision);
+    const formLn = subscriberIed.querySelector(`LN[lnClass="${lnClass}"]`);
+    const parent = formLn.parentElement;
+    const lnType = formLn.getAttribute("lnType");
+    const prefix = formLn.getAttribute("prefix");
+    const ln = createElement(subscriberIed.ownerDocument, "LN", {
+        prefix,
+        lnClass,
+        lnType,
+        inst,
+    });
+    const openScdTag = createElement(subscriberIed.ownerDocument, "Private", {
+        type: "OpenSCD.create",
+    });
+    ln.appendChild(openScdTag);
+    const lastSupervisionLn = parent.querySelector(`:scope > LN[lnClass="${lnClass}"]:last-child`);
+    const reference = lastSupervisionLn
+        ? lastSupervisionLn.nextElementSibling
+        : getReference(parent, "LN");
+    const doc = ln.ownerDocument;
+    const cbRefType = cdRefType(ln);
+    ln.appendChild(createSupervisionDoiElement({
+        doc,
+        cbRefType,
+        controlBlockReference,
+    }));
+    return { parent, node: ln, reference };
+}
+function updateSupervisionLogicalNode(controlBlockReference, logicalNode) {
+    const doc = logicalNode.ownerDocument;
+    const cbRefType = cdRefType(logicalNode);
+    const createSupervisionElementInput = {
+        doc,
+        cbRefType,
+        controlBlockReference,
+    };
+    const doi = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"]`);
+    if (!doi)
+        return {
+            parent: logicalNode,
+            node: createSupervisionDoiElement(createSupervisionElementInput),
+            reference: getReference(logicalNode, "DOI"),
+        };
+    const dai = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"]`);
+    if (!dai)
+        return {
+            parent: doi,
+            node: createSupervisionDaiElement(createSupervisionElementInput),
+            reference: getReference(doi, "DAI"),
+        };
+    const val = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`);
+    if (!val) {
+        const newVal = createElement(doc, "Val", {});
+        dai.appendChild(newVal);
+        newVal.textContent = controlBlockReference;
+        return { parent: dai, node: newVal, reference: getReference(dai, "Val") };
+    }
+    const cbRef = document.createTextNode(controlBlockReference);
+    return { parent: val, node: cbRef, reference: null };
+}
+/** @returns Insert edit on unused supervision logical node or new supervision logical node */
+function createSupervisionEdit(supervision, options) {
+    const sourceControlBlock = supervision.sourceControlBlock;
+    const controlBlockReference = controlBlockObjRef(sourceControlBlock);
+    if (!controlBlockReference)
+        return null;
+    if (supervision.subscriberIedOrLn.tagName === "LN")
+        return updateSupervisionLogicalNode(controlBlockReference, supervision.subscriberIedOrLn);
+    if (isNewSupervisionLn(options) && options.newSupervisionLn) {
+        const inst = options.fixedInst
+            ? options.fixedInst
+            : options.instGenerator(supervision);
+        return createSupervisionLogicalNode(supervision, controlBlockReference, inst);
+    }
+    const unusedSupervisionLogicalNode = availableSupervisionLn(supervision, options?.usedSupervisions);
+    if (!unusedSupervisionLogicalNode) {
+        const inst = isFixedInst(options)
+            ? options.fixedInst
+            : options.instGenerator(supervision);
+        return createSupervisionLogicalNode(supervision, controlBlockReference, inst);
+    }
+    options.usedSupervisions?.add(unusedSupervisionLogicalNode);
+    return updateSupervisionLogicalNode(controlBlockReference, unusedSupervisionLogicalNode);
+}
+
+/** In case a new ExtRef is added to inputs-less LN/LN0
+ * ExtRef does not have parent IED yet.
+ * @returns A sink IED for a given ExtRef insert or `null`*/
+function findIED(edit, previousEdits) {
+    // case 1: Input is already in the SCL and ExtRef is added to it
+    const inputs = edit.parent;
+    const inputsParent = inputs.parentElement;
+    if (inputsParent)
+        return inputs.closest("IED");
+    // case 2: Input element is added as part of the subscription as well.
+    const inputsInsertEdit = previousEdits.find((otherEdit) => isInsert$1(otherEdit) && otherEdit.node === edit.parent);
+    if (inputsInsertEdit)
+        return inputsInsertEdit.parent.closest("IED");
+    // fallback for invalid files
+    return null;
+}
+function uniqueSupervisions(edits) {
+    const uniqueSupervisions = {};
+    edits.forEach((edit) => {
+        let sink = null;
+        let source;
+        let sinkIED = null;
+        const isExtRefUpdate = isUpdate$1(edit) && edit.element.tagName === "ExtRef";
+        const newExtRefInsert = isInsert$1(edit) && edit.node.tagName === "ExtRef";
+        if (isExtRefUpdate) {
+            source = {
+                iedName: edit.attributes["iedName"] ?? "",
+                ldInst: edit.attributes["srcLDInst"] ?? "",
+                prefix: edit.attributes["srcPrefix"] ?? "",
+                lnClass: edit.attributes["srcLNClass"] ?? "",
+                lnInst: edit.attributes["srcLNInst"] ?? "",
+                cbName: edit.attributes["srcCBName"] ?? "",
+            };
+            sink = edit.element;
+            sinkIED = sink.closest("IED");
+        }
+        else if (newExtRefInsert) {
+            const extRef = edit.node;
+            source = {
+                iedName: extRef.getAttribute("iedName") ?? "",
+                ldInst: extRef.getAttribute("srcLDInst") ?? "",
+                prefix: extRef.getAttribute("srcPrefix") ?? "",
+                lnClass: extRef.getAttribute("srcLNClass") ?? "",
+                lnInst: extRef.getAttribute("srcLNInst") ?? "",
+                cbName: extRef.getAttribute("srcCBName") ?? "",
+            };
+            sink = edit.parent;
+            sinkIED = findIED(edit, edits);
+        }
+        else
+            return;
+        const controlBlock = findControlBlockBySrcAttributes(sink.ownerDocument, source);
+        if (!controlBlock)
+            return;
+        const controlBlockReference = controlBlockObjRef(controlBlock);
+        if (!sinkIED)
+            return;
+        const iedName = sinkIED.getAttribute("name");
+        const id = `${controlBlockReference}-${iedName}`;
+        if (!uniqueSupervisions[id])
+            uniqueSupervisions[id] = {
+                sourceControlBlock: controlBlock,
+                subscriberIedOrLn: sinkIED,
+            };
+    });
+    return uniqueSupervisions;
+}
+/**
+ * Insert supervisions triggered by an array of subscribe edits. Subscribe edits
+ * are:
+ * 1. Update edit with element key being `ExtRef` element
+ * 2. Insert edit with node key being `ExtRef` element
+ * All other edits are not taking into consideration
+ * @param edits - Subscribe edit array
+ * @returns Edit array adding supervision on top of the subscription
+ */
+function insertSubscriptionSupervisions(edits) {
+    /** Global as multiple subscription could be defined for different subscriber IEDs */
+    const instGenerator = globalLnInstGenerator();
+    const usedSupervisions = new Set();
+    return Object.values(uniqueSupervisions(edits))
+        .map((supervision) => {
+        if (!canInstantiateSubscriptionSupervision(supervision))
+            return null;
+        return createSupervisionEdit(supervision, {
+            usedSupervisions,
+            instGenerator,
+        });
+    })
+        .filter((action) => action);
+}
+
 function dataAttributeSpecification(anyLn, doName, daName) {
     const doc = anyLn.ownerDocument;
     const lNodeType = doc.querySelector(`:root > DataTypeTemplates > LNodeType[id="${anyLn.getAttribute("lnType")}"]`);
@@ -1609,7 +1982,7 @@ function validSubscribeConditions(connection) {
  * @param source.controlBlock - The control block carrying the [[`source.fcda`]]
  * @returns An array of edits to do a valid subscription
  */
-function subscribe(connectionOrConnections, options = { force: false }) {
+function subscribe(connectionOrConnections, options = { force: false, ignoreSupervision: false }) {
     const connections = Array.isArray(connectionOrConnections)
         ? connectionOrConnections
         : [connectionOrConnections];
@@ -1617,305 +1990,9 @@ function subscribe(connectionOrConnections, options = { force: false }) {
         ? connections
         : connections.filter(validSubscribeConditions);
     const extRefEdits = createSubscribeEdits(validConnections);
-    return [
-        ...extRefEdits,
-        //TODO: ...insertSubscriptionSupervisions(extRefEdits),
-    ];
-}
-
-function type(supervision) {
-    const serviceType = supervision.sourceControlBlock.tagName;
-    return serviceType === "GSEControl" ? "GoCBRef" : "SvCBRef";
-}
-function supervisionLnClass(supervision) {
-    const serviceType = supervision.sourceControlBlock.tagName;
-    return serviceType === "GSEControl" ? "LGOS" : "LSVS";
-}
-/** @returns Unique attribute `inst` for supervision logical nodes. */
-function globalLnInstGenerator() {
-    const lnInstGenerators = new Map();
-    return (supervision) => {
-        const ied = supervision.subscriberIedOrLn;
-        const lnClass = supervisionLnClass(supervision);
-        const formLn = ied.querySelector(`LN[lnClass="${lnClass}"]`);
-        const lDevice = formLn.parentElement;
-        const iedName = `${ied.getAttribute("name")}`;
-        if (!lnInstGenerators.has(iedName))
-            lnInstGenerators.set(iedName, lnInstGenerator(lDevice, "LN"));
-        return lnInstGenerators.get(iedName)(lnClass);
-    };
-}
-
-/** @returns Whether a supervision LN holds a valid control block object ref */
-function holdsValidObjRef(ln, type) {
-    const objRef = ln.querySelector(`:scope > DOI[name="${type}"] > DAI[name="setSrcRef"] > Val`)?.textContent;
-    if (!objRef)
-        return false;
-    // IEDnameLDinst/prefixLnClassLnInst.CbName
-    const indexSlash = objRef.indexOf("/");
-    const indexDot = objRef.indexOf(".");
-    return (indexSlash !== 0 &&
-        indexSlash < indexDot + 1 &&
-        indexDot - 1 < objRef.length);
-}
-/** @returns Whether `Services` element requirement is met */
-function withinSupervisionLimits(supervision) {
-    const subscriberIed = supervision.subscriberIedOrLn.tagName === "IED"
-        ? supervision.subscriberIedOrLn
-        : supervision.subscriberIedOrLn.closest("IED");
-    const lnClass = supervisionLnClass(supervision);
-    const max = subscriberIed
-        ?.querySelector("Services > SupSubscription")
-        ?.getAttribute(`${lnClass === "LGOS" ? "maxGo" : "maxSv"}`);
-    if (!max || isNaN(parseInt(max, 10)))
-        return false;
-    const existingSupervisionLNs = Array.from(subscriberIed.querySelectorAll(`LN[lnClass="${lnClass}"]`));
-    if (existingSupervisionLNs.length < parseInt(max, 10))
-        return true;
-    const availableSupervisorSpots = existingSupervisionLNs.filter((ln) => !holdsValidObjRef(ln, type(supervision)));
-    return (existingSupervisionLNs.length === parseInt(max, 10) &&
-        availableSupervisorSpots.length > 0);
-}
-/** @returns Whether `DA`|`DAI` with name `setSrcRef` is editable */
-function isSrcRefEditable(supervision) {
-    const lnClass = supervisionLnClass(supervision);
-    const ln = supervision.subscriberIedOrLn.tagName === "LN"
-        ? supervision.subscriberIedOrLn
-        : supervision.subscriberIedOrLn.querySelector(`LN[lnClass="${lnClass}"]`);
-    const doiName = type(supervision);
-    if (ln.querySelector(`:scope > DOI[name="${doiName}"] > 
-        DAI[name="setSrcRef"][valImport="true"][valKind="RO"],
-       :scope > DOI[name="${doiName}"] > 
-        DAI[name="setSrcRef"][valImport="true"][valKind="Conf"]`))
-        return true;
-    const rootNode = ln.ownerDocument;
-    const lnType = ln.getAttribute("lnType");
-    const goOrSvCBRef = rootNode.querySelector(`DataTypeTemplates > 
-            LNodeType[id="${lnType}"][lnClass="${lnClass}"] > DO[name="${type(supervision)}"]`);
-    const cbRefId = goOrSvCBRef?.getAttribute("type");
-    const setSrcRef = rootNode.querySelector(`DataTypeTemplates > DOType[id="${cbRefId}"] > DA[name="setSrcRef"]`);
-    return ((setSrcRef?.getAttribute("valKind") === "Conf" ||
-        setSrcRef?.getAttribute("valKind") === "RO") &&
-        setSrcRef.getAttribute("valImport") === "true");
-}
-/**
- * A pre requirement for a subscription supervision is an already existing
- * LN of the class `LGOS` or `LSVS` in the subscriber IED.
- * @returns Whether there is a logical node element `LN` with the class `LGOS`, `LSVS`
- */
-function existFirstSupervisionOfType(supervision) {
-    const lnClass = supervision.sourceControlBlock.tagName === "GSEControl" ? "LGOS" : "LSVS";
-    const firstSupervisionOfType = supervision.subscriberIedOrLn.querySelector(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"]`);
-    return firstSupervisionOfType ? true : false;
-}
-/** @returns Whether [[`controlBlock`]] is supervised in [[`subscriberIed`]] */
-function isControlBlockSupervised(supervision) {
-    const subscriberIed = supervision.subscriberIedOrLn.tagName === "IED"
-        ? supervision.subscriberIedOrLn
-        : supervision.subscriberIedOrLn.closest("IED");
-    const lnClass = supervision.sourceControlBlock.tagName === "GSEControl" ? "LGOS" : "LSVS";
-    const refType = supervision.sourceControlBlock.tagName === "GSEControl"
-        ? "GoCBRef"
-        : "SvCBRef";
-    return Array.from(subscriberIed?.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"] 
-      > DOI[name="${refType}"] > DAI[name="setSrcRef"] > Val`)).some((val) => val.textContent === controlBlockObjRef(supervision.sourceControlBlock));
-}
-/** Whether subscription supervision instantiation can be performed.
- * ```md
- * - check if `valImport` and `valKind` allow to change subscriber logical node
- * - check whether the control block is already supervised in the IED
- * - check whether there is an available location for the control block
- *   reference to be stored in the supervision source reference.
- * - check whether `Service` element requirements are met
- * - check whether the logical node has missing or empty `Val` content
- *   (iedOrLn is LN)
- * ```
- * @returns Whether subscription supervision can be done */
-function canInstantiateSubscriptionSupervision(supervision, options = {
-    newSupervisionLn: false,
-    fixedLnInst: -1,
-    checkEditableSrcRef: true,
-    checkDuplicateSupervisions: true,
-    checkMaxSupervisionLimits: true,
-}) {
-    if (options.checkDuplicateSupervisions &&
-        isControlBlockSupervised(supervision))
-        return false;
-    if (supervision.subscriberIedOrLn.tagName === "LN") {
-        const type = supervision.sourceControlBlock.tagName === "GSEControl"
-            ? "GoCBRef"
-            : "SvCBRef";
-        if (holdsValidObjRef(supervision.subscriberIedOrLn, type))
-            return false;
-    }
-    else {
-        if (!existFirstSupervisionOfType(supervision))
-            return false;
-    }
-    if (options.checkMaxSupervisionLimits &&
-        !withinSupervisionLimits(supervision))
-        return false;
-    if (options.checkEditableSrcRef && !isSrcRefEditable(supervision))
-        return false;
-    return true;
-}
-
-function isFixedInst(options) {
-    return "fixedInst" in options;
-}
-function isNewSupervisionLn(options) {
-    return "newSupervisionLn" in options;
-}
-function createSupervisionDaiElement(input) {
-    const dai = createElement(input.doc, "DAI", { name: "setSrcRef" });
-    const val = createElement(input.doc, "Val", {});
-    dai.appendChild(val);
-    val.textContent = input.controlBlockReference;
-    return dai;
-}
-function createSupervisionDoiElement(input) {
-    const doi = createElement(input.doc, "DOI", { name: input.cbRefType });
-    const dai = createElement(input.doc, "DAI", { name: "setSrcRef" });
-    const val = createElement(input.doc, "Val", {});
-    doi.appendChild(dai);
-    dai.appendChild(val);
-    val.textContent = input.controlBlockReference;
-    return doi;
-}
-function cdRefType(logicalNode) {
-    const lnClass = logicalNode.getAttribute("lnClass");
-    const cbRefType = lnClass === "LGOS" ? "GoCBRef" : "SvCBRef";
-    return cbRefType;
-}
-function availableSupervisionLn(supervision, usedSupervisions) {
-    const lnClass = supervisionLnClass(supervision);
-    const cbRefType = type(supervision);
-    return (Array.from(supervision.subscriberIedOrLn.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"]`))
-        // filter already used available logical nodes
-        .filter((ln) => !usedSupervisions?.has(ln))
-        .find((ln) => {
-        return (ln.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`) === null ||
-            ln.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`)?.textContent === "");
-    }) ?? null);
-}
-function createSupervisionLogicalNode(supervision, controlBlockReference, inst) {
-    const subscriberIed = supervision.subscriberIedOrLn;
-    const lnClass = supervisionLnClass(supervision);
-    const formLn = subscriberIed.querySelector(`LN[lnClass="${lnClass}"]`);
-    const parent = formLn.parentElement;
-    const lnType = formLn.getAttribute("lnType");
-    const prefix = formLn.getAttribute("prefix");
-    const ln = createElement(subscriberIed.ownerDocument, "LN", {
-        prefix,
-        lnClass,
-        lnType,
-        inst,
-    });
-    const openScdTag = createElement(subscriberIed.ownerDocument, "Private", {
-        type: "OpenSCD.create",
-    });
-    ln.appendChild(openScdTag);
-    const lastSupervisionLn = parent.querySelector(`:scope > LN[lnClass="${lnClass}"]:last-child`);
-    const reference = lastSupervisionLn
-        ? lastSupervisionLn.nextElementSibling
-        : getReference(parent, "LN");
-    const doc = ln.ownerDocument;
-    const cbRefType = cdRefType(ln);
-    ln.appendChild(createSupervisionDoiElement({
-        doc,
-        cbRefType,
-        controlBlockReference,
-    }));
-    return { parent, node: ln, reference };
-}
-function updateSupervisionLogicalNode(controlBlockReference, logicalNode) {
-    const doc = logicalNode.ownerDocument;
-    const cbRefType = cdRefType(logicalNode);
-    const createSupervisionElementInput = {
-        doc,
-        cbRefType,
-        controlBlockReference,
-    };
-    const doi = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"]`);
-    if (!doi)
-        return {
-            parent: logicalNode,
-            node: createSupervisionDoiElement(createSupervisionElementInput),
-            reference: getReference(logicalNode, "DOI"),
-        };
-    const dai = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"]`);
-    if (!dai)
-        return {
-            parent: doi,
-            node: createSupervisionDaiElement(createSupervisionElementInput),
-            reference: getReference(doi, "DAI"),
-        };
-    const val = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`);
-    if (!val) {
-        const newVal = createElement(doc, "Val", {});
-        dai.appendChild(newVal);
-        newVal.textContent = controlBlockReference;
-        return { parent: dai, node: newVal, reference: getReference(dai, "Val") };
-    }
-    const cbRef = document.createTextNode(controlBlockReference);
-    return { parent: val, node: cbRef, reference: null };
-}
-/** @returns Insert edit on unused supervision logical node or new supervision logical node */
-function createSupervisionEdit(supervision, options) {
-    const sourceControlBlock = supervision.sourceControlBlock;
-    const controlBlockReference = controlBlockObjRef(sourceControlBlock);
-    if (!controlBlockReference)
-        return null;
-    if (supervision.subscriberIedOrLn.tagName === "LN")
-        return updateSupervisionLogicalNode(controlBlockReference, supervision.subscriberIedOrLn);
-    if (isNewSupervisionLn(options) && options.newSupervisionLn) {
-        const inst = options.fixedInst
-            ? options.fixedInst
-            : options.instGenerator(supervision);
-        return createSupervisionLogicalNode(supervision, controlBlockReference, inst);
-    }
-    const unusedSupervisionLogicalNode = availableSupervisionLn(supervision, options?.usedSupervisions);
-    if (!unusedSupervisionLogicalNode) {
-        const inst = isFixedInst(options)
-            ? options.fixedInst
-            : options.instGenerator(supervision);
-        return createSupervisionLogicalNode(supervision, controlBlockReference, inst);
-    }
-    options.usedSupervisions?.add(unusedSupervisionLogicalNode);
-    return updateSupervisionLogicalNode(controlBlockReference, unusedSupervisionLogicalNode);
-}
-
-/**
- * Instantiate supervision logical node (LGOS/LSVS) for [[`sourceControlBlock`]]
- * within a [[`subscriberIedOrLn`]].
- * @param supervision
- * @param options
- * @return Insert edit or null, if supervision is not possible
- */
-function instantiateSubscriptionSupervision(supervision, options = {
-    newSupervisionLn: false,
-    fixedLnInst: -1,
-    checkEditableSrcRef: true,
-    checkDuplicateSupervisions: true,
-    checkMaxSupervisionLimits: true,
-}) {
-    if (!canInstantiateSubscriptionSupervision(supervision, options))
-        return null;
-    if (options.fixedLnInst >= 0)
-        return createSupervisionEdit(supervision, {
-            newSupervisionLn: options.newSupervisionLn,
-            fixedInst: `${options.fixedLnInst}`,
-        });
-    if (supervision.subscriberIedOrLn.tagName === "LN")
-        return createSupervisionEdit(supervision, { fixedInst: "-1" });
-    /** Global as multiple subscription could be defined for different subscriber IEDs */
-    const instGenerator = globalLnInstGenerator();
-    if (options.newSupervisionLn && options.fixedLnInst === -1)
-        return createSupervisionEdit(supervision, {
-            newSupervisionLn: true,
-            instGenerator,
-        });
-    return createSupervisionEdit(supervision, { instGenerator });
+    if (options.ignoreSupervision)
+        return [...extRefEdits];
+    return [...extRefEdits, ...insertSubscriptionSupervisions(extRefEdits)];
 }
 
 /** @returns Whether a given element is within a Private section */
@@ -11054,14 +11131,6 @@ function newEditEvent(edit) {
     });
 }
 
-function getSclSchemaVersion(doc) {
-    var _a, _b, _c;
-    const scl = doc.documentElement;
-    const edition = ((_a = scl.getAttribute('version')) !== null && _a !== void 0 ? _a : '2003') +
-        ((_b = scl.getAttribute('revision')) !== null && _b !== void 0 ? _b : '') +
-        ((_c = scl.getAttribute('release')) !== null && _c !== void 0 ? _c : '');
-    return edition;
-}
 const serviceTypes = {
     ReportControl: 'Report',
     GSEControl: 'GOOSE',
@@ -11152,42 +11221,23 @@ function sameAttributeValue(leftElement, rightElement, attributeName) {
     return (((_a = leftElement === null || leftElement === void 0 ? void 0 : leftElement.getAttribute(attributeName)) !== null && _a !== void 0 ? _a : '') ===
         ((_b = rightElement === null || rightElement === void 0 ? void 0 : rightElement.getAttribute(attributeName)) !== null && _b !== void 0 ? _b : ''));
 }
-/**
- * Simple function to check if the attribute of the Left Side has the same value as the attribute of the Right Element.
- *
- * @param leftElement        - The Left Element to check against.
- * @param leftAttributeName  - The name of the attribute (left) to check against.
- * @param rightElement       - The Right Element to check.
- * @param rightAttributeName - The name of the attribute (right) to check.
- */
-function sameAttributeValueDiffName(leftElement, leftAttributeName, rightElement, rightAttributeName) {
-    var _a, _b;
-    return (((_a = leftElement === null || leftElement === void 0 ? void 0 : leftElement.getAttribute(leftAttributeName)) !== null && _a !== void 0 ? _a : '') ===
-        ((_b = rightElement === null || rightElement === void 0 ? void 0 : rightElement.getAttribute(rightAttributeName)) !== null && _b !== void 0 ? _b : ''));
-}
-/**
- * If needed check version specific attributes against FCDA Element.
- *
- * @param controlTag     - Indicates which type of control element.
- * @param controlElement - The Control Element to check against.
- * @param extRefElement  - The Ext Ref Element to check.
- */
-function checkEditionSpecificRequirements(controlTag, controlElement, extRefElement) {
-    var _a, _b, _c;
-    // For 2003 Edition no extra check needed.
-    if (getSclSchemaVersion(extRefElement.ownerDocument) === '2003') {
-        return true;
-    }
-    const lDeviceElement = (_a = controlElement === null || controlElement === void 0 ? void 0 : controlElement.closest('LDevice')) !== null && _a !== void 0 ? _a : undefined;
-    const lnElement = (_b = controlElement === null || controlElement === void 0 ? void 0 : controlElement.closest('LN0')) !== null && _b !== void 0 ? _b : undefined;
-    // For the 2007B and 2007B4 Edition we need to check some extra attributes.
-    return (((_c = extRefElement.getAttribute('serviceType')) !== null && _c !== void 0 ? _c : '') ===
-        serviceTypes[controlTag] &&
-        sameAttributeValueDiffName(extRefElement, 'srcLDInst', lDeviceElement, 'inst') &&
-        sameAttributeValueDiffName(extRefElement, 'srcPrefix', lnElement, 'prefix') &&
-        sameAttributeValueDiffName(extRefElement, 'srcLNClass', lnElement, 'lnClass') &&
-        sameAttributeValueDiffName(extRefElement, 'srcLNInst', lnElement, 'inst') &&
-        sameAttributeValueDiffName(extRefElement, 'srcCBName', controlElement, 'name'));
+// taken from scl-lib function of the same name.
+// Can be removed when isSubscribed is improved, exported and some bugs fixed.
+// https://github.com/OpenEnergyTools/scl-lib/issues/78
+// https://github.com/OpenEnergyTools/scl-lib/issues/85
+function matchSrcAttributes(extRef, control) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const cbName = control.getAttribute('name');
+    const srcLDInst = (_a = control.closest('LDevice')) === null || _a === void 0 ? void 0 : _a.getAttribute('inst');
+    const srcPrefix = (_c = (_b = control.closest('LN0, LN')) === null || _b === void 0 ? void 0 : _b.getAttribute('prefix')) !== null && _c !== void 0 ? _c : '';
+    const srcLNClass = (_d = control.closest('LN0, LN')) === null || _d === void 0 ? void 0 : _d.getAttribute('lnClass');
+    const srcLNInst = (_e = control.closest('LN0, LN')) === null || _e === void 0 ? void 0 : _e.getAttribute('inst');
+    return (extRef.getAttribute('srcCBName') === cbName &&
+        extRef.getAttribute('srcLDInst') === srcLDInst &&
+        ((_f = extRef.getAttribute('srcPrefix')) !== null && _f !== void 0 ? _f : '') === srcPrefix &&
+        ((_g = extRef.getAttribute('srcLNInst')) !== null && _g !== void 0 ? _g : '') === srcLNInst &&
+        ((_h = extRef.getAttribute('srcLNClass')) !== null && _h !== void 0 ? _h : 'LLN0') === srcLNClass &&
+        extRef.getAttribute('serviceType') === serviceTypes[control.tagName]);
 }
 /**
  * Check if specific attributes from the ExtRef Element are the same as the ones from the FCDA Element
@@ -11199,7 +11249,7 @@ function checkEditionSpecificRequirements(controlTag, controlElement, extRefElem
  * @param fcdaElement    - The FCDA Element to check against.
  * @param extRefElement  - The Ext Ref Element to check.
  */
-function isSubscribedTo(controlTag, controlElement, fcdaElement, extRefElement) {
+function isSubscribedTo(controlElement, fcdaElement, extRefElement) {
     var _a;
     return (extRefElement.getAttribute('iedName') ===
         ((_a = fcdaElement === null || fcdaElement === void 0 ? void 0 : fcdaElement.closest('IED')) === null || _a === void 0 ? void 0 : _a.getAttribute('name')) &&
@@ -11209,10 +11259,10 @@ function isSubscribedTo(controlTag, controlElement, fcdaElement, extRefElement) 
         sameAttributeValue(fcdaElement, extRefElement, 'lnInst') &&
         sameAttributeValue(fcdaElement, extRefElement, 'doName') &&
         sameAttributeValue(fcdaElement, extRefElement, 'daName') &&
-        checkEditionSpecificRequirements(controlTag, controlElement, extRefElement));
+        matchSrcAttributes(extRefElement, controlElement));
 }
-function getSubscribedExtRefElements(rootElement, controlTag, fcdaElement, controlElement, includeLaterBinding) {
-    return getExtRefElements(rootElement, fcdaElement, includeLaterBinding).filter(extRefElement => isSubscribedTo(controlTag, controlElement, fcdaElement, extRefElement));
+function getSubscribedExtRefElements(rootElement, fcdaElement, controlElement, includeLaterBinding) {
+    return getExtRefElements(rootElement, fcdaElement, includeLaterBinding).filter(extRefElement => isSubscribedTo(controlElement, fcdaElement, extRefElement));
 }
 // TODO: scl-lib export
 function getCbReference(extRef) {
@@ -11831,8 +11881,7 @@ class SubscriberLaterBinding extends s$h {
     getExtRefCount(fcda, control) {
         const controlBlockFcdaId = `${identity(control)} ${identity(fcda)}`;
         if (!this.controlBlockFcdaInfo.has(controlBlockFcdaId)) {
-            const extRefCount = getSubscribedExtRefElements(this.doc.getRootNode(), this.controlTag, fcda, control, true // TODO: do we need this?
-            ).length;
+            const extRefCount = getSubscribedExtRefElements(this.doc.getRootNode(), fcda, control, true).length;
             this.controlBlockFcdaInfo.set(controlBlockFcdaId, extRefCount);
         }
         return this.controlBlockFcdaInfo.get(controlBlockFcdaId);
@@ -11991,29 +12040,14 @@ class SubscriberLaterBinding extends s$h {
         // need to remove invalid existing subscription
         if (isSubscribed(extRef) || isPartiallyConfigured(extRef))
             this.dispatchEvent(newEditEvent(unsubscribe([extRef], { ignoreSupervision: this.ignoreSupervision })));
-        const subscribeEdits = [];
-        // TODO: Update to use specific basic type option
-        // see https://github.com/danyill/oscd-subscriber-later-binding/issues/10
-        //
-        // { checkOnlyBType: this.checkOnlyPreferredBasicType }
-        // TODO: Update for this.ignoreSupervision once it exists.
-        // https://github.com/OpenEnergyTools/scl-lib/issues/26
-        subscribeEdits.push(subscribe({ sink: extRef, source: { fcda, controlBlock } }, {
-            force: this.checkOnlyPreferredBasicType
-        }));
-        if (!this.ignoreSupervision) {
-            const subscriberIed = extRef.closest('IED');
-            const supEdit = instantiateSubscriptionSupervision({
-                subscriberIedOrLn: subscriberIed,
-                sourceControlBlock: controlBlock
-            });
-            if (supEdit)
-                subscribeEdits.push(supEdit);
-        }
+        const subscribeEdits = subscribe({ sink: extRef, source: { fcda, controlBlock } }, {
+            force: this.checkOnlyPreferredBasicType,
+            ignoreSupervision: this.ignoreSupervision
+        });
         this.dispatchEvent(newEditEvent(subscribeEdits));
     }
     getSubscribedExtRefElements() {
-        return getSubscribedExtRefElements(this.doc.getRootNode(), this.controlTag, this.selectedFCDA, this.selectedControl, true);
+        return getSubscribedExtRefElements(this.doc.getRootNode(), this.selectedFCDA, this.selectedControl, true);
     }
     /**
      * Retrieve ExtRefs which match current control block type settings in

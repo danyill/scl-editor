@@ -12,7 +12,6 @@ export declare function getNameAttribute(element: Element): string | undefined;
 export declare function getDescriptionAttribute(element: Element): string | undefined;
 /** Sorts selected `ListItem`s to the top and disabled ones to the bottom. */
 export declare function compareNames(a: Element | string, b: Element | string): number;
-export declare function findControlBlocks(extRef: Element, controlType: 'GOOSE' | 'SMV'): Element[];
 /**
  * @param lnElements - The LN elements to be scanned for `inst`
  * values already in use.

@@ -72,7 +72,6 @@ export default class OscdSupervision extends LitElement {
     private renderInfo;
     private renderIedSelector;
     private resetSearchFilters;
-    private createNewSupervision;
     private renderUnusedControlList;
     private renderUnusedSupervisionList;
     renderUnusedControlBlocksAndSupervisions(): TemplateResult;

@@ -142,6 +142,20 @@ const e$b=(e,t,c)=>(c.configurable=!0,c.enumerable=!0,Reflect.decorate&&"object"
  * SPDX-License-Identifier: BSD-3-Clause
  */function e$a(e,r){return (n,s,i)=>{const o=t=>t.renderRoot?.querySelector(e)??null;if(r){const{get:e,set:r}="object"==typeof s?n:i??(()=>{const t=Symbol();return {get(){return this[t]},set(e){this[t]=e;}}})();return e$b(n,s,{get(){let t=e.call(this);return void 0===t&&(t=o(this),(null!==t||this.hasUpdated)&&r.call(this,t)),t}})}return e$b(n,s,{get(){return o(this)}})}}
 
+/** Utility function to create element with `tagName` and its`attributes` */
+function createElement(doc, tag, attrs) {
+    const element = doc.createElementNS(doc.documentElement.namespaceURI, tag);
+    Object.entries(attrs)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .filter(([_, value]) => value !== null)
+        .forEach(([name, value]) => element.setAttribute(name, value));
+    return element;
+}
+/** @returns the cartesian product of `arrays` */
+function crossProduct$1(...arrays) {
+    return arrays.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())), [[]]);
+}
+
 const tAbstractConductingEquipment = [
     "TransformerWinding",
     "ConductingEquipment",
@@ -949,6 +963,101 @@ function isSCLTag(tag) {
     return tagSet$1.has(tag);
 }
 
+/**
+ * Helper function for to determine schema valid `reference` for OpenSCD
+ * core Insert event.
+ * !! only valid with Edition 2.1 projects (2007B4)
+ * @param parent - The parent element the new child shall be added to
+ * @param tag - The `tagName` of the new child
+ * @returns Reference for new [[`tag`]] child within [[`parent`]]  or `null`
+ */
+function getReference(parent, tag) {
+    if (!isSCLTag(tag))
+        return null;
+    const parentTag = parent.tagName;
+    const children = Array.from(parent.children);
+    if (parentTag === "Services" ||
+        parentTag === "SettingGroups" ||
+        !isSCLTag(parentTag))
+        return children.find((child) => child.tagName === tag) ?? null;
+    const sequence = tags$1[parentTag].children;
+    let index = sequence.findIndex((element) => element === tag);
+    if (index < 0)
+        return null;
+    let nextSibling;
+    while (index < sequence.length && !nextSibling) {
+        // eslint-disable-next-line no-loop-func
+        nextSibling = children.find((child) => child.tagName === sequence[index]);
+        index += 1;
+    }
+    return nextSibling ?? null;
+}
+
+/** @returns object reference acc. IEC 61850-7-3 for control block elements */
+function controlBlockObjRef(ctrlBlock) {
+    const iedName = ctrlBlock.closest("IED")?.getAttribute("name");
+    const ldInst = ctrlBlock.closest("LDevice")?.getAttribute("inst");
+    const parentLn = ctrlBlock.closest("LN,LN0");
+    const prefix = parentLn?.getAttribute("prefix") ?? "";
+    const lnClass = parentLn?.getAttribute("lnClass");
+    const lnInst = parentLn?.getAttribute("inst") ?? "";
+    const cbName = ctrlBlock.getAttribute("name");
+    if (!iedName || !ldInst || !lnClass || !cbName)
+        return null;
+    return `${iedName}${ldInst}/${prefix}${lnClass}${lnInst}.${cbName}`;
+}
+
+/**
+ * Locates control block from an ExtRef element.
+ * NOTE: Only supports > Edition 2 using the srcXXX attributes.
+ * @param extRef - SCL ExtRef element.
+ * @returns Either ReportControl/GSEControl/SampledValueControl or null
+ * if not found.
+ */
+function sourceControlBlock(extRef) {
+    const [iedName, srcPrefix, srcLNInst, srcCBName] = [
+        "iedName",
+        "srcPrefix",
+        "srcLNInst",
+        "srcCBName",
+    ].map((attr) => extRef.getAttribute(attr));
+    const doc = extRef.ownerDocument;
+    const srcLDInst = extRef.getAttribute("srcLDInst") ?? extRef.getAttribute("ldInst");
+    const srcLNClass = extRef.getAttribute("srcLNClass") ?? "LLN0";
+    const serviceType = extRef.getAttribute("serviceType") ?? extRef.getAttribute("pServT");
+    if (!iedName || !srcLDInst || !srcCBName || serviceType === "Poll")
+        return null;
+    const lDevice = `:root > IED[name="${iedName}"] > AccessPoint > Server > LDevice[inst="${srcLDInst}"]`;
+    const maybeReport = !serviceType || serviceType === "Report";
+    const maybeGSE = !serviceType || serviceType === "GOOSE";
+    const maybeSMV = !serviceType || serviceType === "SMV";
+    const anyLN = srcLNClass === "LLN0" ? "LN0" : "LN";
+    const lnClass = `[lnClass="${srcLNClass}"]`;
+    let lnPrefixQualifiers;
+    if (anyLN === "LN") {
+        lnPrefixQualifiers =
+            srcPrefix && srcPrefix !== ""
+                ? [`[prefix="${srcPrefix}"]`]
+                : [":not([prefix])", '[prefix=""]'];
+    }
+    else {
+        lnPrefixQualifiers = [":not([prefix])"];
+    }
+    // On LN0 srcLNInst missing on the ExtRef means an inst=""
+    // On LN inst must be a non-empty string and so srcLNInst
+    // must also be a non-empty string and be present
+    const lnInst = anyLN !== "LN0" && srcLNInst ? `[inst="${srcLNInst}"]` : '[inst=""]';
+    const cbName = `[name="${srcCBName}"]`;
+    const cbTypes = [
+        maybeReport ? `ReportControl${cbName}` : null,
+        maybeGSE ? `GSEControl${cbName}` : null,
+        maybeSMV ? `SampledValueControl${cbName}` : null,
+    ].filter((s) => !!s);
+    return doc.querySelector(crossProduct$1([`${lDevice}>${anyLN}${lnClass}${lnInst}`], lnPrefixQualifiers, [">"], cbTypes)
+        .map((strings) => strings.join(""))
+        .join(","));
+}
+
 const maxGseMacAddress = 0x010ccd0101ff;
 const minGseMacAddress = 0x010ccd010000;
 const maxSmvMacAddress = 0x010ccd0401ff;
@@ -982,13 +1091,343 @@ Array(maxSmvAppId - minSmvAppId)
     .fill(1)
     .map((_, i) => (minSmvAppId + i).toString(16).toUpperCase().padStart(4, "0"));
 
+function getChildElementsByTagName(element, tag) {
+    return Array.from(element.children).filter((element) => element.tagName === tag);
+}
 /** maximum value for `lnInst` attribute */
 const maxLnInst$1 = 99;
-Array(maxLnInst$1)
+const lnInstRange$1 = Array(maxLnInst$1)
     .fill(1)
     .map((_, i) => `${i + 1}`);
+/**
+ * Generator function returning unique `inst` or `lnInst` attribute for element
+ * [[`tagName`]] within [[`parent`]].
+ * ```md
+ * Valid range for both `inst` and `lnInst` is between 1 and 99
+ * ```
+ * @param parent - The parent element to be scanned for `inst` or `lnInst`
+ * values already in use. Be sure to create a new generator every time the
+ * children of this element change in SCL.
+ * @param tagName - Tag name of the child elements containing the
+ * `lnInst` or `inst` attribute
+ * @returns a function generating increasing unused `inst` or `lnInst` values
+ * element with [[`tagName`]] within [[`parent`]] on subsequent invocations
+ */
+function lnInstGenerator(parent, tagName) {
+    const generators = new Map();
+    const generatedAttribute = tagName === "LN" ? "inst" : "lnInst";
+    return (lnClass) => {
+        if (!generators.has(lnClass)) {
+            const lnInstOrInst = new Set(getChildElementsByTagName(parent, tagName)
+                .filter((element) => element.getAttribute("lnClass") === lnClass)
+                .map((element) => element.getAttribute(generatedAttribute)));
+            generators.set(lnClass, () => {
+                const uniqueLnInstOrInst = lnInstRange$1.find((lnInst) => !lnInstOrInst.has(lnInst));
+                if (uniqueLnInstOrInst)
+                    lnInstOrInst.add(uniqueLnInstOrInst);
+                return uniqueLnInstOrInst;
+            });
+        }
+        return generators.get(lnClass)();
+    };
+}
+
+function type(supervision) {
+    const serviceType = supervision.sourceControlBlock.tagName;
+    return serviceType === "GSEControl" ? "GoCBRef" : "SvCBRef";
+}
+function supervisionLnClass(supervision) {
+    const serviceType = supervision.sourceControlBlock.tagName;
+    return serviceType === "GSEControl" ? "LGOS" : "LSVS";
+}
+/** @returns Unique attribute `inst` for supervision logical nodes. */
+function globalLnInstGenerator() {
+    const lnInstGenerators = new Map();
+    return (supervision) => {
+        const ied = supervision.subscriberIedOrLn;
+        const lnClass = supervisionLnClass(supervision);
+        const formLn = ied.querySelector(`LN[lnClass="${lnClass}"]`);
+        const lDevice = formLn.parentElement;
+        const iedName = `${ied.getAttribute("name")}`;
+        if (!lnInstGenerators.has(iedName))
+            lnInstGenerators.set(iedName, lnInstGenerator(lDevice, "LN"));
+        return lnInstGenerators.get(iedName)(lnClass);
+    };
+}
+
+/** @returns Whether a supervision LN holds a valid control block object ref */
+function holdsValidObjRef(ln, type) {
+    const objRef = ln.querySelector(`:scope > DOI[name="${type}"] > DAI[name="setSrcRef"] > Val`)?.textContent;
+    if (!objRef)
+        return false;
+    // IEDnameLDinst/prefixLnClassLnInst.CbName
+    const indexSlash = objRef.indexOf("/");
+    const indexDot = objRef.indexOf(".");
+    return (indexSlash !== 0 &&
+        indexSlash < indexDot + 1 &&
+        indexDot - 1 < objRef.length);
+}
+/** @returns Whether `Services` element requirement is met */
+function withinSupervisionLimits(supervision) {
+    const subscriberIed = supervision.subscriberIedOrLn.tagName === "IED"
+        ? supervision.subscriberIedOrLn
+        : supervision.subscriberIedOrLn.closest("IED");
+    const lnClass = supervisionLnClass(supervision);
+    const max = subscriberIed
+        ?.querySelector("Services > SupSubscription")
+        ?.getAttribute(`${lnClass === "LGOS" ? "maxGo" : "maxSv"}`);
+    if (!max || isNaN(parseInt(max, 10)))
+        return false;
+    const existingSupervisionLNs = Array.from(subscriberIed.querySelectorAll(`LN[lnClass="${lnClass}"]`));
+    if (existingSupervisionLNs.length < parseInt(max, 10))
+        return true;
+    const availableSupervisorSpots = existingSupervisionLNs.filter((ln) => !holdsValidObjRef(ln, type(supervision)));
+    return (existingSupervisionLNs.length === parseInt(max, 10) &&
+        availableSupervisorSpots.length > 0);
+}
+/** @returns Whether `DA`|`DAI` with name `setSrcRef` is editable */
+function isSrcRefEditable(supervision) {
+    const lnClass = supervisionLnClass(supervision);
+    const ln = supervision.subscriberIedOrLn.tagName === "LN"
+        ? supervision.subscriberIedOrLn
+        : supervision.subscriberIedOrLn.querySelector(`LN[lnClass="${lnClass}"]`);
+    const doiName = type(supervision);
+    if (ln.querySelector(`:scope > DOI[name="${doiName}"] > 
+        DAI[name="setSrcRef"][valImport="true"][valKind="RO"],
+       :scope > DOI[name="${doiName}"] > 
+        DAI[name="setSrcRef"][valImport="true"][valKind="Conf"]`))
+        return true;
+    const rootNode = ln.ownerDocument;
+    const lnType = ln.getAttribute("lnType");
+    const goOrSvCBRef = rootNode.querySelector(`DataTypeTemplates > 
+            LNodeType[id="${lnType}"][lnClass="${lnClass}"] > DO[name="${type(supervision)}"]`);
+    const cbRefId = goOrSvCBRef?.getAttribute("type");
+    const setSrcRef = rootNode.querySelector(`DataTypeTemplates > DOType[id="${cbRefId}"] > DA[name="setSrcRef"]`);
+    return ((setSrcRef?.getAttribute("valKind") === "Conf" ||
+        setSrcRef?.getAttribute("valKind") === "RO") &&
+        setSrcRef.getAttribute("valImport") === "true");
+}
+/**
+ * A pre requirement for a subscription supervision is an already existing
+ * LN of the class `LGOS` or `LSVS` in the subscriber IED.
+ * @returns Whether there is a logical node element `LN` with the class `LGOS`, `LSVS`
+ */
+function existFirstSupervisionOfType(supervision) {
+    const lnClass = supervision.sourceControlBlock.tagName === "GSEControl" ? "LGOS" : "LSVS";
+    const firstSupervisionOfType = supervision.subscriberIedOrLn.querySelector(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"]`);
+    return firstSupervisionOfType ? true : false;
+}
+/** @returns Whether [[`controlBlock`]] is supervised in [[`subscriberIed`]] */
+function isControlBlockSupervised(supervision) {
+    const subscriberIed = supervision.subscriberIedOrLn.tagName === "IED"
+        ? supervision.subscriberIedOrLn
+        : supervision.subscriberIedOrLn.closest("IED");
+    const lnClass = supervision.sourceControlBlock.tagName === "GSEControl" ? "LGOS" : "LSVS";
+    const refType = supervision.sourceControlBlock.tagName === "GSEControl"
+        ? "GoCBRef"
+        : "SvCBRef";
+    return Array.from(subscriberIed?.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"] 
+      > DOI[name="${refType}"] > DAI[name="setSrcRef"] > Val`)).some((val) => val.textContent === controlBlockObjRef(supervision.sourceControlBlock));
+}
+/** Whether subscription supervision instantiation can be performed.
+ * ```md
+ * - check if `valImport` and `valKind` allow to change subscriber logical node
+ * - check whether the control block is already supervised in the IED
+ * - check whether there is an available location for the control block
+ *   reference to be stored in the supervision source reference.
+ * - check whether `Service` element requirements are met
+ * - check whether the logical node has missing or empty `Val` content
+ *   (iedOrLn is LN)
+ * ```
+ * @returns Whether subscription supervision can be done */
+function canInstantiateSubscriptionSupervision(supervision, options = {
+    newSupervisionLn: false,
+    fixedLnInst: -1,
+    checkEditableSrcRef: true,
+    checkDuplicateSupervisions: true,
+    checkMaxSupervisionLimits: true,
+}) {
+    if (options.checkDuplicateSupervisions &&
+        isControlBlockSupervised(supervision))
+        return false;
+    if (supervision.subscriberIedOrLn.tagName === "LN") {
+        const type = supervision.sourceControlBlock.tagName === "GSEControl"
+            ? "GoCBRef"
+            : "SvCBRef";
+        if (holdsValidObjRef(supervision.subscriberIedOrLn, type))
+            return false;
+    }
+    else {
+        if (!existFirstSupervisionOfType(supervision))
+            return false;
+    }
+    if (options.checkMaxSupervisionLimits &&
+        !withinSupervisionLimits(supervision))
+        return false;
+    if (options.checkEditableSrcRef && !isSrcRefEditable(supervision))
+        return false;
+    return true;
+}
+
+function isFixedInst(options) {
+    return "fixedInst" in options;
+}
+function isNewSupervisionLn(options) {
+    return "newSupervisionLn" in options;
+}
+function createSupervisionDaiElement(input) {
+    const dai = createElement(input.doc, "DAI", { name: "setSrcRef" });
+    const val = createElement(input.doc, "Val", {});
+    dai.appendChild(val);
+    val.textContent = input.controlBlockReference;
+    return dai;
+}
+function createSupervisionDoiElement(input) {
+    const doi = createElement(input.doc, "DOI", { name: input.cbRefType });
+    const dai = createElement(input.doc, "DAI", { name: "setSrcRef" });
+    const val = createElement(input.doc, "Val", {});
+    doi.appendChild(dai);
+    dai.appendChild(val);
+    val.textContent = input.controlBlockReference;
+    return doi;
+}
+function cdRefType(logicalNode) {
+    const lnClass = logicalNode.getAttribute("lnClass");
+    const cbRefType = lnClass === "LGOS" ? "GoCBRef" : "SvCBRef";
+    return cbRefType;
+}
+function availableSupervisionLn(supervision, usedSupervisions) {
+    const lnClass = supervisionLnClass(supervision);
+    const cbRefType = type(supervision);
+    return (Array.from(supervision.subscriberIedOrLn.querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN[lnClass="${lnClass}"]`))
+        // filter already used available logical nodes
+        .filter((ln) => !usedSupervisions?.has(ln))
+        .find((ln) => {
+        return (ln.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`) === null ||
+            ln.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`)?.textContent === "");
+    }) ?? null);
+}
+function createSupervisionLogicalNode(supervision, controlBlockReference, inst) {
+    const subscriberIed = supervision.subscriberIedOrLn;
+    const lnClass = supervisionLnClass(supervision);
+    const formLn = subscriberIed.querySelector(`LN[lnClass="${lnClass}"]`);
+    const parent = formLn.parentElement;
+    const lnType = formLn.getAttribute("lnType");
+    const prefix = formLn.getAttribute("prefix");
+    const ln = createElement(subscriberIed.ownerDocument, "LN", {
+        prefix,
+        lnClass,
+        lnType,
+        inst,
+    });
+    const openScdTag = createElement(subscriberIed.ownerDocument, "Private", {
+        type: "OpenSCD.create",
+    });
+    ln.appendChild(openScdTag);
+    const lastSupervisionLn = parent.querySelector(`:scope > LN[lnClass="${lnClass}"]:last-child`);
+    const reference = lastSupervisionLn
+        ? lastSupervisionLn.nextElementSibling
+        : getReference(parent, "LN");
+    const doc = ln.ownerDocument;
+    const cbRefType = cdRefType(ln);
+    ln.appendChild(createSupervisionDoiElement({
+        doc,
+        cbRefType,
+        controlBlockReference,
+    }));
+    return { parent, node: ln, reference };
+}
+function updateSupervisionLogicalNode(controlBlockReference, logicalNode) {
+    const doc = logicalNode.ownerDocument;
+    const cbRefType = cdRefType(logicalNode);
+    const createSupervisionElementInput = {
+        doc,
+        cbRefType,
+        controlBlockReference,
+    };
+    const doi = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"]`);
+    if (!doi)
+        return {
+            parent: logicalNode,
+            node: createSupervisionDoiElement(createSupervisionElementInput),
+            reference: getReference(logicalNode, "DOI"),
+        };
+    const dai = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"]`);
+    if (!dai)
+        return {
+            parent: doi,
+            node: createSupervisionDaiElement(createSupervisionElementInput),
+            reference: getReference(doi, "DAI"),
+        };
+    const val = logicalNode.querySelector(`:scope > DOI[name="${cbRefType}"] > DAI[name="setSrcRef"] > Val`);
+    if (!val) {
+        const newVal = createElement(doc, "Val", {});
+        dai.appendChild(newVal);
+        newVal.textContent = controlBlockReference;
+        return { parent: dai, node: newVal, reference: getReference(dai, "Val") };
+    }
+    const cbRef = document.createTextNode(controlBlockReference);
+    return { parent: val, node: cbRef, reference: null };
+}
+/** @returns Insert edit on unused supervision logical node or new supervision logical node */
+function createSupervisionEdit(supervision, options) {
+    const sourceControlBlock = supervision.sourceControlBlock;
+    const controlBlockReference = controlBlockObjRef(sourceControlBlock);
+    if (!controlBlockReference)
+        return null;
+    if (supervision.subscriberIedOrLn.tagName === "LN")
+        return updateSupervisionLogicalNode(controlBlockReference, supervision.subscriberIedOrLn);
+    if (isNewSupervisionLn(options) && options.newSupervisionLn) {
+        const inst = options.fixedInst
+            ? options.fixedInst
+            : options.instGenerator(supervision);
+        return createSupervisionLogicalNode(supervision, controlBlockReference, inst);
+    }
+    const unusedSupervisionLogicalNode = availableSupervisionLn(supervision, options?.usedSupervisions);
+    if (!unusedSupervisionLogicalNode) {
+        const inst = isFixedInst(options)
+            ? options.fixedInst
+            : options.instGenerator(supervision);
+        return createSupervisionLogicalNode(supervision, controlBlockReference, inst);
+    }
+    options.usedSupervisions?.add(unusedSupervisionLogicalNode);
+    return updateSupervisionLogicalNode(controlBlockReference, unusedSupervisionLogicalNode);
+}
 
 await fetch(new URL(new URL('assets/nsd-0a370a57.json', import.meta.url).href, import.meta.url)).then((res) => res.json());
+
+/**
+ * Instantiate supervision logical node (LGOS/LSVS) for [[`sourceControlBlock`]]
+ * within a [[`subscriberIedOrLn`]].
+ * @param supervision
+ * @param options
+ * @return Insert edit or null, if supervision is not possible
+ */
+function instantiateSubscriptionSupervision(supervision, options = {
+    newSupervisionLn: false,
+    fixedLnInst: -1,
+    checkEditableSrcRef: true,
+    checkDuplicateSupervisions: true,
+    checkMaxSupervisionLimits: true,
+}) {
+    if (!canInstantiateSubscriptionSupervision(supervision, options))
+        return null;
+    if (options.fixedLnInst >= 0)
+        return createSupervisionEdit(supervision, {
+            newSupervisionLn: options.newSupervisionLn,
+            fixedInst: `${options.fixedLnInst}`,
+        });
+    if (supervision.subscriberIedOrLn.tagName === "LN")
+        return createSupervisionEdit(supervision, { fixedInst: "-1" });
+    /** Global as multiple subscription could be defined for different subscriber IEDs */
+    const instGenerator = globalLnInstGenerator();
+    if (options.newSupervisionLn && options.fixedLnInst === -1)
+        return createSupervisionEdit(supervision, {
+            newSupervisionLn: true,
+            instGenerator,
+        });
+    return createSupervisionEdit(supervision, { instGenerator });
+}
 
 /** @returns Whether a given element is within a Private section */
 function isPublic(element) {
@@ -14247,27 +14686,70 @@ FilterButton = __decorate([
     t$4('oscd-filter-button')
 ], FilterButton);
 
-const SCL_NAMESPACE = 'http://www.iec.ch/61850/2003/SCL';
-function getSclSchemaVersion(doc) {
-    const scl = doc.documentElement;
-    const edition = (scl.getAttribute('version') ?? '2003') +
-        (scl.getAttribute('revision') ?? '') +
-        (scl.getAttribute('release') ?? '');
-    return edition;
+/**
+ * Extract the 'name' attribute from the given XML element.
+ * @param element - The element to extract name from.
+ * @returns the name, or undefined if there is no name.
+ */
+function getNameAttribute(element) {
+    const name = element.getAttribute('name');
+    return name || undefined;
 }
 /**
- * Check if the ExtRef is already subscribed to a FCDA Element.
- *
- * @param extRefElement - The Ext Ref Element to check.
+ * Extract the 'desc' attribute from the given XML element.
+ * @param element - The element to extract description from.
+ * @returns the name, or undefined if there is no description.
  */
-function isSubscribed(extRefElement) {
-    return (extRefElement.hasAttribute('iedName') &&
-        extRefElement.hasAttribute('ldInst') &&
-        extRefElement.hasAttribute('lnClass') &&
-        extRefElement.hasAttribute('lnInst') &&
-        extRefElement.hasAttribute('doName') &&
-        extRefElement.hasAttribute('daName'));
+function getDescriptionAttribute(element) {
+    const name = element.getAttribute('desc');
+    return name || undefined;
 }
+/** Sorts selected `ListItem`s to the top and disabled ones to the bottom. */
+function compareNames(a, b) {
+    if (typeof a === 'string' && typeof b === 'string')
+        return a.localeCompare(b);
+    if (typeof a === 'object' && typeof b === 'string')
+        return (a.getAttribute('name') ?? '').localeCompare(b);
+    if (typeof a === 'string' && typeof b === 'object')
+        return a.localeCompare(b.getAttribute('name'));
+    if (typeof a === 'object' && typeof b === 'object')
+        return (a.getAttribute('name') ?? '').localeCompare(b.getAttribute('name') ?? '');
+    return 0;
+}
+/** maximum value for `lnInst` attribute */
+const maxLnInst = 99;
+const lnInstRange = Array(maxLnInst)
+    .fill(1)
+    .map((_, i) => `${i + 1}`);
+/**
+ * @param lnElements - The LN elements to be scanned for `inst`
+ * values already in use.
+ * @returns first available inst value for LN or undefined if no inst is available
+ */
+function minAvailableLogicalNodeInstance(lnElements) {
+    const lnInsts = new Set(lnElements.map(ln => ln.getAttribute('inst') || ''));
+    return lnInstRange.find(lnInst => !lnInsts.has(lnInst));
+}
+
+const pathsSVG = {
+    gooseIcon: b `<path d="M11,7H15V9H11V15H13V11H15V15A2,2 0 0,1 13,17H11A2,2 0 0,1 9,15V9A2,2 0 0,1 11,7M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />`,
+    smvIcon: b `'<path d="M11,7H15V9H11V11H13A2,2 0 0,1 15,13V15A2,2 0 0,1 13,17H9V15H13V13H11A2,2 0 0,1 9,11V9A2,2 0 0,1 11,7M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />`
+};
+const gooseIcon = b `<svg style="width:24px;height:24px" viewBox="0 0 24 24">${pathsSVG.gooseIcon}</svg>`;
+const smvIcon = b `<svg style="width:24px;height:24px" viewBox="0 0 24 24">${pathsSVG.smvIcon}</svg>`;
+function getIconButton(type, state) {
+    return b `<svg
+    slot="${state ? 'onIcon' : 'offIcon'}"
+    xmlns="http://www.w3.orgs/2000/svg"
+    viewBox="0 0 24 24" 
+  >
+    ${pathsSVG[type]}
+  </svg>`;
+}
+const gooseActionIcon = getIconButton('gooseIcon', false);
+const smvActionIcon = getIconButton('smvIcon', true);
+
+const SCL_NAMESPACE = 'http://www.iec.ch/61850/2003/SCL';
 /**
  * Creates a string pointer to the control block element.
  *
@@ -14287,30 +14769,6 @@ function controlBlockReference(controlBlock) {
     if (!cbName && !iedName && !ldInst && !lnClass)
         return null;
     return `${iedName}${ldInst}/${prefix}${lnClass}${lnInst}.${cbName}`;
-}
-function findFCDAs(extRef) {
-    if (extRef.tagName !== 'ExtRef' || extRef.closest('Private'))
-        return [];
-    const [iedName, ldInst, prefix, lnClass, lnInst, doName, daName] = [
-        'iedName',
-        'ldInst',
-        'prefix',
-        'lnClass',
-        'lnInst',
-        'doName',
-        'daName'
-    ].map(name => extRef.getAttribute(name));
-    const ied = Array.from(extRef.ownerDocument.getElementsByTagName('IED')).find(element => element.getAttribute('name') === iedName && !element.closest('Private'));
-    if (!ied)
-        return [];
-    return Array.from(ied.getElementsByTagName('FCDA'))
-        .filter(item => !item.closest('Private'))
-        .filter(fcda => (fcda.getAttribute('ldInst') ?? '') === (ldInst ?? '') &&
-        (fcda.getAttribute('prefix') ?? '') === (prefix ?? '') &&
-        (fcda.getAttribute('lnClass') ?? '') === (lnClass ?? '') &&
-        (fcda.getAttribute('lnInst') ?? '') === (lnInst ?? '') &&
-        (fcda.getAttribute('doName') ?? '') === (doName ?? '') &&
-        (fcda.getAttribute('daName') ?? '') === (daName ?? ''));
 }
 /**
  * Searches for first instantiated LGOS/LSVS LN for presence of DOI>DAI[valKind=Conf/RO][valImport=true]
@@ -14398,7 +14856,6 @@ function removeSubscriptionSupervision(controlBlock, subscriberIED) {
     });
     return edits;
 }
-// TODO: Daniel has changed this function
 /**
  * Counts the max number of LN instances with supervision allowed for
  * the given control block's type of message.
@@ -14413,38 +14870,6 @@ function maxSupervisions(subscriberIED, controlBlockType) {
         .querySelector('Services>SupSubscription')
         ?.getAttribute(maxAttr) ?? '0', 10);
     return Number.isNaN(maxValues) ? 0 : maxValues;
-}
-/**
- * Counts the number of LN instances with proper supervision for the given control block set up.
- *
- * @param subscriberIED - The subscriber IED.
- * @param controlBlock - The GOOSE or SMV message element.
- * @returns The number of LN instances with a supervision set up.
- */
-function instantiatedSupervisionsCount(subscriberIED, controlBlock) {
-    const instantiatedValues = getSupervisionCbRefs(subscriberIED, controlBlock.tagName).filter(val => val.textContent !== '');
-    return instantiatedValues.length;
-}
-/**
- * Checks if the given combination of GOOSE/SMV message and subscriber IED
- * allows for subscription supervision.
- * @param controlBlock The GOOSE or SMV message element
- * @param subscriberIED The subscriber IED
- * @param supervisionType LSVS or LGOS
- * @returns true if both controlBlock and subscriberIED meet the requirements for
- * setting up a supervision for the specified supervision type or false if they don't
- */
-function isSupervisionAllowed(controlBlock, subscriberIED, supervisionType) {
-    if (getSclSchemaVersion(subscriberIED.ownerDocument) === '2003')
-        return false;
-    if (subscriberIED.querySelector(`LN[lnClass="${supervisionType}"]`) === null)
-        return false;
-    if (getSupervisionCbRefs(subscriberIED, controlBlock.tagName).find(val => val.textContent === controlBlockReference(controlBlock)))
-        return false;
-    if (maxSupervisions(subscriberIED, controlBlock.tagName) <=
-        instantiatedSupervisionsCount(subscriberIED, controlBlock))
-        return false;
-    return true;
 }
 /** Returns an new LN instance available for supervision instantiation
  *
@@ -14504,206 +14929,25 @@ function createNewSupervisionLnEvent(ied, supervisionType) {
     }
     return null;
 }
-/* TODO: Update and add proper unit tests, needs to be changed for subscriber plugin */
-/** Returns an new or existing LN instance available for supervision instantiation
- *
- * @param controlBlock The GOOSE or SMV message element
- * @param subscriberIED The subscriber IED
- * @returns The LN instance or null if no LN instance could be found or created
- */
-function findOrCreateAvailableLNInst(controlBlock, subscriberIED, supervisionType) {
-    let availableLN = Array.from(subscriberIED.querySelectorAll(`LN[lnClass="${supervisionType}"]`)).find(ln => {
-        const supervisionName = supervisionType === 'LGOS' ? 'GoCBRef' : 'SvCBRef';
-        // TODO: What about overriding incorrect values? Do we need an edit to do manual fixes?
-        return (ln.querySelector(`DOI[name="${supervisionName}"]>DAI[name="setSrcRef"]>Val`) === null ||
-            ln.querySelector(`DOI[name="${supervisionName}"]>DAI[name="setSrcRef"]>Val`)?.textContent === '');
-    }) ?? null;
-    if (!availableLN) {
-        availableLN = createNewSupervisionLnInst(subscriberIED, supervisionType);
-    }
-    return availableLN;
-}
-// IMPORTANT: Has been updated by Daniel to add existingSupervision
-// TODO: But does it correctly check that modifications are allowed? Probably.
-/**
- * Returns an array with a single Insert Edit to create a new
- * supervision element for the given GOOSE/SMV message and subscriber IED.
- *
- * @param controlBlock The GOOSE or SMV message element
- * @param subscriberIED The subscriber IED
- * @returns an empty array if instantiation is not possible or an array with a single Create action
- */
-function instantiateSubscriptionSupervision(controlBlock, subscriberIED, existingSupervision = undefined) {
-    const supervisionType = controlBlock?.tagName === 'GSEControl' ? 'LGOS' : 'LSVS';
-    if (!controlBlock ||
-        !subscriberIED ||
-        !isSupervisionAllowed(controlBlock, subscriberIED, supervisionType))
-        return [];
-    const availableLN = existingSupervision ??
-        findOrCreateAvailableLNInst(controlBlock, subscriberIED, supervisionType);
-    if (!availableLN ||
-        !isSupervisionModificationAllowed(subscriberIED, supervisionType))
-        return [];
+function clearSupervisionReference(ln) {
+    const val = ln.querySelector(':scope > DOI[name="GoCBRef"] > DAI[name="setSrcRef"] > Val, :scope > DOI[name="SvCBRef"] > DAI[name="setSrcRef"] > Val');
+    if (!val || val.textContent === '')
+        return undefined;
     const edits = [];
-    // If creating new LN element
-    if (!availableLN.parentElement) {
-        const parent = subscriberIED.querySelector(`LN[lnClass="${supervisionType}"]`)?.parentElement;
-        if (parent) {
-            // use Insert edit for supervision LN
-            edits.push({
-                parent,
-                node: availableLN,
-                reference: parent.querySelector(`LN[lnClass="${supervisionType}"]:last-child`)
-                    ?.nextElementSibling ?? null
-            });
-        }
-    }
-    // Insert child elements
-    const supervisionName = supervisionType === 'LGOS' ? 'GoCBRef' : 'SvCBRef';
-    let doiElement = availableLN.querySelector(`DOI[name="${supervisionName}"]`);
-    if (!doiElement) {
-        doiElement = subscriberIED.ownerDocument.createElementNS(SCL_NAMESPACE, 'DOI');
-        doiElement.setAttribute('name', supervisionName);
-        edits.push({
-            parent: availableLN,
-            reference: null,
-            node: doiElement
-        });
-    }
-    let daiElement = availableLN.querySelector(`DOI[name="${supervisionName}"]>DAI[name="setSrcRef"]`);
-    if (!daiElement) {
-        daiElement = subscriberIED.ownerDocument.createElementNS(SCL_NAMESPACE, 'DAI');
-        const srcValRef = subscriberIED.querySelector(`LN[lnClass="${supervisionType}"]>DOI[name="${supervisionName}"]>DAI[name="setSrcRef"]`);
-        daiElement.setAttribute('name', 'setSrcRef');
-        // transfer valKind and valImport from first supervision instance if present
-        if (srcValRef?.hasAttribute('valKind'))
-            daiElement.setAttribute('valKind', srcValRef.getAttribute('valKind'));
-        if (srcValRef?.hasAttribute('valImport'))
-            daiElement.setAttribute('valImport', srcValRef.getAttribute('valImport'));
-        edits.push({
-            parent: doiElement,
-            reference: null,
-            node: daiElement
-        });
-    }
-    const valTextContent = controlBlockReference(controlBlock);
-    const valElement = daiElement.querySelector(`Val`);
-    let newValElement;
-    if (valElement) {
-        // remove old element
-        edits.push({
-            node: valElement
-        });
-        newValElement = valElement.cloneNode(true);
-    }
-    else {
-        newValElement = subscriberIED.ownerDocument.createElementNS(SCL_NAMESPACE, 'Val');
-    }
-    newValElement.textContent = valTextContent;
+    // remove old element
+    edits.push({
+        node: val
+    });
+    const newValElement = val.cloneNode(true);
+    newValElement.textContent = '';
     // add new element
     edits.push({
-        parent: daiElement,
+        parent: val.parentElement,
         reference: null,
         node: newValElement
     });
     return edits;
 }
-
-/**
- * Extract the 'name' attribute from the given XML element.
- * @param element - The element to extract name from.
- * @returns the name, or undefined if there is no name.
- */
-function getNameAttribute(element) {
-    const name = element.getAttribute('name');
-    return name || undefined;
-}
-/**
- * Extract the 'desc' attribute from the given XML element.
- * @param element - The element to extract description from.
- * @returns the name, or undefined if there is no description.
- */
-function getDescriptionAttribute(element) {
-    const name = element.getAttribute('desc');
-    return name || undefined;
-}
-/** Sorts selected `ListItem`s to the top and disabled ones to the bottom. */
-function compareNames(a, b) {
-    if (typeof a === 'string' && typeof b === 'string')
-        return a.localeCompare(b);
-    if (typeof a === 'object' && typeof b === 'string')
-        return (a.getAttribute('name') ?? '').localeCompare(b);
-    if (typeof a === 'string' && typeof b === 'object')
-        return a.localeCompare(b.getAttribute('name'));
-    if (typeof a === 'object' && typeof b === 'object')
-        return (a.getAttribute('name') ?? '').localeCompare(b.getAttribute('name') ?? '');
-    return 0;
-}
-const serviceTypeControlBlockTags = {
-    GOOSE: ['GSEControl'],
-    SMV: ['SampledValueControl'],
-    Report: ['ReportControl'],
-    NONE: ['LogControl', 'GSEControl', 'SampledValueControl', 'ReportControl']
-};
-// NOTE: This function modified extensively from the core function to more efficiently handle the srcXXX attributes on ExtRefs
-function findControlBlocks(extRef, controlType) {
-    if (!isSubscribed(extRef))
-        return [];
-    const extRefValues = ['iedName', 'srcPrefix', 'srcCBName', 'srcLNInst'];
-    const [srcIedName, srcPrefix, srcCBName, srcLNInst] = extRefValues.map(attr => extRef.getAttribute(attr) ?? '');
-    const srcLDInst = extRef.getAttribute('srcLDInst') ?? extRef.getAttribute('ldInst');
-    const srcLNClass = extRef.getAttribute('srcLNClass') ?? 'LLN0';
-    const controlBlockFromSrc = Array.from(extRef
-        .closest('SCL')
-        .querySelectorAll(`IED[name="${srcIedName}"] LDevice[inst="${srcLDInst}"] > LN0[lnClass="${srcLNClass}"]${srcPrefix !== '' ? `[prefix="${srcPrefix}"]` : ''}${srcLNInst !== '' ? `[inst="${srcLNInst}"]` : ''} > ${serviceTypeControlBlockTags[controlType]}[name="${srcCBName}"]`));
-    if (controlBlockFromSrc)
-        return controlBlockFromSrc;
-    // Ed 1 this is more complicated as control blocks not explicitly identified...
-    const fcdas = findFCDAs(extRef);
-    const cbTags = serviceTypeControlBlockTags[extRef.getAttribute('serviceType') ?? 'NONE'] ??
-        [];
-    const controlBlocks = new Set(fcdas.flatMap(fcda => {
-        const dataSet = fcda.parentElement;
-        const dsName = dataSet.getAttribute('name') ?? '';
-        const anyLN = dataSet.parentElement;
-        return cbTags
-            .flatMap(tag => Array.from(anyLN.getElementsByTagName(tag)))
-            .filter(cb => cb.getAttribute('datSet') === dsName);
-    }));
-    return Array.from(controlBlocks);
-}
-/** maximum value for `lnInst` attribute */
-const maxLnInst = 99;
-const lnInstRange = Array(maxLnInst)
-    .fill(1)
-    .map((_, i) => `${i + 1}`);
-/**
- * @param lnElements - The LN elements to be scanned for `inst`
- * values already in use.
- * @returns first available inst value for LN or undefined if no inst is available
- */
-function minAvailableLogicalNodeInstance(lnElements) {
-    const lnInsts = new Set(lnElements.map(ln => ln.getAttribute('inst') || ''));
-    return lnInstRange.find(lnInst => !lnInsts.has(lnInst));
-}
-
-const pathsSVG = {
-    gooseIcon: b `<path d="M11,7H15V9H11V15H13V11H15V15A2,2 0 0,1 13,17H11A2,2 0 0,1 9,15V9A2,2 0 0,1 11,7M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />`,
-    smvIcon: b `'<path d="M11,7H15V9H11V11H13A2,2 0 0,1 15,13V15A2,2 0 0,1 13,17H9V15H13V13H11A2,2 0 0,1 9,11V9A2,2 0 0,1 11,7M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />`
-};
-const gooseIcon = b `<svg style="width:24px;height:24px" viewBox="0 0 24 24">${pathsSVG.gooseIcon}</svg>`;
-const smvIcon = b `<svg style="width:24px;height:24px" viewBox="0 0 24 24">${pathsSVG.smvIcon}</svg>`;
-function getIconButton(type, state) {
-    return b `<svg
-    slot="${state ? 'onIcon' : 'offIcon'}"
-    xmlns="http://www.w3.orgs/2000/svg"
-    viewBox="0 0 24 24" 
-  >
-    ${pathsSVG[type]}
-  </svg>`;
-}
-const gooseActionIcon = getIconButton('gooseIcon', false);
-const smvActionIcon = getIconButton('smvIcon', true);
 
 const controlTag = { GOOSE: 'GSEControl', SMV: 'SampledValueControl' };
 const supervisionLnType = { GOOSE: 'LGOS', SMV: 'LSVS' };
@@ -14717,7 +14961,7 @@ function controlBlockDescription(control) {
     const lnClass = lN0.getAttribute('lnClass');
     const lnInst = lN0.getAttribute('inst');
     const desc = control.getAttribute('desc');
-    const lN0Desc = lN0?.getAttribute(' ');
+    const lN0Desc = lN0?.getAttribute('desc');
     const descriptions = [desc, lN0Desc].filter(a => !!a).join(' > ');
     const pathName = [iedName, '>', name].filter(a => !!a).join(' ');
     const pathLDeviceAndLN = [ldInst, '/', lnPrefix, lnClass, lnInst]
@@ -14815,7 +15059,9 @@ function getSubscribedCBRefs(ied, type) {
     const controlBlockRefs = new Set();
     extRefs.forEach(extRef => {
         if (isGOOSEorSMV(extRef, type)) {
-            findControlBlocks(extRef, type).forEach(cb => controlBlockRefs.add(controlBlockReference(cb) ?? 'Unknown Control'));
+            const cb = sourceControlBlock(extRef);
+            if (cb)
+                controlBlockRefs.add(controlBlockReference(cb) ?? 'Unknown Control');
         }
     });
     return Array.from(controlBlockRefs);
@@ -14965,7 +15211,7 @@ class OscdSupervision extends s$h {
                 }
             }
         }
-        if (_changedProperties.has('selectedIed') && this.selectedIed) {
+        if (_changedProperties.has('selectedIEDs')) {
             this.updateCBRefInfo(this.selectedIed, this.controlType);
             this.clearListSelections();
             this.resetSearchFilters();
@@ -14979,13 +15225,7 @@ class OscdSupervision extends s$h {
     }
     // eslint-disable-next-line class-methods-use-this
     renderUnusedSupervisionNode(lN) {
-        const descriptionLn = getDescriptionAttribute(lN);
-        const cbRef = this.controlType === 'GOOSE' ? 'GoCBRef' : 'SvCBRef';
-        const doi = lN.querySelector(`DOI[name="${cbRef}"`);
-        const descriptionDoi = doi ? getDescriptionAttribute(doi) : undefined;
-        const description = [descriptionLn, descriptionDoi]
-            .filter(d => d !== undefined)
-            .join(' > ');
+        const description = getDescriptionAttribute(lN);
         const controlBlockRef = getSupervisionCBRef(lN);
         const invalidControlBlock = controlBlockRef !== '' &&
             !this.otherIedsCBRefs.includes(controlBlockRef ?? 'Unknown control block') &&
@@ -15031,13 +15271,7 @@ class OscdSupervision extends s$h {
     }
     // eslint-disable-next-line class-methods-use-this
     renderSupervisionListItem(lN, interactive) {
-        const descriptionLn = getDescriptionAttribute(lN);
-        const cbRef = this.controlType === 'GOOSE' ? 'GoCBRef' : 'SvCBRef';
-        const doi = lN.querySelector(`DOI[name="${cbRef}"`);
-        const descriptionDoi = doi ? getDescriptionAttribute(doi) : undefined;
-        const description = [descriptionLn, descriptionDoi]
-            .filter(d => d !== undefined)
-            .join(' > ');
+        const description = getDescriptionAttribute(lN);
         return x$1 `
       <mwc-list-item
         ?twoline=${!!description}
@@ -15142,15 +15376,11 @@ class OscdSupervision extends s$h {
             if (!selectedListItem)
                 return;
             const { ln } = selectedListItem.dataset;
-            if (!ln)
-                return;
-            const lN = find(this.doc, 'LN', ln);
-            if (!lN)
-                return;
+            const supLn = find(this.doc, 'LN', ln);
             if (isSupervisionModificationAllowed(this.selectedIed, supervisionLnType[this.controlType]) &&
-                lN !== firstSupervision) {
+                supLn !== firstSupervision) {
                 const removeEdit = {
-                    node: lN
+                    node: supLn
                 };
                 this.dispatchEvent(newEditEvent(removeEdit));
                 this.updateCBRefInfo(this.selectedIed, this.controlType);
@@ -15209,12 +15439,8 @@ class OscdSupervision extends s$h {
             if (!selectedListItem)
                 return;
             const { ln } = selectedListItem.dataset;
-            if (!ln)
-                return;
-            const lN = find(this.doc, 'LN', ln);
-            if (!lN)
-                return;
-            const cbRef = getSupervisionCBRef(lN);
+            const supLn = find(this.doc, 'LN', ln);
+            const cbRef = getSupervisionCBRef(supLn);
             const controlBlock = getOtherIedControlElements(this.selectedIed, this.controlType).find(control => cbRef === controlBlockReference(control)) ?? null;
             if (controlBlock) {
                 const removeEdit = removeSubscriptionSupervision(controlBlock, this.selectedIed);
@@ -15282,20 +15508,8 @@ class OscdSupervision extends s$h {
         return x$1 `<mwc-list class="column mlist">
       ${this.getSelectedIedSupLNs(true, false).map(lN => {
             const cbRef = getSupervisionCBRef(lN);
-            const controlElement = getOtherIedControlElements(this.selectedIed, this.controlType).find(control => cbRef === controlBlockReference(control)) ?? null;
-            return x$1 `${controlElement
-                ? this.renderControl(controlElement)
-                : x$1 `<mwc-list-item
-              noninteractive
-              graphic="icon"
-              data-control="${identity(controlElement)}"
-              value="Control not found"
-            >
-              <span>Control not found</span>
-              <mwc-icon slot="graphic"
-                >${this.controlType === 'GOOSE' ? gooseIcon : smvIcon}</mwc-icon
-              >
-            </mwc-list-item>`}`;
+            const controlElement = getOtherIedControlElements(this.selectedIed, this.controlType).find(control => cbRef === controlBlockReference(control));
+            return this.renderControl(controlElement);
         })}</mwc-list
     >`;
     }
@@ -15326,7 +15540,7 @@ class OscdSupervision extends s$h {
         }}"
       >
         ${this.iedList.map(ied => {
-            const name = getNameAttribute(ied) ?? 'Unknown Name';
+            const name = getNameAttribute(ied);
             const descr = getDescriptionAttribute(ied);
             const type = ied.getAttribute('type');
             const manufacturer = ied.getAttribute('manufacturer');
@@ -15362,32 +15576,6 @@ class OscdSupervision extends s$h {
                 textField.value = '';
         }
     }
-    // TODO: restructure in terms of edits
-    createNewSupervision(selectedControl) {
-        const subscriberIED = this.selectedIed;
-        const supervisionType = selectedControl?.tagName === 'GSEControl' ? 'LGOS' : 'LSVS';
-        const newLN = createNewSupervisionLnInst(subscriberIED, supervisionType);
-        let edits;
-        const parent = subscriberIED.querySelector(`LN[lnClass="${supervisionType}"]`)?.parentElement;
-        if (parent && newLN) {
-            // use Insert edit for supervision LN
-            edits = [
-                {
-                    parent,
-                    node: newLN,
-                    reference: parent.querySelector(`LN[lnClass="${supervisionType}"]:last-child`)
-                        ?.nextElementSibling ?? null
-                }
-            ];
-            const instanceNum = newLN?.getAttribute('inst');
-            // TODO: Explain To The User That They Have Erred And Can't Make Any New Subscriptions!
-            if (edits) {
-                this.dispatchEvent(newEditEvent(edits));
-                const instantiationEdit = instantiateSubscriptionSupervision(selectedControl, this.selectedIed, parent.querySelector(`LN[lnClass="${supervisionType}"][inst="${instanceNum}"]`));
-                this.dispatchEvent(newEditEvent(instantiationEdit));
-            }
-        }
-    }
     renderUnusedControlList() {
         return x$1 `<oscd-filtered-list
       id="unusedControls"
@@ -15400,13 +15588,30 @@ class OscdSupervision extends s$h {
             this.selectedControl = selectedControl;
             if (this.selectedControl &&
                 (this.selectedSupervision || this.newSupervision)) {
-                if (this.newSupervision) {
-                    this.createNewSupervision(this.selectedControl);
-                }
-                else {
-                    const edits = instantiateSubscriptionSupervision(this.selectedControl, this.selectedIed, this.selectedSupervision ?? undefined);
+                if (this.selectedSupervision) {
+                    //  TODO: We have to remove first to use the scl-lib function
+                    //  We hope to have an upstream overwrite option before too long
+                    //  See https://github.com/OpenEnergyTools/scl-lib/issues/79
+                    const edits = [];
+                    const removalEdit = clearSupervisionReference(this.selectedSupervision);
+                    if (removalEdit)
+                        edits.push(removalEdit);
                     this.dispatchEvent(newEditEvent(edits));
                 }
+                const instantiationEdit = instantiateSubscriptionSupervision({
+                    subscriberIedOrLn: this.newSupervision
+                        ? this.selectedIed
+                        : this.selectedSupervision,
+                    sourceControlBlock: this.selectedControl
+                }, {
+                    newSupervisionLn: this.newSupervision,
+                    fixedLnInst: -1,
+                    checkEditableSrcRef: true,
+                    checkDuplicateSupervisions: true,
+                    checkMaxSupervisionLimits: true
+                });
+                if (instantiationEdit)
+                    this.dispatchEvent(newEditEvent(instantiationEdit));
             }
             this.updateCBRefInfo(this.selectedIed, this.controlType);
             this.clearListSelections();

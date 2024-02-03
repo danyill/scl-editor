@@ -1,12 +1,9 @@
 import { LitElement, TemplateResult } from 'lit';
-import '@material/mwc-list';
-import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
-import '@openscd/oscd-filtered-list';
-import './foundation/components/oscd-textfield.js';
-import './foundation/components/action-filtered-list.js';
-import type { OscdTextfield } from './foundation/components/oscd-textfield.js';
+import '@openenergytools/filterable-lists/dist/action-list.js';
+import './foundation/components/scl-template-textfield.js';
+import type { SclTemplateTextfield } from './foundation/components/scl-template-textfield.js';
 /** An editor [[`plugin`]] for editing the `DataTypeTemplates` section. */
 export default class TemplatesPlugin extends LitElement {
     /** The document being edited as provided to plugins by [[`OpenSCD`]]. */
@@ -18,13 +15,13 @@ export default class TemplatesPlugin extends LitElement {
     selectedEnumType: Element | null | undefined;
     get dataTypeTemplate(): Element | null;
     lNodeTypeDiff: boolean;
-    lNodeTypeInputs?: OscdTextfield[];
+    lNodeTypeInputs?: SclTemplateTextfield[];
     doTypeDiff: boolean;
-    doTypeInputs?: OscdTextfield[];
+    doTypeInputs?: SclTemplateTextfield[];
     daTypeDiff: boolean;
-    daTypeInputs?: OscdTextfield[];
+    daTypeInputs?: SclTemplateTextfield[];
     enumTypeDiff: boolean;
-    enumTypeInputs?: OscdTextfield[];
+    enumTypeInputs?: SclTemplateTextfield[];
     private onLNodeTypeInputChange;
     private onSaveLNodeType;
     private onDOTypeInputChange;
@@ -33,13 +30,8 @@ export default class TemplatesPlugin extends LitElement {
     private onSaveDAType;
     private onEnumTypeInputChange;
     private onSaveEnumType;
-    private dispatchEditEvent;
     private dispatchCreateEvent;
-    private openEnumTypeWizard;
-    private openDATypeWizard;
-    private openDOTypeWizard;
     private selectReferencedChild;
-    private openLNodeTypeWizard;
     private renderEnumTypeChildrenList;
     private renderEnumTypeList;
     private renderDATypeChildrenList;
