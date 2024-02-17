@@ -6459,6 +6459,8 @@ class BaseSubstationElementEditor extends s {
         this.editCount = -1;
         /** Whether function type element shall be shown */
         this.showfunctions = false;
+        /** Whether text/private type element shall be shown */
+        this.showuserdef = false;
     }
     openCreateWizard(tagName) {
         this.dispatchEvent(newCreateWizardEvent(this.element, tagName));
@@ -6476,9 +6478,13 @@ class BaseSubstationElementEditor extends s {
             this.addMenu.anchor = this.addButton;
     }
     renderAddButtons() {
-        return getChildren(this.element).map(child => x `<mwc-list-item class="action add" value="${child}"
-          ><span>${child}</span></mwc-list-item
-        >`);
+        var _a;
+        const alreadyHasText = (_a = this.element.querySelector(':scope > Text')) !== null && _a !== void 0 ? _a : false;
+        return getChildren(this.element)
+            .filter(child => child !== 'Text' || (child === 'Text' && !alreadyHasText))
+            .map(child => x `<mwc-list-item class="action add" value="${child}"
+            ><span>${child}</span></mwc-list-item
+          >`);
     }
     renderAddButton() {
         return x ` <abbr slot="action" style="position:relative;">
@@ -6512,6 +6518,9 @@ __decorate([
     n$2({ type: Boolean })
 ], BaseSubstationElementEditor.prototype, "showfunctions", void 0);
 __decorate([
+    n$2({ type: Boolean })
+], BaseSubstationElementEditor.prototype, "showuserdef", void 0);
+__decorate([
     i$2('mwc-menu')
 ], BaseSubstationElementEditor.prototype, "addMenu", void 0);
 __decorate([
@@ -6529,6 +6538,116 @@ __decorate([
 __decorate([
     e$3('.action.add')
 ], BaseSubstationElementEditor.prototype, "addActionable", void 0);
+
+let TextEditor = class TextEditor extends BaseSubstationElementEditor {
+    get header() {
+        const content = this.element.textContent;
+        return `${content}`;
+    }
+    render() {
+        return x `<oscd-action-pane
+      label="${this.header}"
+      icon="notes"
+      secondary
+      highlighted
+    >
+      <abbr slot="action" title="Edit">
+        <mwc-icon-button
+          class="action edit"
+          icon="edit"
+          @click=${() => this.openEditWizard()}
+        ></mwc-icon-button>
+      </abbr>
+      <abbr slot="action" title="Remove">
+        <mwc-icon-button
+          class="action remove"
+          icon="delete"
+          @click=${() => this.removeElement()}
+        ></mwc-icon-button>
+      </abbr>
+    </oscd-action-pane>`;
+    }
+};
+TextEditor.styles = i$5 `
+    abbr {
+      text-decoration: none;
+      border-bottom: none;
+    }
+  `;
+__decorate([
+    t$1()
+], TextEditor.prototype, "header", null);
+TextEditor = __decorate([
+    e$6('text-editor')
+], TextEditor);
+function renderText(parent, editCount, showfunctions, showuserdef) {
+    if (!showfunctions)
+        return x ``;
+    if (!showuserdef)
+        return x ``;
+    const text = getChildElementsByTagName(parent, 'Text');
+    return x `${text.map(fText => x `<text-editor
+        .editCount=${editCount}
+        .element=${fText}
+        ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
+      ></text-editor>`)}`;
+}
+
+let PrivateEditor = class PrivateEditor extends BaseSubstationElementEditor {
+    get header() {
+        const privateType = this.element.getAttribute('type');
+        return `${privateType}`;
+    }
+    render() {
+        return x `<oscd-action-pane
+      label="${this.header}"
+      icon="contact_page"
+      secondary
+      highlighted
+    >
+      <abbr slot="action" title="Edit">
+        <mwc-icon-button
+          class="action edit"
+          icon="edit"
+          @click=${() => this.openEditWizard()}
+        ></mwc-icon-button>
+      </abbr>
+      <abbr slot="action" title="Remove">
+        <mwc-icon-button
+          class="action remove"
+          icon="delete"
+          @click=${() => this.removeElement()}
+        ></mwc-icon-button>
+      </abbr>
+    </oscd-action-pane>`;
+    }
+};
+PrivateEditor.styles = i$5 `
+    abbr {
+      text-decoration: none;
+      border-bottom: none;
+    }
+  `;
+__decorate([
+    t$1()
+], PrivateEditor.prototype, "header", null);
+PrivateEditor = __decorate([
+    e$6('private-editor')
+], PrivateEditor);
+function renderPrivate(parent, editCount, showfunctions, showuserdef) {
+    if (!showfunctions)
+        return x ``;
+    if (!showuserdef)
+        return x ``;
+    const privateElement = getChildElementsByTagName(parent, 'Private');
+    return x `${privateElement.map(fPrivate => x `<private-editor
+        .editCount=${editCount}
+        .element=${fPrivate}
+        ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
+      ></text-editor>`)}`;
+}
 
 /** Pane rendering `EqSubFunction` element with its children */
 let EqSubFunctionEditor = class EqSubFunctionEditor extends BaseSubstationElementEditor {
@@ -6558,8 +6677,10 @@ let EqSubFunctionEditor = class EqSubFunctionEditor extends BaseSubstationElemen
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderEqSubFunctions(this.element, this.editCount, this.showfunctions)}
     </oscd-action-pane>`;
     }
@@ -6630,8 +6751,10 @@ let EqFunctionEditor = class EqFunctionEditor extends BaseSubstationElementEdito
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderEqSubFunctions(this.element, this.editCount, this.showfunctions)}
     </oscd-action-pane>`;
     }
@@ -6664,12 +6787,13 @@ __decorate([
 EqFunctionEditor = __decorate([
     e$6('eq-function-editor')
 ], EqFunctionEditor);
-function renderEqFunctions(parent, editCount) {
+function renderEqFunctions(parent, editCount, showuserdef) {
     const eqFunctions = getChildElementsByTagName(parent, 'EqFunction');
     return x ` ${eqFunctions.map(eqFunction => x `<eq-function-editor
         .element=${eqFunction}
         .editCount=${editCount}
         ?showfunctions=${true}
+        ?showuserdef=${showuserdef}
       ></eq-function-editor>`)}`;
 }
 
@@ -6699,8 +6823,10 @@ let GeneralEquipmentEditor = class GeneralEquipmentEditor extends BaseSubstation
           ></mwc-icon-button>
         </abbr>
         ${this.renderAddButton()}
+        ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+        ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
         ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-        ${renderEqFunctions(this.element, this.editCount)}
+        ${renderEqFunctions(this.element, this.editCount, this.showuserdef)}
       </oscd-action-pane>`;
         return x `<oscd-action-icon label=${this.header}>
       <mwc-icon slot="icon">${generalConductingEquipmentIcon}</mwc-icon>
@@ -6741,13 +6867,14 @@ __decorate([
 GeneralEquipmentEditor = __decorate([
     e$6('general-equipment-editor')
 ], GeneralEquipmentEditor);
-function renderGeneralEquipment(parent, editCount, showfunctions) {
+function renderGeneralEquipment(parent, editCount, showfunctions, showuserdef) {
     const generalEquipment = getChildElementsByTagName(parent, 'GeneralEquipment');
     if (showfunctions)
         return x `${generalEquipment.map(gEquipment => x `<general-equipment-editor
           .editCount=${editCount}
           .element=${gEquipment}
           ?showfunctions=${showfunctions}
+          ?showuserdef=${showuserdef}
         ></general-equipment-editor>`)}`;
     return generalEquipment.length
         ? x ` <div class="content actionicon">
@@ -6755,6 +6882,7 @@ function renderGeneralEquipment(parent, editCount, showfunctions) {
               .editCount=${editCount}
               .element=${gEquipment}
               ?showfunctions=${showfunctions}
+              ?showuserdef=${showuserdef}
             ></general-equipment-editor>`)}
       </div>`
         : x ``;
@@ -7324,8 +7452,10 @@ let SubEquipmentEditor = class SubEquipmentEditor extends BaseSubstationElementE
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderEqFunctions(this.element, this.editCount)}
+      ${renderEqFunctions(this.element, this.editCount, this.showuserdef)}
     </oscd-action-pane> `;
     }
 };
@@ -7349,12 +7479,13 @@ __decorate([
 SubEquipmentEditor = __decorate([
     e$6('sub-equipment-editor')
 ], SubEquipmentEditor);
-function renderSubEquipments(parent, editCount, showfunctions) {
+function renderSubEquipments(parent, editCount, showfunctions, showuserdef) {
     const subEquipments = getChildElementsByTagName(parent, 'SubEquipment');
     return x ` ${subEquipments.map(subEquipment => x `<sub-equipment-editor
         .editCount=${editCount}
         .element=${subEquipment}
         ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
       ></sub-equipment-editor>`)}`;
 }
 
@@ -7405,9 +7536,11 @@ let ConductingEquipmentEditor = class ConductingEquipmentEditor extends BaseSubs
       </abbr>
       ${this.renderAddButton()}
       ${this.renderContentPane()}
-        ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-        ${renderEqFunctions(this.element, this.editCount)}
-        ${renderSubEquipments(this.element, this.editCount, this.showfunctions)}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderLNodes(this.element, this.editCount, this.showfunctions)}
+      ${renderEqFunctions(this.element, this.editCount, this.showuserdef)}
+      ${renderSubEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
         </oscd-action-pane
         ></oscd-action-pane
       >`;
@@ -7430,13 +7563,14 @@ __decorate([
 ConductingEquipmentEditor = __decorate([
     e$6('conducting-equipment-editor')
 ], ConductingEquipmentEditor);
-function renderConductingEquipments(parent, editCount, showfunctions) {
+function renderConductingEquipments(parent, editCount, showfunctions, showuserdef) {
     const condEqs = getChildElementsByTagName(parent, 'ConductingEquipment');
     if (showfunctions)
         return x `${condEqs.map(condEq => x `<conducting-equipment-editor
           .element=${condEq}
           .editCount=${editCount}
           ?showfunctions=${showfunctions}
+          ?showuserdef=${showuserdef}
         ></conducting-equipment-editor>`)}`;
     return condEqs.length
         ? x ` <div class="content actionicon">
@@ -7444,6 +7578,7 @@ function renderConductingEquipments(parent, editCount, showfunctions) {
               .editCount=${editCount}
               .element=${conductingEquipment}
               ?showfunctions=${showfunctions}
+              ?showuserdef=${showuserdef}
             ></conducting-equipment-editor>`)}
       </div>`
         : x ``;
@@ -7477,10 +7612,12 @@ let SubFunctionEditor = class SubFunctionEditor extends BaseSubstationElementEdi
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
-      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions)}
-      ${renderSubFunctions(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderSubFunctions(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane>`;
     }
 };
@@ -7512,12 +7649,13 @@ __decorate([
 SubFunctionEditor = __decorate([
     e$6('sub-function-editor')
 ], SubFunctionEditor);
-function renderSubFunctions(parent, editCount, showfunctions) {
+function renderSubFunctions(parent, editCount, showfunctions, showuserdef) {
     const subfunctions = getChildElementsByTagName(parent, 'SubFunction');
     return x ` ${subfunctions.map(subFunction => x `<sub-function-editor
         .element=${subFunction}
         .editCount=${editCount}
         ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
       ></sub-function-editor>`)}`;
 }
 
@@ -7550,10 +7688,12 @@ let FunctionEditor = class FunctionEditor extends BaseSubstationElementEditor {
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
-      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions)}
-      ${renderSubFunctions(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderSubFunctions(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane>`;
     }
 };
@@ -7585,7 +7725,7 @@ __decorate([
 FunctionEditor = __decorate([
     e$6('function-editor')
 ], FunctionEditor);
-function renderFunctions(parent, editCount, showfunctions) {
+function renderFunctions(parent, editCount, showfunctions, showuserdef) {
     if (!showfunctions)
         return x ``;
     const functions = getChildElementsByTagName(parent, 'Function');
@@ -7593,6 +7733,7 @@ function renderFunctions(parent, editCount, showfunctions) {
         .element=${fUnction}
         .editCount=${editCount}
         ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
       ></function-editor>`)}`;
 }
 
@@ -7618,9 +7759,11 @@ let TapChangerEditor = class TapChangerEditor extends BaseSubstationElementEdito
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderEqFunctions(this.element, this.editCount)}
-      ${renderSubEquipments(this.element, this.editCount, this.showfunctions)}
+      ${renderEqFunctions(this.element, this.editCount, this.showuserdef)}
+      ${renderSubEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane>`;
     }
 };
@@ -7647,6 +7790,7 @@ let TransformerWindingEditor = class TransformerWindingEditor extends BaseSubsta
           .element=${tapChanger}
           .editCount=${this.editCount}
           ?showfunctions=${this.showfunctions}
+          ?showuserdef=${this.showuserdef}
         ></tap-changer-editor>`)}`;
     }
     render() {
@@ -7666,10 +7810,12 @@ let TransformerWindingEditor = class TransformerWindingEditor extends BaseSubsta
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
       ${this.renderTapChanger()}
-      ${renderEqFunctions(this.element, this.editCount)}
-      ${renderSubEquipments(this.element, this.editCount, this.showfunctions)}
+      ${renderEqFunctions(this.element, this.editCount, this.showuserdef)}
+      ${renderSubEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane> `;
     }
 };
@@ -7701,6 +7847,7 @@ let PowerTransformerEditor = class PowerTransformerEditor extends BaseSubstation
           .element=${transformerWinding}
           .editCount=${this.editCount}
           ?showfunctions=${this.showfunctions}
+          ?showuserdef=${this.showuserdef}
         ></transformer-winding-editor>`)}`;
     }
     // eslint-disable-next-line class-methods-use-this
@@ -7740,10 +7887,12 @@ let PowerTransformerEditor = class PowerTransformerEditor extends BaseSubstation
           ></mwc-icon-button>
         </abbr>
         ${this.renderAddButton()} ${this.renderContentPane()}
+        ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+        ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
         ${renderLNodes(this.element, this.editCount, this.showfunctions)}
         ${this.renderTransformerWinding()}
-        ${renderEqFunctions(this.element, this.editCount)}
-        ${renderSubEquipments(this.element, this.editCount, this.showfunctions)}
+        ${renderEqFunctions(this.element, this.editCount, this.showuserdef)}
+        ${renderSubEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       </oscd-action-pane> `;
         return x `<oscd-action-icon label="${this.name}"
       >${this.renderContentIcon()}</oscd-action-icon
@@ -7764,13 +7913,14 @@ __decorate([
 PowerTransformerEditor = __decorate([
     e$6('power-transformer-editor')
 ], PowerTransformerEditor);
-function renderPowerTransformerContainer(parent, editCount, showfunctions) {
+function renderPowerTransformerContainer(parent, editCount, showfunctions, showuserdef) {
     const pTrans = getChildElementsByTagName(parent, 'PowerTransformer');
     if (showfunctions)
         return x `${pTrans.map(ptr => x `<power-transformer-editor
           .element=${ptr}
           .editCount=${editCount}
           ?showfunctions=${showfunctions}
+          ?showuserdef=${showuserdef}
         ></power-transformer-editor>`)}`;
     return pTrans.length
         ? x `<div class="content actionicon">
@@ -7778,6 +7928,7 @@ function renderPowerTransformerContainer(parent, editCount, showfunctions) {
               .element=${pwt}
               .editCount=${editCount}
               ?showfunctions=${showfunctions}
+              ?showuserdef=${showuserdef}
             ></power-transformer-editor>`)}
       </div>`
         : x ``;
@@ -7807,11 +7958,13 @@ let BayEditor = class BayEditor extends BaseSubstationElementEditor {
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
-      ${renderPowerTransformerContainer(this.element, this.editCount, this.showfunctions)}
-      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions)}
-      ${renderFunctions(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPowerTransformerContainer(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderFunctions(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane> `;
     }
 };
@@ -7848,6 +8001,7 @@ let VoltageLevelEditor = class VoltageLevelEditor extends BaseSubstationElementE
           .editCount=${this.editCount}
           .element=${bay}
           ?showfunctions=${this.showfunctions}
+          ?showuserdef=${this.showuserdef}
         ></bay-editor>`)}
     </div>`;
     }
@@ -7868,11 +8022,13 @@ let VoltageLevelEditor = class VoltageLevelEditor extends BaseSubstationElementE
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
-      ${renderPowerTransformerContainer(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPowerTransformerContainer(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${this.renderBay()}
-      ${renderFunctions(this.element, this.editCount, this.showfunctions)}
+      ${renderFunctions(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane>`;
     }
 };
@@ -7926,15 +8082,18 @@ let SubstationEditor = class SubstationEditor extends BaseSubstationElementEdito
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
-      ${renderPowerTransformerContainer(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPowerTransformerContainer(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${getChildElementsByTagName(this.element, 'VoltageLevel').map(voltageLevel => x `<voltage-level-editor
             .editCount=${this.editCount}
             .element=${voltageLevel}
             ?showfunctions=${this.showfunctions}
+            ?showuserdef=${this.showuserdef}
           ></voltage-level-editor>`)}
-      ${renderFunctions(this.element, this.editCount, this.showfunctions)}
+      ${renderFunctions(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane>`;
     }
 };
@@ -7947,12 +8106,13 @@ __decorate([
 SubstationEditor = __decorate([
     e$6('substation-editor')
 ], SubstationEditor);
-function renderSubstations(parent, editCount, showfunctions) {
+function renderSubstations(parent, editCount, showfunctions, showuserdef) {
     const substations = getChildElementsByTagName(parent, 'Substation');
     return x ` ${substations.map(Substation => x `<substation-editor
         .element=${Substation}
         .editCount=${editCount}
         ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
       ></substation-editor>`)}`;
 }
 
@@ -7989,10 +8149,12 @@ let LineEditor = class LineEditor extends BaseSubstationElementEditor {
         ></mwc-icon-button>
       </abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
-      ${renderFunctions(this.element, this.editCount, this.showfunctions)}
+      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderFunctions(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane>`;
     }
 };
@@ -8005,12 +8167,13 @@ __decorate([
 LineEditor = __decorate([
     e$6('line-editor')
 ], LineEditor);
-function renderLines(parent, editCount, showfunctions) {
+function renderLines(parent, editCount, showfunctions, showuserdef) {
     const lines = getChildElementsByTagName(parent, 'Line');
     return x ` ${lines.map(Line => x `<line-editor
         .element=${Line}
         .editCount=${editCount}
         ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
       ></line-editor>`)}`;
 }
 
@@ -8037,13 +8200,15 @@ let ProcessEditor = class ProcessEditor extends BaseSubstationElementEditor {
         ></mwc-icon-button
       ></abbr>
       ${this.renderAddButton()}
+      ${renderText(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderPrivate(this.element, this.editCount, this.showfunctions, this.showuserdef)}
       ${renderLNodes(this.element, this.editCount, this.showfunctions)}
-      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions)}
-      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions)}
-      ${renderLines(this.element, this.editCount, this.showfunctions)}
-      ${renderSubstations(this.element, this.editCount, this.showfunctions)}
-      ${renderProcesses(this.element, this.editCount, this.showfunctions)}
-      ${renderFunctions(this.element, this.editCount, this.showfunctions)}
+      ${renderGeneralEquipment(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderConductingEquipments(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderLines(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderSubstations(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderProcesses(this.element, this.editCount, this.showfunctions, this.showuserdef)}
+      ${renderFunctions(this.element, this.editCount, this.showfunctions, this.showuserdef)}
     </oscd-action-pane>`;
     }
 };
@@ -8061,12 +8226,13 @@ __decorate([
 ProcessEditor = __decorate([
     e$6('process-editor')
 ], ProcessEditor);
-function renderProcesses(parent, editCount, showfunctions) {
+function renderProcesses(parent, editCount, showfunctions, showuserdef) {
     const processes = parent.querySelectorAll(':scope > Process');
     return x ` ${Array.from(processes).map(process => x `<process-editor
         .element=${process}
         .editCount=${editCount}
         ?showfunctions=${showfunctions}
+        ?showuserdef=${showuserdef}
       ></process-editor>`)}`;
 }
 
@@ -8075,6 +8241,12 @@ function shouldShowFunctions() {
 }
 function setShowFunctions(value) {
     localStorage.setItem('showfunctions', value);
+}
+function shouldShowUserDef() {
+    return localStorage.getItem('showuserdef') === 'on';
+}
+function setShowUserDef(value) {
+    localStorage.setItem('showuserdef', value);
 }
 /** An editor [[`plugin`]] for editing the `Substation` section. */
 class SclSubstationEditorPlugin extends s {
@@ -8098,6 +8270,13 @@ class SclSubstationEditorPlugin extends s {
             setShowFunctions('on');
         this.requestUpdate();
     }
+    toggleShowUserDef() {
+        if (shouldShowUserDef())
+            setShowUserDef('off');
+        else
+            setShowUserDef('on');
+        this.requestUpdate();
+    }
     render() {
         if (!this.doc)
             return x `<h1>
@@ -8113,6 +8292,16 @@ class SclSubstationEditorPlugin extends s {
       </h1>`;
         return x `<h1>
         <nav>
+          <abbr title="Filter user-defined information">
+            <mwc-icon-button-toggle
+              ?on=${shouldShowUserDef()}
+              @click=${() => this.toggleShowUserDef()}
+              id="showuserdef"
+              onIcon="subtitles"
+              offIcon="subtitles_off"
+              ?disabled="${!shouldShowFunctions()}"
+            ></mwc-icon-button-toggle>
+          </abbr>
           <abbr title="Show Function Structure">
             <mwc-icon-button-toggle
               ?on=${shouldShowFunctions()}
@@ -8125,9 +8314,9 @@ class SclSubstationEditorPlugin extends s {
         </nav>
       </h1>
       <section>
-        ${renderSubstations(this.doc.documentElement, this.editCount, shouldShowFunctions())}
-        ${renderLines(this.doc.documentElement, this.editCount, shouldShowFunctions())}
-        ${renderProcesses(this.doc.documentElement, this.editCount, shouldShowFunctions())}
+        ${renderSubstations(this.doc.documentElement, this.editCount, shouldShowFunctions(), shouldShowUserDef())}
+        ${renderLines(this.doc.documentElement, this.editCount, shouldShowFunctions(), shouldShowUserDef())}
+        ${renderProcesses(this.doc.documentElement, this.editCount, shouldShowFunctions(), shouldShowUserDef())}
       </section>`;
     }
 }

@@ -1,4 +1,4 @@
-import { Edit } from '@openscd/open-scd-core';
+import type { Edit } from '@openscd/open-scd-core';
 /**
  * Creates a string pointer to the control block element.
  *
@@ -16,17 +16,6 @@ export declare function controlBlockReference(controlBlock: Element | undefined)
  */
 export declare function isSupervisionModificationAllowed(ied: Element, supervisionType: string): boolean;
 /**
- * Return an array with a single Remove action to delete the supervision element
- * for the given GOOSE/SMV message and subscriber IED.
- *
- * @param controlBlock The GOOSE or SMV message element
- * @param subscriberIED The subscriber IED
- * @returns an empty array if removing the supervision is not possible or an array
- * with a single Delete action that removes the LN if it was created in OpenSCD
- * or only the supervision structure DOI/DAI/Val if it was created by the user.
- */
-export declare function removeSubscriptionSupervision(controlBlock: Element | undefined, subscriberIED: Element | undefined): Edit[];
-/**
  * Counts the max number of LN instances with supervision allowed for
  * the given control block's type of message.
  *
@@ -42,4 +31,3 @@ export declare function maxSupervisions(subscriberIED: Element, controlBlockType
  * @returns The LN instance or null if no LN instance could be found or created
  */
 export declare function createNewSupervisionLnEvent(ied: Element, supervisionType: 'LGOS' | 'LSVS'): Edit | null;
-export declare function clearSupervisionReference(ln: Element): Edit[] | undefined;

@@ -9,6 +9,7 @@ export default class SclSubstationEditorPlugin extends LitElement {
     get lines(): Element[];
     get processes(): Element[];
     toggleShowFunctions(): void;
+    toggleShowUserDef(): void;
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }

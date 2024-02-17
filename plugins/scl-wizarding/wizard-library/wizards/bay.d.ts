@@ -1,5 +1,5 @@
 import { TemplateResult } from 'lit';
-import '../../foundation/components/scl-textfield.js';
+import '../../foundation/components/scl-wizarding-textfield.js';
 import { Wizard, WizardActor } from '../foundation.js';
 type RenderOptions = {
     name: string | null;

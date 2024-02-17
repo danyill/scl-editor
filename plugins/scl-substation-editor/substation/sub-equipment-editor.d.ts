@@ -10,4 +10,4 @@ export declare class SubEquipmentEditor extends BaseSubstationElementEditor {
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }
-export declare function renderSubEquipments(parent: Element, editCount: number, showfunctions: boolean): TemplateResult;
+export declare function renderSubEquipments(parent: Element, editCount: number, showfunctions: boolean, showuserdef: boolean): TemplateResult;

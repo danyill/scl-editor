@@ -13,4 +13,4 @@ export declare class ConductingEquipmentEditor extends BaseSubstationElementEdit
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }
-export declare function renderConductingEquipments(parent: Element, editCount: number, showfunctions: boolean): TemplateResult;
+export declare function renderConductingEquipments(parent: Element, editCount: number, showfunctions: boolean, showuserdef: boolean): TemplateResult;

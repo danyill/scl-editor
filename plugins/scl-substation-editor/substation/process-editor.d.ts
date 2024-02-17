@@ -6,4 +6,4 @@ export declare class ProcessEditor extends BaseSubstationElementEditor {
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }
-export declare function renderProcesses(parent: Element, editCount: number, showfunctions: boolean): TemplateResult;
+export declare function renderProcesses(parent: Element, editCount: number, showfunctions: boolean, showuserdef: boolean): TemplateResult;

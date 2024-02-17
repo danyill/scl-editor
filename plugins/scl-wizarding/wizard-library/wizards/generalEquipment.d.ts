@@ -1,6 +1,6 @@
 import { TemplateResult } from 'lit';
-import '../../foundation/components/scl-textfield.js';
-import '../../foundation/components/scl-checkbox.js';
+import '../../foundation/components/scl-wizarding-textfield.js';
+import '../../foundation/components/scl-wizarding-checkbox.js';
 import { Wizard } from '../foundation.js';
 type RenderOptions = {
     name: string | null;

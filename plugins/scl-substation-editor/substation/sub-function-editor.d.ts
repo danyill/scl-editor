@@ -8,4 +8,4 @@ export declare class SubFunctionEditor extends BaseSubstationElementEditor {
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }
-export declare function renderSubFunctions(parent: Element, editCount: number, showfunctions: boolean): TemplateResult;
+export declare function renderSubFunctions(parent: Element, editCount: number, showfunctions: boolean, showuserdef: boolean): TemplateResult;

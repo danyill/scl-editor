@@ -13,6 +13,8 @@ export default class BaseSubstationElementEditor extends LitElement {
     editCount: number;
     /** Whether function type element shall be shown */
     showfunctions: boolean;
+    /** Whether text/private type element shall be shown */
+    showuserdef: boolean;
     addMenu?: Menu;
     addButton: IconButton;
     removeActionable?: HTMLElement;

@@ -1065,39 +1065,6 @@ function sourceControlBlock(extRef) {
         .join(","));
 }
 
-const maxGseMacAddress = 0x010ccd0101ff;
-const minGseMacAddress = 0x010ccd010000;
-const maxSmvMacAddress = 0x010ccd0401ff;
-const minSmvMacAddress = 0x010ccd040000;
-function convertToMac(mac) {
-    const str = 0 + mac.toString(16).toUpperCase();
-    const arr = str.match(/.{1,2}/g);
-    return arr.join("-");
-}
-Array(maxGseMacAddress - minGseMacAddress)
-    .fill(1)
-    .map((_, i) => convertToMac(minGseMacAddress + i));
-Array(maxSmvMacAddress - minSmvMacAddress)
-    .fill(1)
-    .map((_, i) => convertToMac(minSmvMacAddress + i));
-
-const maxGseAppId = 0x3fff;
-const minGseAppId = 0x0000;
-// APPID range for Type1A(Trip) GOOSE acc. IEC 61850-8-1
-const maxGseTripAppId = 0xbfff;
-const minGseTripAppId = 0x8000;
-const maxSmvAppId = 0x7fff;
-const minSmvAppId = 0x4000;
-Array(maxGseAppId - minGseAppId)
-    .fill(1)
-    .map((_, i) => (minGseAppId + i).toString(16).toUpperCase().padStart(4, "0"));
-Array(maxGseTripAppId - minGseTripAppId)
-    .fill(1)
-    .map((_, i) => (minGseTripAppId + i).toString(16).toUpperCase().padStart(4, "0"));
-Array(maxSmvAppId - minSmvAppId)
-    .fill(1)
-    .map((_, i) => (minSmvAppId + i).toString(16).toUpperCase().padStart(4, "0"));
-
 function getChildElementsByTagName(element, tag) {
     return Array.from(element.children).filter((element) => element.tagName === tag);
 }
@@ -1161,6 +1128,58 @@ function globalLnInstGenerator() {
         return lnInstGenerators.get(iedName)(lnClass);
     };
 }
+/** @returns Whether child `DA` with name `setSrcRef` can edited by SCL editor */
+function isSrcRefEditable$1(supervisionLn) {
+    const lnClass = supervisionLn.getAttribute("lnClass");
+    const cbRefType = lnClass === "LGOS" ? "GoCBRef" : "SvCBRef";
+    if (supervisionLn.querySelector(`:scope > DOI[name="${cbRefType}"] > 
+        DAI[name="setSrcRef"][valImport="true"][valKind="RO"],
+       :scope > DOI[name="${cbRefType}"] > 
+        DAI[name="setSrcRef"][valImport="true"][valKind="Conf"]`))
+        return true;
+    const rootNode = supervisionLn.ownerDocument;
+    const lnType = supervisionLn.getAttribute("lnType");
+    const goOrSvCBRef = rootNode.querySelector(`DataTypeTemplates > 
+        LNodeType[id="${lnType}"][lnClass="${lnClass}"] > DO[name="${cbRefType}"]`);
+    const cbRefId = goOrSvCBRef?.getAttribute("type");
+    const setSrcRef = rootNode.querySelector(`DataTypeTemplates > DOType[id="${cbRefId}"] > DA[name="setSrcRef"]`);
+    return ((setSrcRef?.getAttribute("valKind") === "Conf" ||
+        setSrcRef?.getAttribute("valKind") === "RO") &&
+        setSrcRef.getAttribute("valImport") === "true");
+}
+
+const maxGseMacAddress = 0x010ccd0101ff;
+const minGseMacAddress = 0x010ccd010000;
+const maxSmvMacAddress = 0x010ccd0401ff;
+const minSmvMacAddress = 0x010ccd040000;
+function convertToMac(mac) {
+    const str = 0 + mac.toString(16).toUpperCase();
+    const arr = str.match(/.{1,2}/g);
+    return arr.join("-");
+}
+Array(maxGseMacAddress - minGseMacAddress)
+    .fill(1)
+    .map((_, i) => convertToMac(minGseMacAddress + i));
+Array(maxSmvMacAddress - minSmvMacAddress)
+    .fill(1)
+    .map((_, i) => convertToMac(minSmvMacAddress + i));
+
+const maxGseAppId = 0x3fff;
+const minGseAppId = 0x0000;
+// APPID range for Type1A(Trip) GOOSE acc. IEC 61850-8-1
+const maxGseTripAppId = 0xbfff;
+const minGseTripAppId = 0x8000;
+const maxSmvAppId = 0x7fff;
+const minSmvAppId = 0x4000;
+Array(maxGseAppId - minGseAppId)
+    .fill(1)
+    .map((_, i) => (minGseAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+Array(maxGseTripAppId - minGseTripAppId)
+    .fill(1)
+    .map((_, i) => (minGseTripAppId + i).toString(16).toUpperCase().padStart(4, "0"));
+Array(maxSmvAppId - minSmvAppId)
+    .fill(1)
+    .map((_, i) => (minSmvAppId + i).toString(16).toUpperCase().padStart(4, "0"));
 
 /** @returns Whether a supervision LN holds a valid control block object ref */
 function holdsValidObjRef(ln, type) {
@@ -1434,6 +1453,44 @@ function instantiateSubscriptionSupervision(supervision, options = {
             instGenerator,
         });
     return createSupervisionEdit(supervision, { instGenerator });
+}
+
+/** @returns Whether other subscribed ExtRef of the same control block exist */
+function isControlBlockSubscribed(supervisionLn) {
+    const controlObjRef = supervisionLn.querySelector(`:scope > DOI[name="GoCBRef"] > DAI[name="setSrcRef"] > Val, 
+    :scope > DOI[name="SvCBRef"] > DAI[name="setSrcRef"] > Val`)?.textContent;
+    const extRefs = Array.from(supervisionLn.closest("IED").querySelectorAll(`:scope > AccessPoint > Server > LDevice > LN0 > Inputs > ExtRef, 
+      :scope > AccessPoint > Server > LDevice > LN0 > Inputs > ExtRef`));
+    return extRefs.some((extRef) => {
+        const [srcCBName, srcLDInst, iedName] = [
+            "srcCBName",
+            "srcLDInst",
+            "iedName",
+        ].map((attr) => extRef.getAttribute(attr));
+        return controlObjRef === `${iedName}${srcLDInst}/LLN0.${srcCBName}`;
+    });
+}
+function canRemoveSupervision(supervisionLn, options) {
+    if (!isSrcRefEditable$1(supervisionLn))
+        return false;
+    if (options.checkSubscription && isControlBlockSubscribed(supervisionLn))
+        return false;
+    return true;
+}
+function removeSupervision(supervisionLn, options = {
+    removeSupervisionLn: false,
+    checkSubscription: true,
+}) {
+    if (!canRemoveSupervision(supervisionLn, options))
+        return null;
+    if (options.removeSupervisionLn)
+        return { node: supervisionLn };
+    const val = supervisionLn.querySelector(`:scope > DOI[name="GoCBRef"] > DAI[name="setSrcRef"] > Val, 
+    :scope > DOI[name="SvCBRef"] > DAI[name="setSrcRef"] > Val`);
+    if (!val)
+        return null;
+    const node = Array.from(val.childNodes).find((childNode) => childNode.nodeType === Node.TEXT_NODE);
+    return { node };
 }
 
 /** @returns Whether a given element is within a Private section */
@@ -14790,78 +14847,10 @@ function isSupervisionModificationAllowed(ied, supervisionType) {
     // no supervision logical nodes => no new supervision possible
     if (firstSupervisionLN === null)
         return false;
-    // check if allowed to modify based on first instance properties
-    const supervisionName = supervisionType === 'LGOS' ? 'GoCBRef' : 'SvCBRef';
-    const instValKind = firstSupervisionLN
-        .querySelector(`DOI[name="${supervisionName}"]>DAI[name="setSrcRef"]`)
-        ?.getAttribute('valKind');
-    const instValImport = firstSupervisionLN
-        .querySelector(`DOI[name="${supervisionName}"]>DAI[name="setSrcRef"]`)
-        ?.getAttribute('valImport');
-    if ((instValKind === 'RO' || instValKind === 'Conf') &&
-        instValImport === 'true')
-        return true;
-    // check if allowed to modify based on DataTypeTemplates for first instance
-    const rootNode = firstSupervisionLN?.ownerDocument;
-    const lNodeType = firstSupervisionLN.getAttribute('lnType');
-    const lnClass = firstSupervisionLN.getAttribute('lnClass');
-    const dObj = rootNode.querySelector(`DataTypeTemplates > LNodeType[id="${lNodeType}"][lnClass="${lnClass}"] > DO[name="${lnClass === 'LGOS' ? 'GoCBRef' : 'SvCBRef'}"]`);
-    if (dObj) {
-        const dORef = dObj.getAttribute('type');
-        const daObj = rootNode.querySelector(`DataTypeTemplates > DOType[id="${dORef}"] > DA[name="setSrcRef"]`);
-        if (daObj) {
-            return ((daObj.getAttribute('valKind') === 'Conf' ||
-                daObj.getAttribute('valKind') === 'RO') &&
-                daObj.getAttribute('valImport') === 'true');
-        }
-    }
-    // definition missing
-    return false;
-}
-// NOTE: Have removed the LN0 selector here.
-/**
- * Return Val elements within an LGOS/LSVS instance for a particular IED and control block type.
- * @param ied - IED SCL element.
- * @param cbTagName - Either GSEControl or (defaults to) SampledValueControl.
- * @returns an Element array of Val SCL elements within an LGOS/LSVS node.
- */
-function getSupervisionCbRefs(ied, cbTagName) {
-    const supervisionType = cbTagName === 'GSEControl' ? 'LGOS' : 'LSVS';
-    const supervisionName = supervisionType === 'LGOS' ? 'GoCBRef' : 'SvCBRef';
-    const selectorString = `LN[lnClass="${supervisionType}"]>DOI[name="${supervisionName}"]>DAI[name="setSrcRef"]>Val`;
-    return Array.from(ied.querySelectorAll(selectorString));
-}
-/**
- * Return an array with a single Remove action to delete the supervision element
- * for the given GOOSE/SMV message and subscriber IED.
- *
- * @param controlBlock The GOOSE or SMV message element
- * @param subscriberIED The subscriber IED
- * @returns an empty array if removing the supervision is not possible or an array
- * with a single Delete action that removes the LN if it was created in OpenSCD
- * or only the supervision structure DOI/DAI/Val if it was created by the user.
- */
-function removeSubscriptionSupervision(controlBlock, subscriberIED) {
-    if (!controlBlock || !subscriberIED)
-        return [];
-    const valElement = getSupervisionCbRefs(subscriberIED, controlBlock.tagName).find(val => val.textContent === controlBlockReference(controlBlock));
-    if (!valElement)
-        return [];
-    const daiElement = valElement.closest('DAI');
-    const edits = [];
-    // remove old element
-    edits.push({
-        node: valElement
+    return canRemoveSupervision(firstSupervisionLN, {
+        removeSupervisionLn: true,
+        checkSubscription: false
     });
-    const newValElement = valElement.cloneNode(true);
-    newValElement.textContent = '';
-    // add new element
-    edits.push({
-        parent: daiElement,
-        reference: null,
-        node: newValElement
-    });
-    return edits;
 }
 /**
  * Counts the max number of LN instances with supervision allowed for
@@ -14935,25 +14924,6 @@ function createNewSupervisionLnEvent(ied, supervisionType) {
         return edit;
     }
     return null;
-}
-function clearSupervisionReference(ln) {
-    const val = ln.querySelector(':scope > DOI[name="GoCBRef"] > DAI[name="setSrcRef"] > Val, :scope > DOI[name="SvCBRef"] > DAI[name="setSrcRef"] > Val');
-    if (!val || val.textContent === '')
-        return undefined;
-    const edits = [];
-    // remove old element
-    edits.push({
-        node: val
-    });
-    const newValElement = val.cloneNode(true);
-    newValElement.textContent = '';
-    // add new element
-    edits.push({
-        parent: val.parentElement,
-        reference: null,
-        node: newValElement
-    });
-    return edits;
 }
 
 const controlTag = { GOOSE: 'GSEControl', SMV: 'SampledValueControl' };
@@ -15073,12 +15043,6 @@ function getSubscribedCBRefs(ied, type) {
     });
     return Array.from(controlBlockRefs);
 }
-/**
- * Gets GSEControl or SampledValueControl elements for the selected IED.
- *
- * @param controlType either 'GOOSE' or 'SMV'
- * @returns array of GSEControl or SampledValueControl elements
- */
 /**
  * Gets GSEControl or SampledValueControl elements _except_ for the
  * selected IED.
@@ -15392,17 +15356,16 @@ class OscdSupervision extends s$h {
                 return;
             const { ln } = selectedListItem.dataset;
             const supLn = find(this.doc, 'LN', ln);
-            if (isSupervisionModificationAllowed(this.selectedIed, supervisionLnType[this.controlType]) &&
-                supLn !== firstSupervision) {
-                const removeEdit = {
-                    node: supLn
-                };
-                this.dispatchEvent(newEditEvent(removeEdit));
-                this.updateCBRefInfo(this.selectedIed, this.controlType);
-                this.clearListSelections();
-                selectedListItem.selected = false;
-                selectedListItem.activated = false;
-            }
+            const deleteEdit = removeSupervision(supLn, {
+                removeSupervisionLn: true,
+                checkSubscription: false
+            });
+            if (deleteEdit)
+                this.dispatchEvent(newEditEvent(deleteEdit));
+            this.updateCBRefInfo(this.selectedIed, this.controlType);
+            this.clearListSelections();
+            selectedListItem.selected = false;
+            selectedListItem.activated = false;
         }}
     >
       <!-- show additional item to allow delete button alignment -->
@@ -15461,8 +15424,12 @@ class OscdSupervision extends s$h {
             const cbRef = getSupervisionCBRef(supLn);
             const controlBlock = getOtherIedControlElements(this.selectedIed, this.controlType).find(control => cbRef === controlBlockReference(control)) ?? null;
             if (controlBlock) {
-                const removeEdit = removeSubscriptionSupervision(controlBlock, this.selectedIed);
-                this.dispatchEvent(newEditEvent(removeEdit));
+                const removeEdit = removeSupervision(supLn, {
+                    removeSupervisionLn: false,
+                    checkSubscription: false
+                });
+                if (removeEdit)
+                    this.dispatchEvent(newEditEvent(removeEdit));
                 this.updateCBRefInfo(this.selectedIed, this.controlType);
                 this.clearListSelections();
                 selectedListItem.selected = false;
@@ -15613,7 +15580,10 @@ class OscdSupervision extends s$h {
                     //  We hope to have an upstream overwrite option before too long
                     //  See https://github.com/OpenEnergyTools/scl-lib/issues/79
                     const edits = [];
-                    const removalEdit = clearSupervisionReference(this.selectedSupervision);
+                    const removalEdit = removeSupervision(this.selectedSupervision, {
+                        removeSupervisionLn: false,
+                        checkSubscription: false
+                    });
                     if (removalEdit)
                         edits.push(removalEdit);
                     this.dispatchEvent(newEditEvent(edits));

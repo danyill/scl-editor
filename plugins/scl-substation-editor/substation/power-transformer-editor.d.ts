@@ -15,4 +15,4 @@ export declare class PowerTransformerEditor extends BaseSubstationElementEditor 
     render(): TemplateResult;
     static styles: import("lit").CSSResult;
 }
-export declare function renderPowerTransformerContainer(parent: Element, editCount: number, showfunctions: boolean): TemplateResult;
+export declare function renderPowerTransformerContainer(parent: Element, editCount: number, showfunctions: boolean, showuserdef: boolean): TemplateResult;
