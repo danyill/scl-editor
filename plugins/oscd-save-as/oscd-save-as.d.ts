@@ -16,6 +16,8 @@ export default class SaveAs extends LitElement {
     usedFileNames: string[];
     userMessageUI?: Snackbar;
     getSaveFileLocation(): Promise<void>;
+    constructor();
+    private handleKeyPress;
     run(): Promise<void>;
     fileSave(): Promise<void>;
     render(): TemplateResult;

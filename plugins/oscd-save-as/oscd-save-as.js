@@ -845,15 +845,9 @@ function fileSize(kBSize) {
  * using the File System API
  */
 class SaveAs extends s$1 {
-    constructor() {
-        super(...arguments);
-        this.editCount = -1;
-        this.usedDirectory = '';
-        this.fileHandle = null;
-        this.userMessage = '';
-        this.usedFileNames = [];
-    }
     async getSaveFileLocation() {
+        if (!this.doc)
+            return;
         // File System API feature exists
         if ('showSaveFilePicker' in window) {
             // eslint-disable-next-line no-undef
@@ -879,6 +873,27 @@ class SaveAs extends s$1 {
             if (this.userMessageUI)
                 this.userMessageUI.show();
         }
+    }
+    constructor() {
+        super();
+        this.editCount = -1;
+        this.usedDirectory = '';
+        this.fileHandle = null;
+        this.userMessage = '';
+        this.usedFileNames = [];
+        document.addEventListener('keydown', event => this.handleKeyPress(event));
+    }
+    handleKeyPress(e) {
+        if (!e.ctrlKey || (e.key !== 's' && e.key !== 'S'))
+            return;
+        if (e.shiftKey) {
+            this.getSaveFileLocation();
+        }
+        else {
+            this.fileSave();
+        }
+        e.stopPropagation();
+        e.preventDefault();
     }
     async run() {
         const plugin = (window.document.querySelector('open-scd')).loadedPlugins.get(this.tagName.toLowerCase());
