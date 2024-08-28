@@ -986,7 +986,7 @@ class SaveAs extends s$1 {
             return;
         }
         try {
-            const writableStream = await this.fileHandle.createWritable();
+            const writableStream = await fileHandle.createWritable();
             const xmlFile = formatXml(new XMLSerializer().serializeToString(this.doc));
             await writableStream.write(xmlFile);
             this.userMessage = `File ${fileHandle.name} saved (${fileSize(xmlFile.length)}).`;
