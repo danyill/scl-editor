@@ -86,7 +86,7 @@
   const isElectron = !!window?.electronAPI;
 
   if (isElectron) {
-    window.electronAPI.onFileOpen(async (filePath) => {
+    window.electronAPI.onFileOpen(async (fileName, filePath) => {
       try {
         const text = await window.electronAPI.readFile(filePath);
         const doc = new DOMParser().parseFromString(text, "application/xml");
@@ -95,10 +95,9 @@
           new CustomEvent("oscd-open", {
             bubbles: true,
             composed: true,
-            detail: { doc, docName: filePath.name },
+            detail: { doc, docName: fileName },
           })
         );
-        // openScd.requestUpdate();
       } catch (err) {
         console.error("Error reading file:", err);
       }

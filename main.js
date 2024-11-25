@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain, shell } from "electron";
 import * as fss from "fs";
 import { promises as fs } from "fs";
 import { fileURLToPath } from "url";
@@ -12,16 +12,17 @@ const packageInfo = JSON.parse(fss.readFileSync("./package.json", "utf8"));
 
 let mainWindow;
 
-// const APP_ICON = path.join(__dirname, "build", "icons", "icon");
-
-// const iconPath = () => {
-//   return APP_ICON + (process.platform === "win32" ? ".ico" : ".png");
-// };
-
 const basePath = isDev ? __dirname : app.getAppPath();
+
+// development vs. production has different process.argv
+// https://github.com/electron/electron/issues/4690
+if (app.isPackaged) {
+  process.argv.unshift(null);
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
+    show: false,
     width: 1920,
     height: 1080,
     webPreferences: {
@@ -29,7 +30,6 @@ function createWindow() {
       nodeIntegration: false,
       enableRemoteModule: false,
       preload: path.join(__dirname, "preload.js"),
-      // icon: path.resolve(basePath, "./build/icon.png"),
     },
   });
 
@@ -61,18 +61,16 @@ function createAppMenu() {
       role: "help",
       submenu: [
         {
-          label: "Learn More ↗️",
+          label: "Learn More",
           click: async () => {
-            const { shell } = require("electron");
             await shell.openExternal(
               "https://github.com/transpower-nz/open-scd"
             );
           },
         },
         {
-          label: "Documentation ↗️",
+          label: "Documentation",
           click: async () => {
-            const { shell } = require("electron");
             await shell.openExternal(
               "https://transpower-nz.github.io/open-scd-docs"
             );
@@ -81,7 +79,7 @@ function createAppMenu() {
         {
           label: "About",
           click: () => {
-            dialog.showMessageBox({
+            dialog.showMessageBoxSync({
               title: "About",
               message: `${packageInfo.build?.productName ?? "Unknown"} v${
                 packageInfo.version ?? "Unknown"
@@ -92,7 +90,7 @@ function createAppMenu() {
                 packageInfo.author ?? "Unknown"
               }`,
               buttons: ["OK"],
-              icon: path.join(__dirname, "build/icon.png"),
+              icon: "./build/icons/png/512x512.png",
             });
           },
         },
@@ -117,7 +115,11 @@ async function handleFileOpen() {
   });
 
   if (!canceled) {
-    mainWindow.webContents.send("file-opened", filePaths[0]);
+    mainWindow.webContents.send(
+      "file-opened",
+      path.basename(filePaths[0]),
+      filePaths[0]
+    );
   }
 }
 
@@ -136,6 +138,18 @@ ipcMain.handle("dialog:openFile", handleFileOpen);
 app.whenReady().then(() => {
   createWindow();
   createAppMenu();
+
+  const inputFilePath = process.argv[2];
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.maximize();
+    if (inputFilePath) {
+      mainWindow.webContents.send(
+        "file-opened",
+        path.basename(inputFilePath),
+        inputFilePath
+      );
+    }
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
