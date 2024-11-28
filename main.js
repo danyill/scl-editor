@@ -3,7 +3,6 @@ import * as fss from "fs";
 import { promises as fs } from "fs";
 import { fileURLToPath } from "url";
 import * as path from "path";
-import isDev from "electron-is-dev";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -12,7 +11,7 @@ const packageInfo = JSON.parse(fss.readFileSync("./package.json", "utf8"));
 
 let mainWindow;
 
-const basePath = isDev ? __dirname : app.getAppPath();
+const basePath = app.isPackaged ? __dirname : app.getAppPath();
 
 // development vs. production has different process.argv
 // https://github.com/electron/electron/issues/4690

@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    permissions:
+      contents: write
+
+    runs-on: electronuserland/builder:wine
+
+    steps:
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
+      - name: create app
+        run: git config --global --add safe.directory '*' && npm i && npm run dist:electron
+        env:
+          ELECTRON_CACHE: "/root/.cache/electron"
+          ELECTRON_BUILDER_CACHE: "/root/.cache/electron-builder"
+
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: true
+          release_name: ${{ steps.package-version.outputs.current-version}}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.adoc
+          env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: upload artifact exe
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/openscd-transpower_win_x64_${{ steps.package-version.outputs.current-version}}_latest.exe
+          asset_name: openscd-transpower_win_x64_${{ steps.package-version.outputs.current-version}}.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+
+      - name: upload artifact msi
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/openscd-transpower_win_x64_${{ steps.package-version.outputs.current-version}}_latest.msi
+          asset_name: openscd-transpower_win_x64_${{ steps.package-version.outputs.current-version}}.msi
+          asset_content_type: application/x-ms-installer
