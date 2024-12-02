@@ -19,16 +19,16 @@
     "elec": "electron ."
   },
   "build": {
-    "extends": "electron-builder.cjs",
-    "productName": "OpenSCD",
+    "productName": "OpenSCD Transpower",
     "appId": "com.transpower.openscd",
     "artifactName": "${name}_${os}_${arch}_${version}_${channel}.${ext}",
+    "extends": "electron-builder.cjs",
     "win": {
       "icon": "build/icons/win/icon.ico",
       "target": [
         "nsis",
         "portable",
-        "msiWrapped"
+        "msi"
       ],
       "executableName": "OpenSCD_Transpower",
       "fileAssociations": [
@@ -50,8 +50,12 @@
       ],
       "signAndEditExecutable": true
     },
-    "msiWrapped": {
-      "artifactName": "${name}_${os}_${arch}_${version}_${channel}_wrapped.${ext}"
+    "msi": {
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "menuCategory": "Transpower",
+      "oneClick": false,
+      "perMachine": true
     },
     "nsis": {
       "artifactName": "${name}_${os}_${arch}_${version}_${channel}_nsis.${ext}",
@@ -62,7 +66,7 @@
       "oneClick": false,
       "perMachine": true,
       "selectPerMachineByDefault": true,
-      "menuCategory": "IEC 61850"
+      "menuCategory": "Transpower"
     }
   },
   "devDependencies": {
