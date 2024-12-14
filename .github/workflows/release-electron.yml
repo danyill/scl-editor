@@ -24,8 +24,8 @@ jobs:
     steps:
       # - name: Ensure Mono is installed even though it should already be
       #   run: apt-get update -y && apt-get install -y --no-install-recommends mono-devel ca-certificates-mono && apt-get clean && rm -rf /var/lib/apt/lists/*
-      - name: Small Test
-        run: env WINEPREFIX=/root/.winepref wineboot -u
+      - name: Set GITHUB_ENV
+        run: echo "WINEPREFIX=/root/.winepref" >> $GITHUB_ENV && echo "ELECTRON_CACHE=/root/.cache/electron" >> $GITHUB_ENV && echo "ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder"
       - name: Checkout
         uses: actions/checkout@v4
       - name: Update npm
