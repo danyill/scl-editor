@@ -35,7 +35,7 @@ jobs:
         # necessary to get Wine to work
         run: chown root:root /github/home
       - name: Build
-        run: npm dist:electron
+        run: npm run dist:electron
       - name: List created files
         run: ls -la dist
       - name: Create release and upload assets
