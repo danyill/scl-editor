@@ -16,7 +16,7 @@ jobs:
   build:
     name: Build executables and create release
     runs-on: ubuntu-latest
-    container: electronuserland/builder:wine-mono
+    container: electronuserland/builder:18-wine-mono-07.24
     env:
       RELEASE_ASSETS: |
         dist/*.exe
