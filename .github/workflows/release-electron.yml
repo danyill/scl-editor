@@ -1,31 +1,59 @@
-name: Build/release
+name: Build executables and create release
 
-on: push
+on:
+  push:
+
+# on:
+#   workflow_dispatch:
+#   push:
+#     tags:
+#       - "v*.*.*"
+
+permissions:
+  contents: write
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-
+  build:
+    name: Build executables and create release
+    runs-on: ubuntu-latest
+    container: electronuserland/builder:wine
+    env:
+      # if file list is changed, also update .github/scripts/generate_checksums.sh
+      RELEASE_ASSETS: |
+        dist/*.exe
+        dist/*.zip
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Update npm
+        run: npm update -g npm
+      - name: Install node dependencies
+        run: npm ci
+      - name: Take container home folder ownership
+        # necessary to get Wine to work
+        run: chown root:root /github/home
+      - name: Build
+        run: npm dist:electron
+      - name: List created files
+        run: ls -la dist
+      - name: Create release and upload assets
+        id: upload_initial
+        continue-on-error: true
+        uses: softprops/action-gh-release@v1
         with:
-          node-version: "18"
-
-      - name: Build/release Electron app
-        uses: samuelmeuli/action-electron-builder@v1
+          draft: true
+          files: ${{ env.RELEASE_ASSETS }}
+      # backup steps
+      - name: Create release and upload assets (retry)
+        id: upload_retry
+        continue-on-error: true
+        if: steps.upload_initial.outcome == 'failure'
+        uses: softprops/action-gh-release@v1
         with:
-          args: "--win --x64"
-          # GitHub token, automatically provided to the action
-          github_token: ${{ secrets.github_token }}
-
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          draft: true
+          files: ${{ env.RELEASE_ASSETS }}
+      - name: Upload workflow artifacts as backup
+        if: steps.upload_retry.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          path: ${{ env.RELEASE_ASSETS }}
