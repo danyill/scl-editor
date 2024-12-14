@@ -6,3 +6,32 @@ docker run --rm -ti  --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NP
 
 
 // "extends": "electron-builder.cjs",
+
+Can't do nsis installer because of problems with mono
+
+
+"nsis": {
+    "artifactName": "${name}_${os}_${arch}_${version}_${channel}_nsis.${ext}",
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "license": "LICENCE.md",
+    "oneClick": false,
+    "perMachine": true,
+    "selectPerMachineByDefault": true,
+    "menuCategory": "Transpower"
+}
+
+
+
+      • building        target=MSI arch=x64 file=dist/openscd-transpower_win_x64_0.1.0_latest.msi
+  • downloading     url=https://github.com/electron-userland/electron-builder-binaries/releases/download/wix-4.0.0.5512.2/wix-4.0.0.5512.2.7z size=2.2 MB parts=1
+  • downloaded      url=https://github.com/electron-userland/electron-builder-binaries/releases/download/wix-4.0.0.5512.2/wix-4.0.0.5512.2.7z duration=164ms
+  ⨯ cannot execute  cause=exit status 255
+                    errorOut=0034:err:module:process_init L"C:\\windows\\system32\\winemenubuilder.exe" not found
+    002c:err:wineboot:process_run_key Error running cmd L"C:\\windows\\system32\\winemenubuilder.exe -a -r" (126).
+    00b8:err:explorer:initialize_display_settings Failed to query current display settings for L"\\\\.\\DISPLAY1".
+    0024:err:mscoree:CLRRuntimeInfo_GetRuntimeHost Wine Mono is not installed
+    
+                    command=wine 'Z:\github\home\.cache\electron-builder\wix\wix-4.0.0.5512.2\candle.exe' -arch x64 '-dappDir=Z:\__w\scl-editor\scl-editor\dist\win-unpacked' -pedantic -wx project.wxs
+                    workingDir=
