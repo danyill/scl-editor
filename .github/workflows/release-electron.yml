@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
       - name: Check out Git repository
@@ -17,11 +17,12 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
+          args: "--win -x64"
           # GitHub token, automatically provided to the action
           github_token: ${{ secrets.github_token }}
 
