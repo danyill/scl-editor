@@ -16,16 +16,12 @@ jobs:
   build:
     name: Build executables and create release
     runs-on: ubuntu-latest
-    container: electronuserland/builder:18-wine-mono-07.24
+    container: electronuserland/builder:wine-mono
     env:
       RELEASE_ASSETS: |
         dist/*.exe
         dist/*.zip
     steps:
-      # - name: Ensure Mono is installed even though it should already be
-      #   run: apt-get update -y && apt-get install -y --no-install-recommends mono-devel ca-certificates-mono && apt-get clean && rm -rf /var/lib/apt/lists/*
-      - name: Set GITHUB_ENV
-        run: echo "WINEPREFIX=/root/.winepref" >> $GITHUB_ENV && echo "ELECTRON_CACHE=/root/.cache/electron" >> $GITHUB_ENV && echo "ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder"
       - name: Checkout
         uses: actions/checkout@v4
       - name: Update npm

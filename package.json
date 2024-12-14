@@ -56,17 +56,6 @@
       "menuCategory": "Transpower",
       "oneClick": false,
       "perMachine": true
-    },
-    "nsis": {
-      "artifactName": "${name}_${os}_${arch}_${version}_${channel}_nsis.${ext}",
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "license": "LICENCE.md",
-      "oneClick": false,
-      "perMachine": true,
-      "selectPerMachineByDefault": true,
-      "menuCategory": "Transpower"
     }
   },
   "devDependencies": {
