@@ -22,7 +22,7 @@ jobs:
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
-          args: "--win -x64"
+          args: "--win --x64"
           # GitHub token, automatically provided to the action
           github_token: ${{ secrets.github_token }}
 
