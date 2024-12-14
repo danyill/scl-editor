@@ -34,6 +34,8 @@ jobs:
       - name: Take container home folder ownership
         # necessary to get Wine to work
         run: chown root:root /github/home
+      - name: Install Mono
+        run: apt update && apt-get install --yes mono-complete
       - name: Build
         run: npm run dist:electron
       - name: List created files
