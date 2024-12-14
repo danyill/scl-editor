@@ -15,17 +15,27 @@ permissions:
 jobs:
   build:
     name: Build executables and create release
-    runs-on: ubuntu-latest
-    container: electronuserland/builder:wine-mono
+    runs-on: ubuntu-24.04
+    container: electronuserland/builder:20-wine-mono-07.24
     env:
       RELEASE_ASSETS: |
         dist/*.exe
         dist/*.zip
     steps:
-      # - name: Ensure Mono is installed even though it should already be
-      #   run: apt-get update -y && apt-get install -y --no-install-recommends mono-devel ca-certificates-mono && apt-get clean && rm -rf /var/lib/apt/lists/*
+      - name: Take container home folder ownership
+        # necessary to get Wine to work
+        run: chown root:root /github/home
       - name: Set GITHUB_ENV
-        run: echo "WINEARCH=win64" >> $GITHUB_ENV && echo "DISPLAY=:0.0" >> $GITHUB_ENV && echo "WINEPREFIX=/root/.winepref" >> $GITHUB_ENV && echo "ELECTRON_CACHE=/root/.cache/electron" >> $GITHUB_ENV && echo "ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder"
+        run: echo "WINEARCH=win64" >> $GITHUB_ENV &&
+          echo "DISPLAY=:0.0" >> $GITHUB_ENV &&
+          echo "WINEPREFIX=/root/.winepref" >> $GITHUB_ENV &&
+          echo "ELECTRON_CACHE=/root/.cache/electron" >> $GITHUB_ENV &&
+          echo "ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder" >> $GITHUB_ENV &&
+          echo "WINEDEBUG=-all" >> $GITHUB_ENV &&
+          echo "WINE_SKIP_DESKTOP_INTEGRATION=1" >> $GITHUB_ENV
+          echo "DEBUG=electron-builder" >> $GITHUB_ENV
+      - name: More random things
+        run: apt-get update && apt-get install -y xvfb
       - name: Configure Wine
         run: winecfg
       - name: Checkout
@@ -36,9 +46,8 @@ jobs:
         run: git config --global --add safe.directory '*'
       - name: Install node dependencies
         run: npm ci
-      - name: Take container home folder ownership
-        # necessary to get Wine to work
-        run: chown root:root /github/home
+      - name: Showing wine environment
+        run: env | grep WINE
       - name: Build
         run: npm run dist:electron
       - name: List created files
