@@ -14,13 +14,13 @@
     "deploy:prod": "gh-pages -d dist -o prod",
     "start:build": "web-dev-server --root-dir dist --app-index index.html --open",
     "start": "web-dev-server",
-    "pack:electron": "rimraf dist && npm run build && electron-builder build --win --x64 --dir",
-    "dist:electron": "rimraf dist && npm run build && electron-builder build --win --x64",
+    "pack:electron": "rimraf dist && npm run build && electron-builder build --win --dir",
+    "dist:electron": "rimraf dist && npm run build && electron-builder build --win",
     "elec": "electron ."
   },
   "build": {
     "productName": "OpenSCD Transpower",
-    "appId": "com.transpower.openscd",
+    "appId": "com.transpower.openscd-transpower",
     "artifactName": "${name}_${os}_${arch}_${version}_${channel}.${ext}",
     "extends": "electron-builder.cjs",
     "win": {
