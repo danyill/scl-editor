@@ -27,13 +27,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Update npm
         run: npm update -g npm
+      - name: Add safe directory for git submodule usage
+        run: git config --global --add safe.directory '*'
       - name: Install node dependencies
         run: npm ci
       - name: Take container home folder ownership
         # necessary to get Wine to work
         run: chown root:root /github/home
-      - name: Add safe directory for git submodule usage
-        run: git config --global --add safe.directory '*'
       - name: Build
         run: npm dist:electron
       - name: List created files
