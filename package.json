@@ -66,8 +66,7 @@
       "oneClick": false,
       "perMachine": true,
       "selectPerMachineByDefault": true,
-      "menuCategory": "Transpower",
-      "arch": "x64"
+      "menuCategory": "Transpower"
     }
   },
   "devDependencies": {
