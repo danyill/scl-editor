@@ -22,6 +22,12 @@ jobs:
         dist/*.exe
         dist/*.zip
     steps:
+      # - name: Ensure Mono is installed even though it should already be
+      #   run: apt-get update -y && apt-get install -y --no-install-recommends mono-devel ca-certificates-mono && apt-get clean && rm -rf /var/lib/apt/lists/*
+      - name: Set GITHUB_ENV
+        run: echo "WINEARCH=win64" >> $GITHUB_ENV && echo "DISPLAY=:0.0" >> $GITHUB_ENV && echo "WINEPREFIX=/root/.winepref" >> $GITHUB_ENV && echo "ELECTRON_CACHE=/root/.cache/electron" >> $GITHUB_ENV && echo "ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder"
+      - name: Configure Wine
+        run: winecfg
       - name: Checkout
         uses: actions/checkout@v4
       - name: Update npm
