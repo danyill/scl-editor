@@ -917,6 +917,26 @@ function cloneAttributes(destElement, sourceElement) {
         destElement.setAttribute(attr.nodeName, attr.nodeValue);
     }
 }
+/**
+ * Creates a deep copy of an XML document with proper namespace handling
+ * @param sourceDoc - The source XML document to copy
+ * @param sclNamespace - The root element namespace URI
+ * @returns A new XML document that is a copy of the source
+ */
+function copyDoc(sourceDoc, sclNamespace = 'http://www.iec.ch/61850/2003/SCL') {
+    const newDoc = document.implementation.createDocument(sclNamespace, 'SCL', null);
+    const processingInstruction = newDoc.createProcessingInstruction('xml', 'version="1.0" encoding="UTF-8"');
+    newDoc.insertBefore(processingInstruction, newDoc.firstChild);
+    if (sourceDoc.documentElement) {
+        cloneAttributes(newDoc.documentElement, sourceDoc.documentElement);
+        const importedNode = newDoc.importNode(sourceDoc.documentElement, true);
+        if (newDoc.documentElement) {
+            newDoc.replaceChild(importedNode, newDoc.documentElement);
+        }
+        return newDoc;
+    }
+    return undefined;
+}
 function snapshotName(filename) {
     // Get current date and format it
     const now = new Date();
@@ -944,12 +964,15 @@ class SnapshotPlugin extends s$6 {
         const snapDoc = document.implementation.createDocument(sclNamespace, 'SCL', null);
         const pi = snapDoc.createProcessingInstruction('xml', 'version="1.0" encoding="UTF-8"');
         snapDoc.insertBefore(pi, snapDoc.firstChild);
-        // ensure schema revision and namespace definitions are transferred
-        cloneAttributes(snapDoc.documentElement, this.doc.documentElement);
-        snapDoc.importNode(this.doc.documentElement, true);
         const snapName = snapshotName(this.docName);
-        this.docs[snapName] = snapDoc;
-        this.userMessage = `Snapshot created: ${snapName}`;
+        const newDoc = copyDoc(this.doc);
+        if (newDoc) {
+            this.docs[snapName] = newDoc;
+            this.userMessage = `Snapshot created: ${snapName}`;
+        }
+        else {
+            this.userMessage = `Unable to take snapshot of ${this.docName}`;
+        }
         if (this.userMessageUI)
             this.userMessageUI.show();
     }
@@ -957,7 +980,6 @@ class SnapshotPlugin extends s$6 {
         return x$1 `
       <mwc-snackbar
         id="userMessage"
-        leading
         labelText="${this.userMessage}"
       ></mwc-snackbar>
     `;
