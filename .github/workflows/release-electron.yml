@@ -15,7 +15,7 @@ permissions:
 jobs:
   build:
     name: Build executables and create release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     container: electronuserland/builder:22-wine
     env:
       RELEASE_ASSETS: |
@@ -25,21 +25,6 @@ jobs:
       - name: Take container home folder ownership
         # necessary to get Wine to work
         run: chown root:root /github/home
-      - name: Set GITHUB_ENV
-        run: echo "WINEARCH=win64" >> $GITHUB_ENV &&
-          echo "DISPLAY=:0.0" >> $GITHUB_ENV &&
-          echo "WINEPREFIX=/root/.winepref" >> $GITHUB_ENV &&
-          echo "ELECTRON_CACHE=/root/.cache/electron" >> $GITHUB_ENV &&
-          echo "ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder" >> $GITHUB_ENV &&
-          echo "WINEDEBUG=-all" >> $GITHUB_ENV &&
-          echo "WINE_SKIP_DESKTOP_INTEGRATION=1" >> $GITHUB_ENV
-          echo "DEBUG=electron-builder" >> $GITHUB_ENV
-      - name: More random things
-        run: apt-get update && apt-get install -y xvfb
-      - name: Configure Wine
-        run: winecfg
-      - name: Run wine installer for dubious reasons
-        run: wine uninstaller
       - name: Checkout
         uses: actions/checkout@v4
       - name: Update npm
