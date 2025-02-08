@@ -16,7 +16,7 @@ jobs:
   build:
     name: Build executables and create release
     runs-on: ubuntu-24.04
-    container: electronuserland/builder:20-wine-mono-07.24
+    container: electronuserland/builder:22-wine
     env:
       RELEASE_ASSETS: |
         dist/*.exe
