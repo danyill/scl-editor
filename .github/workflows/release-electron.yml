@@ -35,6 +35,8 @@ jobs:
         run: npm ci
       - name: Showing wine environment
         run: env | grep WINE
+      - name: Try something new
+        run: wine msiexec /i https://dl.winehq.org/wine/wine-mono/7.3.0/wine-mono-7.3.0-x86.msi
       - name: Build
         run: npm run dist:electron
       - name: List created files
