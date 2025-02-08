@@ -1,15 +1,15 @@
 name: Build executables and create release
 
 # for testing
-on:
-  push:
+# on:
+#   push:
 
 # for normal usage
-# on:
-#   workflow_dispatch:
-#   push:
-#     tags:
-#       - "v*.*.*"
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
 
 permissions:
   contents: write

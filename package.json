@@ -19,7 +19,7 @@
     "elec": "electron ."
   },
   "build": {
-    "productName": "OpenSCD Transpower",
+    "productName": "OpenSCD TP",
     "appId": "com.transpower.openscd-transpower",
     "artifactName": "${name}_${os}_${arch}_${version}_${channel}.${ext}",
     "extends": "electron-builder.cjs",
@@ -30,7 +30,7 @@
         "portable",
         "msi"
       ],
-      "executableName": "OpenSCD_Transpower",
+      "executableName": "OpenSCD_TP",
       "fileAssociations": [
         {
           "ext": "scd"
