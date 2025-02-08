@@ -21,6 +21,7 @@ jobs:
       RELEASE_ASSETS: |
         dist/*.exe
         dist/*.zip
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Take container home folder ownership
         # necessary to get Wine to work
