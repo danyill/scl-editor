@@ -21,6 +21,7 @@ jobs:
       RELEASE_ASSETS: |
         dist/*.exe
         dist/*.zip
+        dist/*.msi
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Take container home folder ownership
