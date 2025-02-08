@@ -1,8 +1,10 @@
 name: Build executables and create release
 
+# for testing
 on:
   push:
 
+# for normal usage
 # on:
 #   workflow_dispatch:
 #   push:
@@ -16,11 +18,10 @@ jobs:
   build:
     name: Build executables and create release
     runs-on: ubuntu-22.04
-    container: electronuserland/builder:20-wine
+    container: electronuserland/builder:22-wine
     env:
       RELEASE_ASSETS: |
         dist/*.exe
-        dist/*.zip
         dist/*.msi
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -37,7 +38,7 @@ jobs:
         run: npm ci
       - name: Showing wine environment
         run: env | grep WINE
-      - name: Try something new
+      - name: Install mono
         run: wine msiexec /i https://dl.winehq.org/wine/wine-mono/7.3.0/wine-mono-7.3.0-x86.msi
       - name: Build
         run: npm run dist:electron
