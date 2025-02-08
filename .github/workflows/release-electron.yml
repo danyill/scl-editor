@@ -37,7 +37,9 @@ jobs:
       - name: More random things
         run: apt-get update && apt-get install -y xvfb
       - name: Configure Wine
-        run: winecfg && wine uninstaller
+        run: winecfg
+      - name: Run wine installer for dubious reasons
+        run: wine uninstaller
       - name: Checkout
         uses: actions/checkout@v4
       - name: Update npm
