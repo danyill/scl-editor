@@ -244,7 +244,7 @@
       "icon": "compare",
       "active": true,
       "requireDoc": true,
-      "src": "https://omicronenergyoss.github.io/oscd-diff/oscd-diff.js"
+      "src": "plugins/oscd-diff/oscd-diff.js"
     }
   ]
 }
