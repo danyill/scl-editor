@@ -1,4 +1,4 @@
-import { LitElement, TemplateResult } from 'lit';
+import { LitElement, PropertyValues, TemplateResult } from 'lit';
 import '@material/mwc-button';
 import '@material/mwc-icon';
 import '@material/mwc-list';
@@ -31,10 +31,15 @@ export default class SldCommunicationEditor extends SldCommunicationEditor_base 
     gridSize: number;
     editCount: number;
     selectedConnection?: Connection;
+    parsedExtRefs: Connection[];
+    private _cachedConnections;
+    get cachedConnections(): Connection[];
+    set cachedConnections(conns: Connection[]);
     mappingDetails: MdDialog;
     removeInputs(inputs: Element[]): void;
     removeAllInputs(): void;
     getCommunicationDetails(connection: Connection | undefined): TemplateResult;
+    protected updated(changedProperties: PropertyValues): void;
     renderSubscription(): TemplateResult;
     render(): TemplateResult<1>;
     static styles: import("lit").CSSResult;
