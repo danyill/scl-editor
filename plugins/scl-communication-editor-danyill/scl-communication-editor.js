@@ -41772,6 +41772,7 @@ class SldCommunicationEditor extends ScopedElementsMixin(r$6) {
             this.cachedConnections = this.substation
                 ? [...clientLnConnections(this.substation.ownerDocument)]
                 : [];
+            this.selectedConnection = undefined;
         }
     }
     renderSubscription() {
