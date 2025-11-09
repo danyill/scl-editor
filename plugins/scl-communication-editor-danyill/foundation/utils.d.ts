@@ -29,4 +29,4 @@ export declare function inputSupportingText(input: Element): {
 export declare function getExistingSupervision(cb: Element, ied: Element): Element | null;
 /** @returns the cartesian product of `arrays` */
 export declare function crossProduct<T>(...arrays: T[][]): T[][];
-export declare function getCommAddress(ctrlBlock: Element): Element;
+export declare function getCommAddress(ctrlBlock: Element): Element | null;

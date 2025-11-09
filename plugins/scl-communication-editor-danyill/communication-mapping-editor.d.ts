@@ -1,4 +1,4 @@
-import { LitElement, TemplateResult, PropertyValues } from 'lit';
+import { LitElement, TemplateResult } from 'lit';
 import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-textfield';
@@ -114,7 +114,7 @@ export declare class CommunicationMappingEditor extends CommunicationMappingEdit
     private toggleManufacturerAll;
     private recomputeSelectedManufacturers;
     private toggleTypeSelection;
-    updated(changed: PropertyValues): void;
+    firstUpdated(): void;
     private toggleVlanExpanded;
     private togglePriorityExpanded;
     renderFilterBox(): TemplateResult;
