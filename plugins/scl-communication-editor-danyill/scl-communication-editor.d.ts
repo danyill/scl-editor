@@ -12,6 +12,7 @@ import { MdListItem } from '@scopedelement/material-web/list/MdListItem.js';
 import { ActionList } from '@openenergytools/filterable-lists/dist/ActionList.js';
 import { Connection } from './foundation/types.js';
 import { CommunicationMappingEditor } from './communication-mapping-editor.js';
+export declare function parseExtRefs(doc: XMLDocument): Connection[];
 declare const SldCommunicationEditor_base: typeof LitElement & import("@open-wc/scoped-elements/lit-element.js").ScopedElementsHostConstructor;
 export default class SldCommunicationEditor extends SldCommunicationEditor_base {
     static scopedElements: {

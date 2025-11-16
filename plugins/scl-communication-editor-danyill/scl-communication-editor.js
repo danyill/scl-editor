@@ -40614,21 +40614,70 @@ MdIcon = __decorate([
 ], MdIcon);
 
 class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
-    get ieds() {
-        return Array.from(this.substation.ownerDocument.getElementsByTagNameNS(sldNs, 'IEDName'))
+    computeIeds() {
+        if (!this.substation) {
+            this.ieds = [];
+            return;
+        }
+        const iedNames = Array.from(this.substation.ownerDocument.getElementsByTagNameNS(sldNs, 'IEDName'))
             .map(iedName => {
             var _a;
-            const ied = this.substation.ownerDocument.querySelector(`:scope > IED[name="${(_a = iedName.getAttributeNS(sldNs, 'name')) !== null && _a !== void 0 ? _a : 'Unknown IED'}"]`);
+            const rawName = (_a = iedName.getAttributeNS(sldNs, 'name')) !== null && _a !== void 0 ? _a : 'Unknown IED';
+            const ied = this.substation.ownerDocument.querySelector(`:scope > IED[name="${rawName}"]`);
             return {
                 element: iedName,
                 ied,
-                name: iedName.getAttribute('name'),
+                name: rawName,
             };
         })
             .filter((iedName) => iedName.ied !== null);
+        this.ieds = iedNames;
     }
     get idle() {
         return !(this.placing || this.placingLabel);
+    }
+    constructor() {
+        super();
+        this.connections = [];
+        this.ieds = [];
+        this.filterReport = false;
+        this.filterGOOSE = false;
+        this.filterSMV = false;
+        this.filterRcv = false;
+        this.filterSend = false;
+        this.sourceIEDFilter = '';
+        this.targetIEDFilter = '';
+        this.cbNameFilter = '';
+        this.vlanFilter = '';
+        this.priorityFilter = '';
+        this.selectedVlans = [];
+        this.selectedPriorities = [];
+        this.showFilterBox = false;
+        this.showVlanDropdown = false;
+        this.showPriorityDropdown = false;
+        // Manufacturer / IED type filter states
+        this.showManufacturerDropdown = false;
+        this.manufacturerValues = [];
+        this.typeValues = [];
+        this.manufacturerTypeMap = {};
+        this.selectedManufacturers = [];
+        this.selectedTypes = [];
+        this.editMode = false;
+        this.showLabel = true;
+        this.placingOffset = [0, 0];
+        this.vlanValues = [];
+        this.priorityValues = [];
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.mouseX2 = 0;
+        this.mouseY2 = 0;
+        this.linkedEquipments = [];
+        this.handleKeydown = ({ key }) => {
+            if (key === 'Escape')
+                this.reset();
+        };
+        this.computeIeds();
+        this.addEventListener('wheel', this.onWheelZoom);
     }
     svgCoordinates(clientX, clientY) {
         const p = new DOMPoint(clientX, clientY);
@@ -40644,6 +40693,8 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
         window.removeEventListener('keydown', this.handleKeydown);
     }
     reset() {
+        // Clear any transient dragging visuals
+        this.clearDraggingState();
         this.placing = undefined;
         this.placingLabel = undefined;
     }
@@ -40666,10 +40717,10 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
         var _a;
         const edits = [];
         const oldParent = element.parentElement;
-        const newParent = Array.from(this.substation.querySelectorAll(':scope > VoltageLevel > Bay'))
+        const newParent = (Array.from(this.substation.querySelectorAll(':scope > VoltageLevel > Bay'))
             .concat(Array.from(this.substation.querySelectorAll(':scope > VoltageLevel')))
-            .find(vlOrBay => containsRect(vlOrBay, x, y, 1, 1)) || this.substation;
-        if (element.parentElement !== newParent) {
+            .find(vlOrBay => containsRect(vlOrBay, x, y, 1, 1)) || this.substation).querySelector(':scope > Private[type="OpenSCD-Linked-IEDs"]');
+        if (element.parentElement !== newParent && newParent !== null) {
             edits.push(...reparentElement(element, newParent));
         }
         const { pos: [oldX, oldY], label: [oldLX, oldLY], } = attributes(element);
@@ -40696,15 +40747,15 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
             if (!privateElement) {
                 privateElement = this.substation.ownerDocument.createElementNS(this.substation.ownerDocument.documentElement.namespaceURI, 'Private');
                 privateElement.setAttribute('type', 'OpenSCD-Linked-IEDs');
+                privateElement.appendChild(element.cloneNode());
+                enclosingEdits.push({
+                    parent: element.parentElement,
+                    node: privateElement,
+                    reference: getReference(element.parentElement, 'Private'),
+                }, {
+                    node: element,
+                });
             }
-            privateElement.appendChild(element.cloneNode());
-            enclosingEdits.push({
-                parent: element.parentElement,
-                node: privateElement,
-                reference: getReference(element.parentElement, 'Private'),
-            }, {
-                node: element,
-            });
         }
         if (element.localName === 'IEDName' &&
             (oldParent === null || oldParent === void 0 ? void 0 : oldParent.tagName) === 'Private' &&
@@ -40720,6 +40771,74 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
         this.reset();
         this.placing = element;
         this.placingOffset = offset;
+    }
+    get isPlacingIED() {
+        return !!this.placing && this.placing.localName === 'IEDName';
+    }
+    updateDraggingIedVisual() {
+        if (!this.isPlacingIED)
+            return;
+        const placingElement = this.placing; // IEDName element
+        const iedObj = this.ieds.find(i => i.element === placingElement);
+        if (!iedObj)
+            return;
+        const idStr = iedObj.name;
+        const topSvg = this.sld.querySelector(`svg[id="${idStr}"]`);
+        if (!topSvg)
+            return;
+        const [tx, ty] = this.renderedPosition(placingElement);
+        topSvg.setAttribute('x', String(tx));
+        topSvg.setAttribute('y', String(ty));
+        const g = topSvg.querySelector('g.ied');
+        if (g && !g.classList.contains('dragging'))
+            g.classList.add('dragging');
+        // Move the associated label imperatively while dragging
+        const label = this.sld.querySelector(`g[id="label:${idStr}"]`);
+        if (label) {
+            const [lx, ly] = this.renderedLabelPosition(placingElement);
+            const textEl = label.querySelector('text');
+            if (textEl) {
+                textEl.setAttribute('x', String(lx + 0.1));
+                textEl.setAttribute('y', String(ly - 0.5));
+            }
+            label.setAttribute('transform', `rotate(${0} ${lx + 0.5} ${ly - 0.5})`);
+        }
+    }
+    updateDraggingLabelVisual() {
+        if (!this.placingLabel)
+            return;
+        const labelElement = this.placingLabel;
+        const name = labelElement.getAttributeNS(sldNs, 'name');
+        if (!name)
+            return;
+        const labelGroup = this.sld.querySelector(`g[id="label:${name}"]`);
+        if (!labelGroup)
+            return;
+        const [lx, ly] = this.renderedLabelPosition(labelElement);
+        const textEl = labelGroup.querySelector('text');
+        if (textEl) {
+            textEl.setAttribute('x', String(lx + 0.1));
+            textEl.setAttribute('y', String(ly - 0.5));
+        }
+        labelGroup.setAttribute('transform', `rotate(${0} ${lx + 0.5} ${ly - 0.5})`);
+    }
+    clearDraggingState() {
+        var _a, _b;
+        if (this.isPlacingIED) {
+            const placingElement = this.placing;
+            const ied = this.ieds.find(i => i.element === placingElement);
+            if (ied) {
+                const idStr = ied.name;
+                const topSvg = this.sld.querySelector(`svg[id="${idStr}"]`);
+                const g = topSvg === null || topSvg === void 0 ? void 0 : topSvg.querySelector('g.ied');
+                if (g === null || g === void 0 ? void 0 : g.classList.contains('dragging'))
+                    g.classList.remove('dragging');
+                return;
+            }
+        }
+        // Fallback: if we couldn't resolve the specific IED, clear any leftovers
+        const draggingGroups = (_b = (_a = this.sld) === null || _a === void 0 ? void 0 : _a.querySelectorAll('g.ied.dragging')) !== null && _b !== void 0 ? _b : [];
+        draggingGroups.forEach(g => g.classList.remove('dragging'));
     }
     onWheelZoom(evt) {
         if (evt.ctrlKey) {
@@ -41083,47 +41202,6 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
         else
             this.resetIedSelection();
     }
-    constructor() {
-        super();
-        this.connections = [];
-        this.filterReport = false;
-        this.filterGOOSE = false;
-        this.filterSMV = false;
-        this.filterRcv = false;
-        this.filterSend = false;
-        this.sourceIEDFilter = '';
-        this.targetIEDFilter = '';
-        this.cbNameFilter = '';
-        this.vlanFilter = '';
-        this.priorityFilter = '';
-        this.selectedVlans = [];
-        this.selectedPriorities = [];
-        this.showFilterBox = false;
-        this.showVlanDropdown = false;
-        this.showPriorityDropdown = false;
-        // Manufacturer / IED type filter states
-        this.showManufacturerDropdown = false;
-        this.manufacturerValues = [];
-        this.typeValues = [];
-        this.manufacturerTypeMap = {};
-        this.selectedManufacturers = [];
-        this.selectedTypes = [];
-        this.editMode = false;
-        this.showLabel = true;
-        this.placingOffset = [0, 0];
-        this.vlanValues = [];
-        this.priorityValues = [];
-        this.mouseX = 0;
-        this.mouseY = 0;
-        this.mouseX2 = 0;
-        this.mouseY2 = 0;
-        this.linkedEquipments = [];
-        this.handleKeydown = ({ key }) => {
-            if (key === 'Escape')
-                this.reset();
-        };
-        this.addEventListener('wheel', this.onWheelZoom);
-    }
     renderedLabelPosition(element) {
         var _a;
         let { label: [x, y], } = attributes(element);
@@ -41153,10 +41231,14 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
         let handleClick = E$1;
         if (this.idle && this.editMode) {
             events = 'all';
-            const offset = [this.mouseX2 - x - 0.5, this.mouseY2 - y + 0.5];
-            handleClick = () => this.startPlacingLabel(ied.element, offset);
+            handleClick = (evt) => {
+                evt.stopPropagation();
+                const [mx, my] = this.svgCoordinates(evt.clientX, evt.clientY);
+                const offset = [mx - x - 0.5, my - y + 0.5];
+                this.startPlacingLabel(ied.element, offset);
+            };
         }
-        const id = identity(ied.ied);
+        const id = ied.name;
         const classes = e$1({
             label: true,
             ied: true,
@@ -41207,7 +41289,7 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
         return b `<svg
     xmlns="${svgNs}"
     xmlns:xlink="${xlinkNs}"
-    id="${identity(ied.ied)}"
+    id="${ied.name}"
     x="${x}"
     y="${y}"
     width="${1 * this.gridSize}"
@@ -41217,7 +41299,9 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
     <g class="ied ${isSelected ? 'selected-ied' : ''}"
       id="#${ied.name}"
       transform="translate(${0} ${0})">
-        <title>${ied.name}</title>
+        <title>${ied.name}
+${ied.ied.getAttribute('manufacturer') || 'Unknown manufacturer'} ${ied.ied.getAttribute('type') || 'Unknown type'}
+        </title>
         ${backgroundRect}
         ${icon}
         <rect width="1" height="1" fill="none" pointer-events="all"
@@ -41323,7 +41407,15 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
             : [...this.selectedTypes, type];
         this.recomputeSelectedManufacturers();
     }
+    updated(changedProperties) {
+        super.updated(changedProperties);
+        if (changedProperties.has('substation')) {
+            this.selectedIed = undefined;
+            this.computeIeds();
+        }
+    }
     firstUpdated() {
+        this.computeIeds();
         this.computeVlanPriorityValues();
         this.computeManufacturerTypeValues();
     }
@@ -41643,6 +41735,8 @@ class CommunicationMappingEditor extends ScopedElementsMixin(r$6) {
             this.mouseY = Math.floor(y);
             this.mouseX2 = Math.round(x * 2) / 2;
             this.mouseY2 = Math.round(y * 2) / 2;
+            this.updateDraggingIedVisual();
+            this.updateDraggingLabelVisual();
         }}
         >
           ${sldSvg(this.substation, {
@@ -41696,6 +41790,13 @@ CommunicationMappingEditor.styles = i$c `
     svg.connection:hover > path {
       stroke: #ffcc00;
       stroke-width: 0.12;
+    }
+
+    /* Visual feedback while dragging an IED (imperative update) */
+    g.ied.dragging > rect,
+    g.ied.dragging use {
+      opacity: 0.75;
+      cursor: grabbing;
     }
 
     .info-box {
@@ -41803,7 +41904,7 @@ __decorate([
 ], CommunicationMappingEditor.prototype, "connections", void 0);
 __decorate([
     r$4()
-], CommunicationMappingEditor.prototype, "ieds", null);
+], CommunicationMappingEditor.prototype, "ieds", void 0);
 __decorate([
     r$4()
 ], CommunicationMappingEditor.prototype, "filterReport", void 0);
@@ -41971,60 +42072,119 @@ function clientLnConnections(doc) {
     })
         .filter((conn) => conn.source.iedName !== undefined);
 }
+function buildIedNameMap(doc) {
+    const map = new Map();
+    Array.from(doc.getElementsByTagNameNS(sldNs, 'IEDName')).forEach(iedName => {
+        const n = iedName.getAttributeNS(sldNs, 'name');
+        if (n)
+            map.set(n, iedName);
+    });
+    return map;
+}
+function indexAllExtRefs(doc, iedNameMap) {
+    const byKey = new Map();
+    // Select ExtRefs that specify a srcCBName; both LN0 and LN contexts.
+    const extRefs = doc.querySelectorAll(':root > IED > AccessPoint > Server > LDevice > LN0 > Inputs > ExtRef[srcCBName], ' +
+        ':root > IED > AccessPoint > Server > LDevice > LN > Inputs > ExtRef[srcCBName]');
+    extRefs.forEach(extRef => {
+        const keyIed = extRef.getAttribute('iedName');
+        const cbName = extRef.getAttribute('srcCBName');
+        const lnClass = extRef.getAttribute('srcLNClass');
+        if (!keyIed || !cbName || !lnClass)
+            return; // skip incomplete keys
+        const targetIed = extRef.closest('IED');
+        if (!targetIed)
+            return;
+        const targetName = targetIed.getAttribute('name');
+        if (!targetName)
+            return;
+        const targetIedNameEl = iedNameMap.get(targetName);
+        if (!targetIedNameEl)
+            return;
+        const entry = {
+            el: extRef,
+            targetIed,
+            targetIedName: targetIedNameEl,
+            srcLDInst: extRef.getAttribute('srcLDInst') || undefined,
+            ldInst: extRef.getAttribute('ldInst') || undefined,
+            srcPrefix: extRef.getAttribute('srcPrefix') || '',
+            srcLNInst: extRef.getAttribute('srcLNInst') || '',
+        };
+        const key = `${keyIed}|${lnClass}|${cbName}`;
+        const bucket = byKey.get(key);
+        if (bucket)
+            bucket.push(entry);
+        else
+            byKey.set(key, [entry]);
+    });
+    return byKey;
+}
 function parseExtRefs(doc) {
-    const iedToNameElement = new Map();
-    Array.from(doc.getElementsByTagNameNS(sldNs, 'IEDName')).forEach(iedName => iedToNameElement.set(iedName.getAttributeNS(sldNs, 'name'), iedName));
-    const controlBlockSelector = combineSelectors([':root > IED > AccessPoint > Server > LDevice'], ['>'], ['LN0'], ['>'], ['GSEControl', 'SampledValueControl']);
-    return Array.from(doc.querySelectorAll(controlBlockSelector))
-        .flatMap(controlBlock => {
-        const sourceIed = controlBlock.closest('IED');
-        const iedName = sourceIed.getAttribute('name');
-        const sourceIedName = iedToNameElement.get(iedName);
-        const ldInst = controlBlock.closest('LDevice').getAttribute('inst');
-        const anyLn = controlBlock.closest('LN,LN0');
-        const prefix = anyLn.getAttribute('prefix');
-        const lnClass = anyLn.getAttribute('lnClass');
-        const lnInst = anyLn.getAttribute('inst');
+    const iedNameMap = buildIedNameMap(doc);
+    const extRefIndex = indexAllExtRefs(doc, iedNameMap);
+    // Control blocks limited to LN0 (GSEControl/SampledValueControl) per IEC conventions.
+    const controlBlocks = doc.querySelectorAll(':root > IED > AccessPoint > Server > LDevice > LN0 > GSEControl, ' +
+        ':root > IED > AccessPoint > Server > LDevice > LN0 > SampledValueControl');
+    const results = [];
+    controlBlocks.forEach(controlBlock => {
+        var _a;
+        const srcIed = controlBlock.closest('IED');
+        if (!srcIed)
+            return;
+        const sourceIedNameStr = srcIed.getAttribute('name');
+        if (!sourceIedNameStr)
+            return;
+        const sourceIedNameEl = iedNameMap.get(sourceIedNameStr);
+        if (!sourceIedNameEl)
+            return;
+        const ldInst = ((_a = controlBlock.closest('LDevice')) === null || _a === void 0 ? void 0 : _a.getAttribute('inst')) || '';
+        const ln0 = controlBlock.closest('LN0,LN');
+        if (!ln0)
+            return;
+        const prefix = ln0.getAttribute('prefix') || '';
+        const lnClass = ln0.getAttribute('lnClass') || '';
+        const lnInst = ln0.getAttribute('inst') || '';
         const cbName = controlBlock.getAttribute('name');
-        const extRefSelector = combineSelectors([':root > IED > AccessPoint > Server > LDevice'], ['>'], ['LN0', 'LN'], ['>'], [
-            `Inputs > ExtRef[iedName="${iedName}"][srcLNClass="${lnClass}"][srcCBName="${cbName}"]`,
-        ]);
-        const targetMap = {};
-        Array.from(doc.querySelectorAll(extRefSelector))
-            .filter(extRef => {
-            const [extRefLdInst, srcLDInst, srcPrefix, srcLNInst] = [
-                'ldInst',
-                'srcLDInst',
-                'srcPrefix',
-                'srcLNInst',
-            ].map(attr => extRef.getAttribute(attr));
-            return ((srcLDInst ? srcLDInst === ldInst : extRefLdInst === srcLDInst) &&
-                (srcPrefix !== null && srcPrefix !== void 0 ? srcPrefix : '') === (prefix !== null && prefix !== void 0 ? prefix : '') &&
-                (srcLNInst !== null && srcLNInst !== void 0 ? srcLNInst : '') === (lnInst !== null && lnInst !== void 0 ? lnInst : ''));
-        })
-            .forEach(extRef => {
-            const target = extRef.closest('IED');
-            const targetName = target.getAttribute('name');
-            const targetIedName = iedToNameElement.get(targetName);
-            if (targetName && targetMap[targetName])
-                targetMap[targetName].inputs.push(extRef);
-            else if (targetIedName)
-                targetMap[targetName] = {
-                    ied: target,
-                    iedName: targetIedName,
-                    inputs: [extRef],
-                };
+        if (!cbName)
+            return;
+        const key = `${sourceIedNameStr}|${lnClass}|${cbName}`;
+        const candidates = extRefIndex.get(key);
+        if (!candidates)
+            return; // no matches for this CB
+        // Filter by LD/prefix/instance equivalence rules.
+        const filtered = candidates.filter(ext => {
+            const ldMatch = ext.srcLDInst
+                ? ext.srcLDInst === ldInst
+                : ext.ldInst === ldInst;
+            return ldMatch && ext.srcPrefix === prefix && ext.srcLNInst === lnInst;
         });
-        return Object.values(targetMap).map(target => {
-            const id = `${identity(controlBlock)}${target.ied}`;
-            return {
+        if (!filtered.length)
+            return;
+        // Group by target IED name.
+        const grouped = {};
+        for (const ext of filtered) {
+            const tgtName = ext.targetIed.getAttribute('name');
+            if (tgtName) {
+                if (grouped[tgtName])
+                    grouped[tgtName].inputs.push(ext.el);
+                else
+                    grouped[tgtName] = {
+                        ied: ext.targetIed,
+                        iedName: ext.targetIedName,
+                        inputs: [ext.el],
+                    };
+            }
+        }
+        Object.values(grouped).forEach(target => {
+            const id = `${identity(controlBlock)}:${target.ied.getAttribute('name')}`;
+            results.push({
                 id,
-                source: { ied: sourceIed, iedName: sourceIedName, controlBlock },
+                source: { ied: srcIed, iedName: sourceIedNameEl, controlBlock },
                 target,
-            };
+            });
         });
-    })
-        .filter((conn) => conn.source.iedName !== null && conn.source.iedName !== null);
+    });
+    return results;
 }
 function connectionHeading(conn) {
     const sourceIedName = conn.source.ied.getAttribute('name');
@@ -42155,8 +42315,13 @@ class SldCommunicationEditor extends ScopedElementsMixin(r$6) {
     }
     updated(changedProperties) {
         super.updated(changedProperties);
-        // When a new document is loaded we reset the connections
-        if (changedProperties.has('doc')) {
+        // When a new document is loaded or a connection is removed
+        // We update the cached variables
+        if (changedProperties.has('doc') ||
+            changedProperties.has('docName')
+        // ||
+        // changedProperties.has('editCount')
+        ) {
             this.parsedExtRefs = this.substation
                 ? parseExtRefs(this.substation.ownerDocument)
                 : [];
@@ -42437,5 +42602,5 @@ __decorate([
     e$d('#mappingDetails')
 ], SldCommunicationEditor.prototype, "mappingDetails", void 0);
 
-export { SldCommunicationEditor as default };
+export { SldCommunicationEditor as default, parseExtRefs };
 //# sourceMappingURL=scl-communication-editor.js.map

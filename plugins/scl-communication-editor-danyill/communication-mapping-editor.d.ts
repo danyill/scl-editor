@@ -1,4 +1,4 @@
-import { LitElement, TemplateResult } from 'lit';
+import { LitElement, TemplateResult, PropertyValues } from 'lit';
 import '@material/mwc-icon-button';
 import '@material/mwc-icon-button-toggle';
 import '@material/mwc-textfield';
@@ -26,7 +26,8 @@ export declare class CommunicationMappingEditor extends CommunicationMappingEdit
     substation: Element;
     gridSize: number;
     connections: Connection[];
-    get ieds(): IED[];
+    private ieds;
+    private computeIeds;
     filterReport: boolean;
     filterGOOSE: boolean;
     filterSMV: boolean;
@@ -64,6 +65,7 @@ export declare class CommunicationMappingEditor extends CommunicationMappingEdit
     get idle(): boolean;
     sld: SVGGraphicsElement;
     container: HTMLDivElement;
+    constructor();
     svgCoordinates(clientX: number, clientY: number): Point;
     handleKeydown: ({ key }: KeyboardEvent) => void;
     connectedCallback(): void;
@@ -73,6 +75,10 @@ export declare class CommunicationMappingEditor extends CommunicationMappingEdit
     startPlacingLabel(element: Element | undefined, offset?: Point): void;
     placeElement(element: Element, x: number, y: number): void;
     startPlacing(element: Element | undefined, offset?: Point): void;
+    private get isPlacingIED();
+    private updateDraggingIedVisual;
+    private updateDraggingLabelVisual;
+    private clearDraggingState;
     onWheelZoom(evt: WheelEvent): void;
     clearFilter(): void;
     activeFilter(): boolean;
@@ -103,7 +109,6 @@ export declare class CommunicationMappingEditor extends CommunicationMappingEdit
     filterConnections(conn: Connection): boolean;
     resetIedSelection(): void;
     selectIED(ied: IED): void;
-    constructor();
     renderedLabelPosition(element: Element): Point;
     renderLabel(ied: IED): TemplateResult<2>;
     renderedPosition(element: Element): Point;
@@ -114,6 +119,7 @@ export declare class CommunicationMappingEditor extends CommunicationMappingEdit
     private toggleManufacturerAll;
     private recomputeSelectedManufacturers;
     private toggleTypeSelection;
+    protected updated(changedProperties: PropertyValues): void;
     firstUpdated(): void;
     private toggleVlanExpanded;
     private togglePriorityExpanded;
