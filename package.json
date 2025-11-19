@@ -3,11 +3,11 @@
   "description": "Transpower OpenSCD distribution - A System Configuration Tool for managing IEC 61850 digital substations",
   "license": "Apache-2.0",
   "author": "Transpower New Zealand (Daniel Mulholland)",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "preinstall": "git submodule update --init --recursive --remote",
+    "preinstall": "git submodule update --init --recursive",
     "build": "rimraf dist && rollup -c rollup.config.js && cp favicon.ico dist",
     "deploy": "npm run preinstall && npm run build && gh-pages -d dist",
     "deploy:nobuild": "gh-pages -d dist",
